@@ -1,0 +1,12 @@
+{
+  "nav": {
+    "sign_in": "Sign In",
+    "about": "About Us"
+  },
+  "footer": {
+    "copyright": "© 2026 WellnessHub. All rights reserved.",
+    "services": "Services",
+    "about": "About",
+    "privacy": "Privacy"
+  }
+}

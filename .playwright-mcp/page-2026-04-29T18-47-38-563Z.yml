@@ -1,0 +1,287 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e5]:
+      - link "Sign In" [ref=e7] [cursor=pointer]:
+        - /url: /login
+      - link "WellnessHub home" [ref=e9] [cursor=pointer]:
+        - /url: /
+        - img "WellnessHub" [ref=e11]
+      - button "Switch language" [ref=e14]:
+        - img [ref=e15]
+    - generic [ref=e22]:
+      - generic [ref=e26]:
+        - paragraph [ref=e27]: Classes for every level
+        - heading "Fitness & Dance" [level=2] [ref=e28]
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - heading "Indian Zumba / Oriental Dance" [level=3] [ref=e32]
+          - generic [ref=e33]:
+            - button "8 Sessions 40 OMR" [ref=e34]:
+              - generic [ref=e35]:
+                - generic [ref=e36]: 8 Sessions
+                - generic [ref=e38]: 40 OMR
+            - button "10 Sessions 45 OMR" [ref=e39]:
+              - generic [ref=e40]:
+                - generic [ref=e41]: 10 Sessions
+                - generic [ref=e43]: 45 OMR
+            - button "12 Sessions 55 OMR" [ref=e44]:
+              - generic [ref=e45]:
+                - generic [ref=e46]: 12 Sessions
+                - generic [ref=e48]: 55 OMR
+        - generic [ref=e49]:
+          - heading "Fitness" [level=3] [ref=e50]
+          - button "Monthly Subscription 35 OMR" [ref=e52]:
+            - generic [ref=e53]:
+              - generic [ref=e54]: Monthly Subscription
+              - generic [ref=e56]: 35 OMR
+    - generic [ref=e57]:
+      - generic [ref=e61]: Ad
+      - generic [ref=e62]:
+        - paragraph [ref=e63]: Coming Soon
+        - heading "Exclusive Offers" [level=3] [ref=e64]
+        - paragraph [ref=e65]: Book now and save on your next session
+    - generic [ref=e66]:
+      - generic [ref=e70]:
+        - paragraph [ref=e71]: Hair, skin, and makeup
+        - heading "Salon & Beauty" [level=2] [ref=e72]
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - heading "Hair & Skin Care" [level=3] [ref=e76]
+          - generic [ref=e77]:
+            - button "Natural & Treatment Hair Masks 15 OMR" [ref=e78]:
+              - generic [ref=e79]:
+                - generic [ref=e80]: Natural & Treatment Hair Masks
+                - generic [ref=e82]: 15 OMR
+            - button "Natural & Treatment Face Masks 5 OMR" [ref=e83]:
+              - generic [ref=e84]:
+                - generic [ref=e85]: Natural & Treatment Face Masks
+                - generic [ref=e87]: 5 OMR
+            - button "Hair Care Session with Massage 30 minutes 20 OMR 60 minutes 30 OMR" [ref=e88]:
+              - generic [ref=e89]:
+                - paragraph [ref=e91]: Hair Care Session with Massage
+                - generic [ref=e92]:
+                  - generic [ref=e93]: 30 minutes
+                  - generic [ref=e94]: 20 OMR
+                - generic [ref=e95]:
+                  - generic [ref=e96]: 60 minutes
+                  - generic [ref=e97]: 30 OMR
+        - generic [ref=e98]:
+          - heading "Hair & Face Services" [level=3] [ref=e99]
+          - generic [ref=e100]:
+            - button "Blow Dry from 4 OMR" [ref=e101]:
+              - generic [ref=e102]:
+                - generic [ref=e103]: Blow Dry
+                - generic [ref=e105]: from 4 OMR
+            - button "Full Face & Eyebrow Threading 5 OMR" [ref=e106]:
+              - generic [ref=e107]:
+                - generic [ref=e108]: Full Face & Eyebrow Threading
+                - generic [ref=e110]: 5 OMR
+            - button "Face Threading Only 3 OMR" [ref=e111]:
+              - generic [ref=e112]:
+                - generic [ref=e113]: Face Threading Only
+                - generic [ref=e115]: 3 OMR
+            - button "Hair Coloring & Bleaching 3 OMR" [ref=e116]:
+              - generic [ref=e117]:
+                - generic [ref=e118]: Hair Coloring & Bleaching
+                - generic [ref=e120]: 3 OMR
+        - generic [ref=e121]:
+          - heading "Eyelashes" [level=3] [ref=e122]
+          - generic [ref=e123]:
+            - button "Half Lash Extension 15 OMR" [ref=e124]:
+              - generic [ref=e125]:
+                - generic [ref=e126]: Half Lash Extension
+                - generic [ref=e128]: 15 OMR
+            - button "Full Lash Extension 25 OMR" [ref=e129]:
+              - generic [ref=e130]:
+                - generic [ref=e131]: Full Lash Extension
+                - generic [ref=e133]: 25 OMR
+            - button "Corner Lash Extension 10 OMR" [ref=e134]:
+              - generic [ref=e135]:
+                - generic [ref=e136]: Corner Lash Extension
+                - generic [ref=e138]: 10 OMR
+        - generic [ref=e139]:
+          - heading "Makeup" [level=3] [ref=e140]
+          - button "Full Makeup with Lashes 20 OMR" [ref=e142]:
+            - generic [ref=e143]:
+              - generic [ref=e144]: Full Makeup with Lashes
+              - generic [ref=e146]: 20 OMR
+    - generic [ref=e147]:
+      - generic [ref=e151]:
+        - paragraph [ref=e152]: Permanent makeup & skin treatments
+        - heading "Advanced Beauty" [level=2] [ref=e153]
+      - generic [ref=e155]:
+        - generic [ref=e156]:
+          - heading "Permanent Makeup" [level=3] [ref=e157]
+          - generic [ref=e158]:
+            - button "Eyebrow Microblading 70 OMR" [ref=e159]:
+              - generic [ref=e160]:
+                - generic [ref=e161]: Eyebrow Microblading
+                - generic [ref=e163]: 70 OMR
+            - button "Permanent Eyeliner 50 OMR" [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]: Permanent Eyeliner
+                - generic [ref=e168]: 50 OMR
+            - button "Lip Blush 80 OMR" [ref=e169]:
+              - generic [ref=e170]:
+                - generic [ref=e171]: Lip Blush
+                - generic [ref=e173]: 80 OMR
+        - generic [ref=e174]:
+          - heading "Facial Treatments" [level=3] [ref=e175]
+          - generic [ref=e176]:
+            - button "Facial with Thermal Mask 50 OMR" [ref=e177]:
+              - generic [ref=e178]:
+                - generic [ref=e179]: Facial with Thermal Mask
+                - generic [ref=e181]: 50 OMR
+            - button "Lavender & Cocoa Facial 40 OMR" [ref=e182]:
+              - generic [ref=e183]:
+                - generic [ref=e184]: Lavender & Cocoa Facial
+                - generic [ref=e186]: 40 OMR
+            - button "Deep Skin Cleansing 30 OMR" [ref=e187]:
+              - generic [ref=e188]:
+                - generic [ref=e189]: Deep Skin Cleansing
+                - generic [ref=e191]: 30 OMR
+        - generic [ref=e192]:
+          - heading "Skin Treatment Technologies" [level=3] [ref=e193]
+          - generic [ref=e194]:
+            - button "Microneedling Single Session 35 OMR 3 Sessions 85 OMR" [ref=e195]:
+              - generic [ref=e196]:
+                - paragraph [ref=e198]: Microneedling
+                - generic [ref=e199]:
+                  - generic [ref=e200]: Single Session
+                  - generic [ref=e201]: 35 OMR
+                - generic [ref=e202]:
+                  - generic [ref=e203]: 3 Sessions
+                  - generic [ref=e204]: 85 OMR
+            - button "Mesotherapy (DNA Salmon) Single Session 45 OMR 3 Sessions 120 OMR" [ref=e205]:
+              - generic [ref=e206]:
+                - paragraph [ref=e208]: Mesotherapy (DNA Salmon)
+                - generic [ref=e209]:
+                  - generic [ref=e210]: Single Session
+                  - generic [ref=e211]: 45 OMR
+                - generic [ref=e212]:
+                  - generic [ref=e213]: 3 Sessions
+                  - generic [ref=e214]: 120 OMR
+            - button "Skin Tightening (Plasma Jet) Single Session 35 OMR 3 Sessions 90 OMR" [ref=e215]:
+              - generic [ref=e216]:
+                - paragraph [ref=e218]: Skin Tightening (Plasma Jet)
+                - generic [ref=e219]:
+                  - generic [ref=e220]: Single Session
+                  - generic [ref=e221]: 35 OMR
+                - generic [ref=e222]:
+                  - generic [ref=e223]: 3 Sessions
+                  - generic [ref=e224]: 90 OMR
+        - generic [ref=e225]:
+          - heading "Advanced Hair Care" [level=3] [ref=e226]
+          - generic [ref=e227]:
+            - button "Professional Haircut (Taichi) 15 – 40 OMR" [ref=e228]:
+              - generic [ref=e229]:
+                - generic [ref=e230]: Professional Haircut (Taichi)
+                - generic [ref=e232]: 15 – 40 OMR
+            - button "Hair Mesotherapy Single Session 35 OMR 3 Sessions 90 OMR" [ref=e233]:
+              - generic [ref=e234]:
+                - paragraph [ref=e236]: Hair Mesotherapy
+                - generic [ref=e237]:
+                  - generic [ref=e238]: Single Session
+                  - generic [ref=e239]: 35 OMR
+                - generic [ref=e240]:
+                  - generic [ref=e241]: 3 Sessions
+                  - generic [ref=e242]: 90 OMR
+    - generic [ref=e243]:
+      - generic [ref=e247]: Ad
+      - generic [ref=e248]:
+        - paragraph [ref=e249]: Coming Soon
+        - heading "Seasonal Packages" [level=3] [ref=e250]
+        - paragraph [ref=e251]: Curated bundles for ultimate wellness
+    - generic [ref=e252]:
+      - generic [ref=e256]:
+        - paragraph [ref=e257]: Extensions, lamination & care
+        - heading "Nail Services" [level=2] [ref=e258]
+      - generic [ref=e260]:
+        - generic [ref=e261]:
+          - heading "Nail Extensions (Poly Gel)" [level=3] [ref=e262]
+          - paragraph [ref=e263]: Safe for nails and suitable for sensitive skin
+          - generic [ref=e264]:
+            - button "With Nail Polish 20 OMR" [ref=e265]:
+              - generic [ref=e266]:
+                - generic [ref=e267]: With Nail Polish
+                - generic [ref=e269]: 20 OMR
+            - button "With Magnetic Effect 25 OMR" [ref=e270]:
+              - generic [ref=e271]:
+                - generic [ref=e272]: With Magnetic Effect
+                - generic [ref=e274]: 25 OMR
+        - generic [ref=e275]:
+          - heading "Nail Lamination" [level=3] [ref=e276]
+          - generic [ref=e277]:
+            - button "Nail Lamination with Polish 15 OMR" [ref=e278]:
+              - generic [ref=e279]:
+                - generic [ref=e280]: Nail Lamination with Polish
+                - generic [ref=e282]: 15 OMR
+            - button "Nail Lamination with Magnetic Effect 20 OMR" [ref=e283]:
+              - generic [ref=e284]:
+                - generic [ref=e285]: Nail Lamination with Magnetic Effect
+                - generic [ref=e287]: 20 OMR
+        - generic [ref=e288]:
+          - heading "Nail Strengthening" [level=3] [ref=e289]
+          - button "Long Nail Strengthening with Poly Gel 15 OMR" [ref=e291]:
+            - generic [ref=e292]:
+              - generic [ref=e293]: Long Nail Strengthening with Poly Gel
+              - generic [ref=e295]: 15 OMR
+        - generic [ref=e296]:
+          - heading "Hand Care" [level=3] [ref=e297]
+          - button "Hand Cleaning + Massage 5 OMR" [ref=e299]:
+            - generic [ref=e300]:
+              - generic [ref=e301]: Hand Cleaning + Massage
+              - generic [ref=e303]: 5 OMR
+        - generic [ref=e304]:
+          - heading "Foot Care" [level=3] [ref=e305]
+          - button "Pedicure 12 OMR" [ref=e307]:
+            - generic [ref=e308]:
+              - generic [ref=e309]: Pedicure
+              - generic [ref=e310]:
+                - img [ref=e404]
+                - generic [ref=e311]: 12 OMR
+        - generic [ref=e312]:
+          - heading "Toenail Polish" [level=3] [ref=e313]
+          - generic [ref=e314]:
+            - button "Regular Toenail Polish 10 OMR" [ref=e315]:
+              - generic [ref=e316]:
+                - generic [ref=e317]: Regular Toenail Polish
+                - generic [ref=e319]: 10 OMR
+            - button "Magnetic Toenail Polish 12 OMR" [ref=e320]:
+              - generic [ref=e321]:
+                - generic [ref=e322]: Magnetic Toenail Polish
+                - generic [ref=e324]: 12 OMR
+    - generic [ref=e326]:
+      - generic [ref=e327]:
+        - img "WellnessHub" [ref=e328]
+        - paragraph [ref=e329]: © 2026 WellnessHub. All rights reserved.
+      - navigation [ref=e330]:
+        - link "Services" [ref=e331] [cursor=pointer]:
+          - /url: "#fitness"
+        - link "About" [ref=e332] [cursor=pointer]:
+          - /url: "#about"
+        - link "Privacy" [ref=e333] [cursor=pointer]:
+          - /url: "#"
+  - navigation [ref=e334]:
+    - generic [ref=e336]:
+      - link "Profile" [ref=e337] [cursor=pointer]:
+        - /url: /profile
+        - img [ref=e338]
+        - generic [ref=e342]: Profile
+      - link "Alerts" [ref=e343] [cursor=pointer]:
+        - /url: /notifications
+        - img [ref=e344]
+        - generic [ref=e347]: Alerts
+      - button "Cart, 1 items" [ref=e407]:
+        - img [ref=e350]
+        - generic [ref=e408]: "1"
+      - button "Favorites" [ref=e353]:
+        - img [ref=e355]
+        - generic [ref=e357]: Favs
+      - link "Home" [ref=e358] [cursor=pointer]:
+        - /url: /
+        - img [ref=e359]
+        - generic [ref=e362]: Home
+  - button "Open Next.js Dev Tools" [ref=e368] [cursor=pointer]:
+    - img [ref=e369]
+  - alert [ref=e372]

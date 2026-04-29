@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAdmin, createAuthedClient } from "@/lib/auth/verify-admin";
+
+export async function GET(request: NextRequest) {
+  const ctx = await verifyAdmin(request);
+  if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(request.url);
+  const status = searchParams.get("status");
+
+  const token = request.cookies.get("admin-token")!.value;
+  const supabase = createAuthedClient(token);
+
+  let query = supabase
+    .from("bookings")
+    .select(`
+      id, status, scheduled_at, notes, conflict_flag, created_at,
+      users ( full_name, email ),
+      services ( name ),
+      packages ( name )
+    `)
+    .eq("business_id", ctx.businessId)
+    .order("created_at", { ascending: false });
+
+  if (status && status !== "all") {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const bookings = (data ?? []).map((b: any) => ({
+    id: b.id,
+    status: b.status,
+    scheduled_at: b.scheduled_at,
+    notes: b.notes,
+    conflict_flag: b.conflict_flag,
+    created_at: b.created_at,
+    customer_name: b.users?.full_name ?? null,
+    customer_email: b.users?.email ?? null,
+    service_name: b.services?.name ?? null,
+    package_name: b.packages?.name ?? null,
+  }));
+
+  return NextResponse.json(bookings);
+}
