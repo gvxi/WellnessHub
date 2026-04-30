@@ -9,30 +9,29 @@ export type AdminContext = {
   businessId: string;
 };
 
+// Anon client for SECURITY DEFINER RPCs (no RLS, no JWT threading)
+function anonClient() {
+  return createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } });
+}
+
 export async function verifyAdmin(request: NextRequest): Promise<AdminContext | null> {
   const token = request.cookies.get("admin-token")?.value;
   const businessId = request.cookies.get("admin-biz")?.value;
 
   if (!token || !businessId) return null;
 
+  // Validate JWT via auth endpoint (Authorization header works fine for auth calls)
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
+    auth: { persistSession: false },
   });
-
-  // setSession ensures RLS queries use the user JWT rather than anon key
-  await supabase.auth.setSession({ access_token: token, refresh_token: "" });
 
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return null;
 
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (userRow?.role !== "admin") return null;
+  // SECURITY DEFINER RPC — bypasses RLS
+  const { data: ctx } = await anonClient().rpc("get_admin_context", { uid: user.id });
+  if (!ctx || ctx.length === 0 || ctx[0].role !== "admin") return null;
 
   return { userId: user.id, businessId };
 }

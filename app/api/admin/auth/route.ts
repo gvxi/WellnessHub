@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAuthedClient } from "@/lib/auth/verify-admin";
+import { createClient } from "@supabase/supabase-js";
 
 const EDGE_URL = process.env.SUPABASE_EDGE_FUNCTION_URL!;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+// Anon client — used only for SECURITY DEFINER RPCs (no RLS needed)
+function anonClient() {
+  return createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
+}
 
 // POST /api/admin/auth — login
 export async function POST(request: NextRequest) {
@@ -28,40 +34,36 @@ export async function POST(request: NextRequest) {
   }
 
   const { session } = efData;
+  const userId: string = session.user?.id ?? efData.user?.id;
 
-  // Verify role + fetch business_id server-side (avoids EF RLS context issues)
-  // Must call setSession so Supabase JS v2 uses the user JWT (not anon key) for RLS queries
-  const supabase = createAuthedClient(session.access_token);
-  await supabase.auth.setSession({
-    access_token: session.access_token,
-    refresh_token: session.refresh_token,
-  });
+  // SECURITY DEFINER RPC — bypasses RLS, no JWT threading needed
+  const { data: ctx, error: ctxErr } = await anonClient().rpc("get_admin_context", { uid: userId });
 
-  const userId = session.user?.id ?? efData.user?.id;
+  if (ctxErr || !ctx || ctx.length === 0) {
+    return NextResponse.json({ error: "User not found" }, { status: 403 });
+  }
 
-  const [{ data: userRow }, { data: buRow }] = await Promise.all([
-    supabase.from("users").select("id, email, full_name, role").eq("id", userId).single(),
-    supabase.from("business_users").select("business_id").eq("user_id", userId).single(),
-  ]);
+  const { role, business_id } = ctx[0] as { role: string; business_id: string };
 
-  if (!userRow || userRow.role !== "admin") {
+  if (role !== "admin") {
     return NextResponse.json({ error: "Unauthorized: admin access required" }, { status: 403 });
   }
 
-  const businessId = buRow?.business_id ?? "";
-
-  const response = NextResponse.json({ ok: true, user: userRow });
+  const response = NextResponse.json({
+    ok: true,
+    user: { id: userId, email: efData.user?.email, role },
+  });
 
   const cookieOpts = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge: 60 * 60, // 1 hour
+    maxAge: 60 * 60,
   };
 
   response.cookies.set("admin-token", session.access_token, cookieOpts);
-  response.cookies.set("admin-biz", businessId, cookieOpts);
+  response.cookies.set("admin-biz", business_id ?? "", cookieOpts);
 
   return response;
 }
@@ -71,24 +73,22 @@ export async function GET(request: NextRequest) {
   const token = request.cookies.get("admin-token")?.value;
   if (!token) return NextResponse.json({ error: "No session" }, { status: 401 });
 
-  const supabase = createAuthedClient(token);
-  await supabase.auth.setSession({ access_token: token, refresh_token: "" });
+  // Validate the JWT via auth.getUser (uses global Authorization header — auth calls work fine)
+  const supabase = createClient(SUPABASE_URL, ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false },
+  });
 
   const { data: { user }, error } = await supabase.auth.getUser();
-
   if (error || !user) return NextResponse.json({ error: "Invalid session" }, { status: 401 });
 
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("id, email, full_name, role")
-    .eq("id", user.id)
-    .single();
+  const { data: ctx } = await anonClient().rpc("get_admin_context", { uid: user.id });
 
-  if (userRow?.role !== "admin") {
+  if (!ctx || ctx.length === 0 || ctx[0].role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  return NextResponse.json({ user: userRow });
+  return NextResponse.json({ user: { id: user.id, email: user.email, role: ctx[0].role } });
 }
 
 // DELETE /api/admin/auth — logout

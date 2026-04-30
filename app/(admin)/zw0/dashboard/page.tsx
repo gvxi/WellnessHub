@@ -87,7 +87,11 @@ export default function DashboardPage() {
         onClose={() => setDrawerOpen(false)}
         onTabChange={handleTabChange}
       />
-      <QuickAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} />
+      <QuickAddSheet
+        open={addSheetOpen}
+        onClose={() => setAddSheetOpen(false)}
+        onNavigate={(tab) => { handleTabChange(tab); setAddSheetOpen(false); }}
+      />
     </div>
   );
 }

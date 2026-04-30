@@ -20,7 +20,7 @@ export default function AnalyticsTab() {
   useEffect(() => {
     fetch("/api/admin/analytics")
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
+      .then((d) => { if (!d.error && Array.isArray(d.top_services)) setData(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 

@@ -2,23 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ToggleLeft, ToggleRight, ImageOff } from "lucide-react";
+import { ToggleLeft, ToggleRight, ImageOff, Edit2, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import EditSheet, { type FieldDef } from "../_components/EditSheet";
+import ConfirmSheet from "../_components/ConfirmSheet";
 
 type AdRow = {
-  id: string;
-  headline: string;
-  subtitle: string | null;
-  unsplash_id: string | null;
-  badge_text: string | null;
-  is_active: boolean;
-  display_order: number;
+  id: string; headline: string; subtitle: string | null;
+  unsplash_id: string | null; badge_text: string | null;
+  is_active: boolean; display_order: number;
 };
+
+const AD_FIELDS: FieldDef[] = [
+  { key: "headline", label: "Headline", required: true, placeholder: "e.g. Exclusive Offers" },
+  { key: "subtitle", label: "Subtitle", placeholder: "e.g. Book now and save" },
+  { key: "unsplash_id", label: "Unsplash Photo ID", placeholder: "e.g. photo-1581009146145-b5ef050c2e1e" },
+  { key: "badge_text", label: "Badge Text", placeholder: "e.g. Ad" },
+];
 
 export default function AdsTab() {
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [editing, setEditing] = useState<AdRow | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState<AdRow | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/ads")
@@ -30,16 +38,55 @@ export default function AdsTab() {
   async function toggleActive(ad: AdRow) {
     setToggling(ad.id);
     await fetch(`/api/admin/ads/${ad.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_active: !ad.is_active }),
     });
-    setAds((prev) => prev.map((a) => (a.id === ad.id ? { ...a, is_active: !a.is_active } : a)));
+    setAds((prev) => prev.map((a) => a.id === ad.id ? { ...a, is_active: !a.is_active } : a));
     setToggling(null);
   }
 
+  async function saveAd(values: Record<string, string>) {
+    if (editing) {
+      const res = await fetch(`/api/admin/ads/${editing.id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const updated = await res.json();
+      setAds((prev) => prev.map((a) => a.id === editing.id ? { ...a, ...updated } : a));
+    } else {
+      const res = await fetch("/api/admin/ads", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...values, display_order: ads.length }),
+      });
+      const created = await res.json();
+      setAds((prev) => [...prev, created]);
+    }
+  }
+
+  async function deleteAd() {
+    if (!deleting) return;
+    await fetch(`/api/admin/ads/${deleting.id}`, { method: "DELETE" });
+    setAds((prev) => prev.filter((a) => a.id !== deleting.id));
+  }
+
+  function openEdit(ad: AdRow) {
+    setAdding(false);
+    setEditing(ad);
+  }
+
+  const sheetOpen = editing !== null || adding;
+
   return (
     <div className="px-4 py-5 pb-6 space-y-4">
+      {/* Add ad button */}
+      <button
+        onClick={() => { setEditing(null); setAdding(true); }}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
+      >
+        <Plus size={14} />
+        Add Ad
+      </button>
+
       {loading ? (
         <>
           <Skeleton className="h-36 rounded-2xl" />
@@ -63,15 +110,14 @@ export default function AdsTab() {
               variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
               className="rounded-2xl overflow-hidden"
             >
-              {/* Ad preview banner */}
+              {/* Preview banner */}
               <div
                 className="relative min-h-[130px] flex items-end"
                 style={
                   ad.unsplash_id
                     ? {
                         backgroundImage: `url(https://images.unsplash.com/${ad.unsplash_id}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=60&w=600)`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
+                        backgroundSize: "cover", backgroundPosition: "center",
                       }
                     : { background: "linear-gradient(135deg, #5A0F1B, #8E6A94)" }
                 }
@@ -90,32 +136,53 @@ export default function AdsTab() {
 
               {/* Controls */}
               <div className="flex items-center justify-between px-4 py-3 bg-dark/[0.03]">
-                <div>
-                  <p className="text-xs font-medium text-dark">{ad.headline}</p>
-                  <p className="text-[10px] text-dark/40">Order: {ad.display_order}</p>
-                </div>
                 <button
                   disabled={toggling === ad.id}
                   onClick={() => toggleActive(ad)}
                   className="flex items-center gap-1.5 text-xs font-medium disabled:opacity-50"
                 >
                   {ad.is_active ? (
-                    <>
-                      <ToggleRight size={20} className="text-emerald-500" />
-                      <span className="text-emerald-600">Active</span>
-                    </>
+                    <><ToggleRight size={20} className="text-emerald-500" /><span className="text-emerald-600">Active</span></>
                   ) : (
-                    <>
-                      <ToggleLeft size={20} className="text-dark/30" />
-                      <span className="text-dark/40">Off</span>
-                    </>
+                    <><ToggleLeft size={20} className="text-dark/30" /><span className="text-dark/40">Off</span></>
                   )}
+                </button>
+
+                <button
+                  onClick={() => openEdit(ad)}
+                  className="w-7 h-7 rounded-lg bg-dark/5 flex items-center justify-center"
+                >
+                  <Edit2 size={13} className="text-dark/50" />
                 </button>
               </div>
             </motion.div>
           ))}
         </motion.div>
       )}
+
+      {/* Edit / Create sheet */}
+      <EditSheet
+        open={sheetOpen}
+        title={editing ? "Edit Ad" : "New Ad"}
+        fields={AD_FIELDS}
+        initialValues={editing ? {
+          headline: editing.headline,
+          subtitle: editing.subtitle ?? "",
+          unsplash_id: editing.unsplash_id ?? "",
+          badge_text: editing.badge_text ?? "",
+        } : undefined}
+        onClose={() => { setEditing(null); setAdding(false); }}
+        onSave={saveAd}
+        onDelete={editing ? () => { setEditing(null); setAdding(false); setDeleting(editing); } : undefined}
+      />
+
+      {/* Confirm delete */}
+      <ConfirmSheet
+        open={deleting !== null}
+        message={`Delete "${deleting?.headline}"? This cannot be undone.`}
+        onConfirm={deleteAd}
+        onClose={() => setDeleting(null)}
+      />
     </div>
   );
 }

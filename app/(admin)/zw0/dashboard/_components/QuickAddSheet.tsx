@@ -1,20 +1,22 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X, CalendarPlus, Layers, Megaphone } from "lucide-react";
+import { X, Layers, Megaphone, FolderPlus } from "lucide-react";
+import type { AdminTab } from "../page";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  onNavigate: (tab: AdminTab) => void;
 }
 
 const ACTIONS = [
-  { icon: CalendarPlus, label: "New Booking", color: "bg-secondary/10 text-secondary" },
-  { icon: Layers, label: "New Service", color: "bg-accent/20 text-secondary" },
-  { icon: Megaphone, label: "New Ad", color: "bg-primary/8 text-primary" },
+  { icon: FolderPlus, label: "New Category", tab: "services" as AdminTab, color: "bg-accent/20 text-secondary" },
+  { icon: Layers, label: "New Service", tab: "services" as AdminTab, color: "bg-accent/20 text-secondary" },
+  { icon: Megaphone, label: "New Ad", tab: "ads" as AdminTab, color: "bg-primary/8 text-primary" },
 ];
 
-export default function QuickAddSheet({ open, onClose }: Props) {
+export default function QuickAddSheet({ open, onClose, onNavigate }: Props) {
   return (
     <AnimatePresence>
       {open && (
@@ -46,10 +48,10 @@ export default function QuickAddSheet({ open, onClose }: Props) {
             </div>
 
             <div className="space-y-2">
-              {ACTIONS.map(({ icon: Icon, label, color }) => (
+              {ACTIONS.map(({ icon: Icon, label, tab, color }) => (
                 <button
                   key={label}
-                  onClick={onClose}
+                  onClick={() => { onNavigate(tab); onClose(); }}
                   className="w-full flex items-center gap-4 p-4 rounded-2xl bg-dark/[0.03] hover:bg-dark/[0.06] transition-colors text-left"
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
