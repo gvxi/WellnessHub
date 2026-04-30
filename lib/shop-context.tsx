@@ -11,9 +11,16 @@ import {
 import type { ServiceItem } from "@/lib/services-data";
 import { categories } from "@/lib/services-data";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Module-level item registry (populated at render time from DB items) ─────
+
+const _itemRegistry = new Map<string, ServiceItem>();
+
+export function registerItem(item: ServiceItem) {
+  _itemRegistry.set(item.id, item);
+}
 
 export function getItemById(id: string): ServiceItem | undefined {
+  if (_itemRegistry.has(id)) return _itemRegistry.get(id);
   return categories
     .flatMap((c) => c.subs)
     .flatMap((s) => s.items)
@@ -22,10 +29,10 @@ export function getItemById(id: string): ServiceItem | undefined {
 
 // ─── Cart ────────────────────────────────────────────────────────────────────
 
-export type CartItem = { id: string; qty: number };
+export type CartItem = { id: string; qty: number; snapshot: ServiceItem };
 
 type CartAction =
-  | { type: "ADD"; id: string }
+  | { type: "ADD"; item: ServiceItem; qty?: number }
   | { type: "REMOVE"; id: string }
   | { type: "UPDATE"; id: string; qty: number }
   | { type: "CLEAR" }
@@ -36,14 +43,20 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
     case "INIT":
       return action.items;
     case "ADD": {
-      const existing = state.find((i) => i.id === action.id);
-      if (existing) return state.map((i) => i.id === action.id ? { ...i, qty: i.qty + 1 } : i);
-      return [...state, { id: action.id, qty: 1 }];
+      const qty = action.qty ?? 1;
+      const existing = state.find((i) => i.id === action.item.id);
+      if (existing)
+        return state.map((i) =>
+          i.id === action.item.id ? { ...i, qty: i.qty + qty } : i
+        );
+      return [...state, { id: action.item.id, qty, snapshot: action.item }];
     }
     case "REMOVE":
       return state.filter((i) => i.id !== action.id);
     case "UPDATE":
-      return state.map((i) => i.id === action.id ? { ...i, qty: Math.max(1, action.qty) } : i);
+      return state.map((i) =>
+        i.id === action.id ? { ...i, qty: Math.max(1, action.qty) } : i
+      );
     case "CLEAR":
       return [];
     default:
@@ -53,7 +66,7 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (id: string) => void;
+  addItem: (item: ServiceItem, qty?: number) => void;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
   clearCart: () => void;
@@ -73,7 +86,8 @@ export function useCart() {
 
 interface FavsContextType {
   ids: Set<string>;
-  toggle: (id: string) => void;
+  favItems: ServiceItem[];
+  toggle: (item: ServiceItem) => void;
   isFav: (id: string) => boolean;
 }
 
@@ -85,7 +99,7 @@ export function useFavs() {
   return ctx;
 }
 
-// ─── UI (selected item drawer + cart drawer open state) ──────────────────────
+// ─── UI ──────────────────────────────────────────────────────────────────────
 
 interface UIContextType {
   selectedItem: ServiceItem | null;
@@ -109,39 +123,48 @@ export function useUI() {
 export function ShopProvider({ children }: { children: ReactNode }) {
   const [cartItems, dispatch] = useReducer(cartReducer, []);
   const [hydrated, setHydrated] = useState(false);
-  const [favIds, setFavIds] = useState<Set<string>>(new Set());
+  const [favMap, setFavMap] = useState<Map<string, ServiceItem>>(new Map());
   const [selectedItem, setSelectedItem] = useState<ServiceItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [favsOpen, setFavsOpen] = useState(false);
 
-  // Load from localStorage once on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem("wh_cart");
-      if (raw) dispatch({ type: "INIT", items: JSON.parse(raw) as CartItem[] });
+      if (raw) {
+        const parsed = JSON.parse(raw) as CartItem[];
+        const valid = parsed.filter((i) => i.snapshot);
+        if (valid.length > 0) dispatch({ type: "INIT", items: valid });
+      }
       const rawFavs = localStorage.getItem("wh_favs");
-      if (rawFavs) setFavIds(new Set(JSON.parse(rawFavs) as string[]));
+      if (rawFavs) {
+        const parsed = JSON.parse(rawFavs);
+        if (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
+          setFavMap(new Map(parsed as [string, ServiceItem][]));
+        }
+      }
     } catch {
       // ignore malformed storage
     }
     setHydrated(true);
   }, []);
 
-  // Persist cart
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem("wh_cart", JSON.stringify(cartItems));
   }, [cartItems, hydrated]);
 
-  // Persist favs
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem("wh_favs", JSON.stringify([...favIds]));
-  }, [favIds, hydrated]);
+    localStorage.setItem("wh_favs", JSON.stringify(Array.from(favMap.entries())));
+  }, [favMap, hydrated]);
+
+  const favIds = new Set(favMap.keys());
+  const favItems = Array.from(favMap.values());
 
   const cart: CartContextType = {
     items: cartItems,
-    addItem: (id) => dispatch({ type: "ADD", id }),
+    addItem: (item, qty) => dispatch({ type: "ADD", item, qty }),
     removeItem: (id) => dispatch({ type: "REMOVE", id }),
     updateQty: (id, qty) => dispatch({ type: "UPDATE", id, qty }),
     clearCart: () => dispatch({ type: "CLEAR" }),
@@ -151,13 +174,14 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   const favs: FavsContextType = {
     ids: favIds,
-    toggle: (id) =>
-      setFavIds((prev) => {
-        const next = new Set(prev);
-        next.has(id) ? next.delete(id) : next.add(id);
+    favItems,
+    toggle: (item) =>
+      setFavMap((prev) => {
+        const next = new Map(prev);
+        next.has(item.id) ? next.delete(item.id) : next.set(item.id, item);
         return next;
       }),
-    isFav: (id) => favIds.has(id),
+    isFav: (id) => favMap.has(id),
   };
 
   const ui: UIContextType = {

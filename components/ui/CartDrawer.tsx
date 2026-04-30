@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useEffect } from "react";
-import { useCart, getItemById } from "@/lib/shop-context";
+import { useCart } from "@/lib/shop-context";
 import { cn } from "@/lib/utils";
 
 const SPRING = { type: "spring" as const, stiffness: 260, damping: 26 };
@@ -28,16 +28,13 @@ export default function CartDrawer({ open, onClose }: Props) {
   }, [open]);
 
   const subtotal = items.reduce((sum, cartItem) => {
-    const info = getItemById(cartItem.id);
-    const price = info?.numericPrice ?? 0;
-    return sum + price * cartItem.qty;
+    return sum + (cartItem.snapshot.numericPrice ?? 0) * cartItem.qty;
   }, 0);
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="cart-backdrop"
             initial={{ opacity: 0 }}
@@ -48,7 +45,6 @@ export default function CartDrawer({ open, onClose }: Props) {
             onClick={onClose}
           />
 
-          {/* Panel — always slides from right */}
           <motion.div
             key="cart-panel"
             initial={{ x: "100%" }}
@@ -59,7 +55,6 @@ export default function CartDrawer({ open, onClose }: Props) {
             className="fixed z-50 right-0 top-0 bottom-0 bg-light flex flex-col
                        w-full max-w-[420px] rounded-l-3xl shadow-2xl overflow-hidden"
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-dark/8 shrink-0">
               <div className="flex items-center gap-2.5">
                 <ShoppingBag size={18} className="text-primary" />
@@ -80,7 +75,6 @@ export default function CartDrawer({ open, onClose }: Props) {
               </button>
             </div>
 
-            {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-center py-16">
@@ -94,8 +88,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                 <div className="flex flex-col gap-3">
                   <AnimatePresence initial={false}>
                     {items.map((cartItem) => {
-                      const info = getItemById(cartItem.id);
-                      if (!info) return null;
+                      const info = cartItem.snapshot;
                       return (
                         <motion.div
                           key={cartItem.id}
@@ -106,7 +99,6 @@ export default function CartDrawer({ open, onClose }: Props) {
                           transition={{ duration: 0.22 }}
                           className="flex items-center gap-3 p-3 rounded-2xl bg-dark/[0.03] hover:bg-dark/[0.05] transition-colors"
                         >
-                          {/* Thumbnail */}
                           {info.unsplashId && (
                             <img
                               src={`https://images.unsplash.com/${info.unsplashId}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=120`}
@@ -115,7 +107,6 @@ export default function CartDrawer({ open, onClose }: Props) {
                             />
                           )}
 
-                          {/* Info */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-dark truncate">{info.name}</p>
                             <p className="text-xs text-dark/45 tabular-nums">
@@ -123,7 +114,6 @@ export default function CartDrawer({ open, onClose }: Props) {
                             </p>
                           </div>
 
-                          {/* Qty controls */}
                           <div className="flex items-center gap-1.5 bg-dark/6 rounded-xl px-1.5 py-1">
                             <motion.button
                               whileTap={{ scale: 0.82 }}
@@ -148,7 +138,6 @@ export default function CartDrawer({ open, onClose }: Props) {
                             </motion.button>
                           </div>
 
-                          {/* Remove */}
                           <motion.button
                             whileTap={{ scale: 0.82 }}
                             onClick={() => removeItem(cartItem.id)}
@@ -166,18 +155,14 @@ export default function CartDrawer({ open, onClose }: Props) {
               )}
             </div>
 
-            {/* Footer */}
             {items.length > 0 && (
               <div className="px-6 pb-8 pt-4 border-t border-dark/8 flex flex-col gap-3 shrink-0">
-                {/* Subtotal */}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-dark/55">Subtotal</span>
                   <span className="text-base font-bold text-dark tabular-nums">
                     {subtotal} OMR
                   </span>
                 </div>
-
-                {/* Actions */}
                 <motion.a
                   href="/checkout"
                   whileTap={{ scale: 0.97 }}

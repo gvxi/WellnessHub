@@ -6,6 +6,7 @@ import AdBanner from "@/app/(public)/_sections/AdBanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Category, ServiceItem, SubCategory } from "@/lib/services-data";
 import type { ApiCategory, ApiAd } from "@/lib/supabase/types";
+import { Sparkles } from "lucide-react";
 
 // ─── Adapters ─────────────────────────────────────────────────────────────────
 
@@ -15,35 +16,39 @@ function apiToCategory(cat: ApiCategory): Category {
     title: cat.name,
     subtitle: cat.subtitle ?? "",
     unsplashId: cat.unsplash_id ?? "",
+    imageUrl: cat.image_url ?? undefined,
     subs: cat.groups.map((g) => {
       const sub: SubCategory = {
         title: g.label,
-        items: g.services.map((svc): ServiceItem => {
-          if (svc.packages.length !== 1) {
+        items: g.services
+          .filter((svc) => svc.packages.length > 0)
+          .map((svc): ServiceItem => {
+            if (svc.packages.length !== 1) {
+              return {
+                id: svc.id,
+                name: svc.name,
+                description: svc.description ?? undefined,
+                tiers: svc.packages.map((p) => ({
+                  label: p.name,
+                  price: `${p.price} ${p.currency}`,
+                  numericPrice: p.price,
+                })),
+              };
+            }
+            const pkg = svc.packages[0];
             return {
               id: svc.id,
               name: svc.name,
               description: svc.description ?? undefined,
-              tiers: svc.packages.map((p) => ({
-                label: p.name,
-                price: `${p.price} ${p.currency}`,
-                numericPrice: p.price,
-              })),
+              price: pkg.note === "Starting from"
+                ? `from ${pkg.price} ${pkg.currency}`
+                : `${pkg.price} ${pkg.currency}`,
+              numericPrice: pkg.price,
+              note: pkg.note ?? undefined,
+              unsplashId: svc.unsplash_id ?? undefined,
+              icon: pkg.icon ?? undefined,
             };
-          }
-          const pkg = svc.packages[0];
-          return {
-            id: svc.id,
-            name: svc.name,
-            description: svc.description ?? undefined,
-            price: pkg.note === "Starting from"
-              ? `from ${pkg.price} ${pkg.currency}`
-              : `${pkg.price} ${pkg.currency}`,
-            numericPrice: pkg.price,
-            note: pkg.note ?? undefined,
-            unsplashId: svc.unsplash_id ?? undefined,
-          };
-        }),
+          }),
       };
       return sub;
     }),
@@ -100,7 +105,17 @@ async function LandingContent() {
   const [fitness, salon, advanced, nails] = categories.map(apiToCategory);
   const [adA, adB] = ads;
 
-  if (!fitness) return null;
+  if (!fitness) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 px-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-dark/5 flex items-center justify-center mb-4">
+          <Sparkles size={28} className="text-dark/20" />
+        </div>
+        <p className="text-sm font-medium text-dark/40">Services coming soon</p>
+        <p className="text-xs text-dark/30 mt-1">Check back shortly</p>
+      </div>
+    );
+  }
 
   return (
     <>

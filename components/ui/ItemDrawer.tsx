@@ -49,7 +49,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
 
   function handleAddToCart() {
     if (!item) return;
-    for (let i = 0; i < qty; i++) addItem(item.id);
+    addItem(item, qty);
     showToast(`${item.name} added to cart`, "cart");
     onClose();
   }
@@ -57,7 +57,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
   function handleToggleFav() {
     if (!item) return;
     const wasFav = isFav(item.id);
-    toggle(item.id);
+    toggle(item);
     showToast(wasFav ? "Removed from favorites" : `${item.name} saved`, "fav");
   }
 
@@ -65,7 +65,6 @@ export default function ItemDrawer({ item, onClose }: Props) {
     ? `https://images.unsplash.com/${item.unsplashId}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800`
     : null;
 
-  // Slide direction depends on viewport
   const panelVariants = {
     hidden: isDesktop ? { x: "100%" } : { y: "100%" },
     visible: isDesktop ? { x: 0 } : { y: 0 },
@@ -80,7 +79,6 @@ export default function ItemDrawer({ item, onClose }: Props) {
     <AnimatePresence>
       {item && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -91,7 +89,6 @@ export default function ItemDrawer({ item, onClose }: Props) {
             onClick={onClose}
           />
 
-          {/* Panel */}
           <motion.div
             key="panel"
             variants={panelVariants}
@@ -102,7 +99,6 @@ export default function ItemDrawer({ item, onClose }: Props) {
             className={panelClass}
             style={{ willChange: "transform" }}
           >
-            {/* Image hero */}
             {imageUrl && (
               <div className="relative w-full h-[220px] shrink-0">
                 <img
@@ -114,7 +110,6 @@ export default function ItemDrawer({ item, onClose }: Props) {
               </div>
             )}
 
-            {/* Close */}
             <button
               onClick={onClose}
               aria-label="Close"
@@ -124,9 +119,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
               <X size={18} />
             </button>
 
-            {/* Scrollable body */}
             <div className="flex flex-col flex-1 overflow-y-auto px-6 pt-5 pb-8 gap-4">
-              {/* Title + fav */}
               <div className="flex items-start justify-between gap-3">
                 <h2 className="text-xl font-bold text-dark leading-snug flex-1">{item.name}</h2>
                 <motion.button
@@ -146,12 +139,10 @@ export default function ItemDrawer({ item, onClose }: Props) {
                 </motion.button>
               </div>
 
-              {/* Description */}
               {item.description && (
                 <p className="text-sm text-dark/60 leading-relaxed">{item.description}</p>
               )}
 
-              {/* Price */}
               <div className="flex flex-col gap-1">
                 {item.tiers ? (
                   item.tiers.map((tier) => (
@@ -171,12 +162,10 @@ export default function ItemDrawer({ item, onClose }: Props) {
                 )}
               </div>
 
-              {/* Note */}
               {item.note && (
                 <p className="text-xs text-dark/40 italic">{item.note}</p>
               )}
 
-              {/* Quantity selector */}
               <div className="flex items-center gap-4 pt-1">
                 <span className="text-sm font-medium text-dark/70">Qty</span>
                 <div className="flex items-center gap-3 bg-dark/5 rounded-2xl px-3 py-2">
@@ -204,7 +193,6 @@ export default function ItemDrawer({ item, onClose }: Props) {
                 </div>
               </div>
 
-              {/* Add to cart CTA */}
               <motion.button
                 whileTap={{ scale: 0.96 }}
                 onClick={handleAddToCart}

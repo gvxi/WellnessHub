@@ -27,6 +27,7 @@ export type Category = {
   title: string;
   subtitle: string;
   unsplashId: string;
+  imageUrl?: string;
   subs: SubCategory[];
 };
 

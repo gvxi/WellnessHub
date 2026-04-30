@@ -1,95 +1,104 @@
 "use client";
 
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
-import { Globe, ShoppingBag } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Globe, Heart, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCart, useUI } from "@/lib/shop-context";
+import { useCart, useFavs, useUI } from "@/lib/shop-context";
 
 export default function Nav() {
   const { totalCount } = useCart();
-  const { setCartOpen } = useUI();
-  const { scrollY } = useScroll();
-  const bgOpacity = useTransform(scrollY, [0, 60], [0, 0.9]);
-  const borderOpacity = useTransform(scrollY, [0, 60], [0, 0.07]);
-  const textColor = useTransform(
-    scrollY,
-    [0, 60],
-    ["rgba(255,255,255,0.88)", "rgba(14,11,13,0.65)"]
-  );
-  const logoInvert = useTransform(scrollY, [0, 60], [1, 0]);
+  const { ids } = useFavs();
+  const { setCartOpen, setFavsOpen } = useUI();
 
   return (
-    <motion.header className="fixed top-0 inset-x-0 z-50">
-      {/* Glass layer */}
-      <motion.div
-        className="absolute inset-0 border-b border-dark/0"
-        style={{
-          backgroundColor: useTransform(bgOpacity, (v) => `rgba(242,237,238,${v})`),
-          backdropFilter: "blur(18px)",
-          WebkitBackdropFilter: "blur(18px)",
-          borderColor: useTransform(borderOpacity, (v) => `rgba(14,11,13,${v})`),
-        }}
-      />
-
-      {/* 3-column grid */}
-      <div className="relative grid grid-cols-3 items-center h-16 px-5 md:px-10 max-w-[1400px] mx-auto w-full">
+    <header className="fixed top-0 inset-x-0 z-50 bg-light/95 backdrop-blur-xl border-b border-dark/8">
+      <div className="grid grid-cols-3 items-center h-16 px-5 md:px-10 max-w-[1400px] mx-auto w-full">
 
         {/* LEFT — Sign In */}
-        <motion.div style={{ color: textColor }} className="flex items-center">
+        <div className="flex items-center">
           <Link
             href="/login"
-            className="text-sm font-medium px-4 py-1.5 rounded-xl border border-current/25
-                       hover:border-current/50 hover:bg-current/5 transition-all duration-200"
+            className="text-xs font-semibold text-dark/60 px-3.5 py-1.5 rounded-xl
+                       bg-dark/[0.04] hover:bg-dark/[0.08] hover:text-dark
+                       transition-all duration-200"
           >
             Sign In
           </Link>
-        </motion.div>
+        </div>
 
-        {/* CENTER — Logo (SVG, inverts from white→dark on scroll) */}
+        {/* CENTER — Logo */}
         <div className="flex justify-center">
           <Link href="/" aria-label="WellnessHub home">
-            <motion.div style={{ filter: useTransform(logoInvert, (v) => `invert(${v})`) }}>
-              <Image
-                src="/media/Logo.svg"
-                alt="WellnessHub"
-                width={44}
-                height={44}
-                priority
-                className="w-11 h-11 object-contain"
-              />
-            </motion.div>
+            <Image
+              src="/media/Logo.svg"
+              alt="WellnessHub"
+              width={38}
+              height={38}
+              priority
+              className="w-9 h-9 object-contain"
+            />
           </Link>
         </div>
 
-        {/* RIGHT — About + Globe */}
-        <motion.div
-          style={{ color: textColor }}
-          className="flex items-center justify-end gap-3"
-        >
+        {/* RIGHT — Favs + Globe + Cart */}
+        <div className="flex items-center justify-end gap-1">
           <Link
             href="#about"
-            className="text-sm font-medium hover:opacity-100 opacity-90 transition-opacity duration-200 hidden sm:block"
+            className="hidden sm:flex text-xs font-medium text-dark/50 hover:text-dark/80
+                       px-3 py-1.5 rounded-xl hover:bg-dark/5 transition-all duration-200"
           >
-            About Us
+            About
           </Link>
+
+          {/* Favs */}
           <button
-            aria-label="Switch language"
-            className="w-8 h-8 flex items-center justify-center rounded-xl
-                       hover:bg-current/8 transition-colors duration-200 opacity-70 hover:opacity-100"
+            onClick={() => setFavsOpen(true)}
+            aria-label={`Favorites${ids.size > 0 ? `, ${ids.size} saved` : ""}`}
+            className="relative w-9 h-9 flex items-center justify-center rounded-xl
+                       text-dark/45 hover:text-secondary hover:bg-secondary/8 transition-all duration-200"
           >
-            <Globe size={16} strokeWidth={1.6} />
+            <Heart
+              size={17}
+              strokeWidth={1.7}
+              className={ids.size > 0 ? "fill-secondary text-secondary" : ""}
+            />
+            <AnimatePresence>
+              {ids.size > 0 && (
+                <motion.span
+                  key="fav-badge"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full
+                             bg-secondary text-light text-[9px] font-bold
+                             flex items-center justify-center tabular-nums"
+                >
+                  {ids.size > 9 ? "9+" : ids.size}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
 
-          {/* Cart — desktop only */}
+          {/* Globe */}
+          <button
+            aria-label="Switch language"
+            className="w-9 h-9 flex items-center justify-center rounded-xl
+                       text-dark/40 hover:text-dark/70 hover:bg-dark/5 transition-all duration-200"
+          >
+            <Globe size={17} strokeWidth={1.7} />
+          </button>
+
+          {/* Cart */}
           <motion.button
             onClick={() => setCartOpen(true)}
             aria-label={`Cart${totalCount > 0 ? `, ${totalCount} items` : ""}`}
             whileTap={{ scale: 0.88 }}
-            className="relative hidden md:flex w-8 h-8 items-center justify-center rounded-xl
-                       hover:bg-current/8 transition-colors duration-200 opacity-80 hover:opacity-100"
+            className="relative w-9 h-9 flex items-center justify-center rounded-xl
+                       text-dark/45 hover:text-primary hover:bg-primary/8 transition-all duration-200"
           >
-            <ShoppingBag size={16} strokeWidth={1.6} />
+            <ShoppingBag size={17} strokeWidth={1.7} />
             <AnimatePresence>
               {totalCount > 0 && (
                 <motion.span
@@ -98,7 +107,7 @@ export default function Nav() {
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full
+                  className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full
                              bg-primary text-light text-[9px] font-bold
                              flex items-center justify-center tabular-nums"
                 >
@@ -107,8 +116,8 @@ export default function Nav() {
               )}
             </AnimatePresence>
           </motion.button>
-        </motion.div>
+        </div>
       </div>
-    </motion.header>
+    </header>
   );
 }

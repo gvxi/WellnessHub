@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useInView } from "framer-motion";
 import { Heart, ShoppingBag } from "lucide-react";
 import { useRef } from "react";
 import type { Category, ServiceItem } from "@/lib/services-data";
-import { useCart, useFavs, useUI } from "@/lib/shop-context";
+import { useCart, useFavs, useUI, registerItem } from "@/lib/shop-context";
 import { cn, resolveImage } from "@/lib/utils";
 import { PACKAGE_ICONS } from "@/lib/package-icons";
 
@@ -32,7 +32,7 @@ function Banner({ category }: { category: Category }) {
         transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
         className="absolute inset-0 bg-cover bg-center will-change-transform"
         style={{
-          backgroundImage: `url(${resolveImage(undefined, category.unsplashId, 1600) ?? ""})`,
+          backgroundImage: `url(${resolveImage(category.imageUrl, category.unsplashId, 1600) ?? ""})`,
           filter: "saturate(0.8) contrast(1.05)",
         }}
       />
@@ -95,6 +95,7 @@ function ItemIndicators({ itemId }: { itemId: string }) {
 
 function ServiceRow({ item }: { item: ServiceItem }) {
   const { setSelectedItem } = useUI();
+  registerItem(item);
 
   return (
     <motion.button
