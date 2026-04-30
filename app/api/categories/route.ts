@@ -11,10 +11,10 @@ export async function GET() {
   const { data, error } = await supabase
     .from("categories")
     .select(`
-      id, name, subtitle, unsplash_id, slug, display_order,
+      id, name, subtitle, unsplash_id, image_url, slug, display_order,
       services (
         id, name, description, group_label, unsplash_id, display_order,
-        packages ( id, name, description, price, currency, note, display_order )
+        packages ( id, name, description, price, currency, note, icon, display_order )
       )
     `)
     .order("display_order", { ascending: true });
@@ -47,6 +47,7 @@ export async function GET() {
             price: p.price,
             currency: p.currency,
             note: p.note,
+            icon: p.icon,
             display_order: p.display_order,
           })),
       });
@@ -62,6 +63,7 @@ export async function GET() {
       name: cat.name,
       subtitle: cat.subtitle,
       unsplash_id: cat.unsplash_id,
+      image_url: cat.image_url,
       slug: cat.slug,
       display_order: cat.display_order,
       groups,

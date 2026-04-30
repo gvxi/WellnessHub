@@ -13,6 +13,7 @@ export type ServiceItem = {
   tiers?: PriceTier[];
   note?: string;
   unsplashId?: string;
+  icon?: string;
 };
 
 export type SubCategory = {

@@ -10,7 +10,7 @@ const supabase = createClient(
 export async function GET() {
   const { data, error } = await supabase
     .from("ads")
-    .select("id, headline, subtitle, unsplash_id, badge_text, display_order")
+    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, fullscreen_enabled, display_order")
     .eq("is_active", true)
     .order("display_order", { ascending: true });
 
@@ -23,7 +23,9 @@ export async function GET() {
     headline: ad.headline,
     subtitle: ad.subtitle,
     unsplash_id: ad.unsplash_id,
+    image_url: ad.image_url,
     badge_text: ad.badge_text,
+    fullscreen_enabled: ad.fullscreen_enabled ?? false,
     display_order: ad.display_order,
   }));
 

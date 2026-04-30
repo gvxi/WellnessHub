@@ -5,7 +5,8 @@ import { Heart, ShoppingBag } from "lucide-react";
 import { useRef } from "react";
 import type { Category, ServiceItem } from "@/lib/services-data";
 import { useCart, useFavs, useUI } from "@/lib/shop-context";
-import { cn } from "@/lib/utils";
+import { cn, resolveImage } from "@/lib/utils";
+import { PACKAGE_ICONS } from "@/lib/package-icons";
 
 const rowVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -31,7 +32,7 @@ function Banner({ category }: { category: Category }) {
         transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
         className="absolute inset-0 bg-cover bg-center will-change-transform"
         style={{
-          backgroundImage: `url(https://images.unsplash.com/${category.unsplashId}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1600)`,
+          backgroundImage: `url(${resolveImage(undefined, category.unsplashId, 1600) ?? ""})`,
           filter: "saturate(0.8) contrast(1.05)",
         }}
       />
@@ -118,7 +119,10 @@ function ServiceRow({ item }: { item: ServiceItem }) {
         </div>
       ) : (
         <div className="flex justify-between items-center py-3 border-b border-dark/6 last:border-0 gap-3">
-          <span className="text-sm text-dark/80">{item.name}</span>
+          <span className="text-sm text-dark/80">
+            {item.icon && PACKAGE_ICONS[item.icon as keyof typeof PACKAGE_ICONS]?.emoji + " "}
+            {item.name}
+          </span>
           <div className="flex items-center gap-2 shrink-0">
             <ItemIndicators itemId={item.id} />
             <span className="text-sm font-semibold text-dark tabular-nums whitespace-nowrap">

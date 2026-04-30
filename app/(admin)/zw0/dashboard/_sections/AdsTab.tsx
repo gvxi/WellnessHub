@@ -2,21 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ToggleLeft, ToggleRight, ImageOff, Edit2, Plus } from "lucide-react";
+import { ToggleLeft, ToggleRight, ImageOff, Edit2, Plus, Maximize2, Minimize2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditSheet, { type FieldDef } from "../_components/EditSheet";
 import ConfirmSheet from "../_components/ConfirmSheet";
+import { resolveImage } from "@/lib/utils";
 
 type AdRow = {
   id: string; headline: string; subtitle: string | null;
-  unsplash_id: string | null; badge_text: string | null;
-  is_active: boolean; display_order: number;
+  unsplash_id: string | null; image_url: string | null;
+  badge_text: string | null; is_active: boolean;
+  fullscreen_enabled: boolean; display_order: number;
 };
 
 const AD_FIELDS: FieldDef[] = [
   { key: "headline", label: "Headline", required: true, placeholder: "e.g. Exclusive Offers" },
   { key: "subtitle", label: "Subtitle", placeholder: "e.g. Book now and save" },
-  { key: "unsplash_id", label: "Unsplash Photo ID", placeholder: "e.g. photo-1581009146145-b5ef050c2e1e" },
+  { key: "image_url", label: "Ad Image", type: "image", uploadFolder: "ads" },
+  { key: "unsplash_id", label: "Unsplash Fallback ID", placeholder: "e.g. photo-1581009146145-b5ef050c2e1e" },
   { key: "badge_text", label: "Badge Text", placeholder: "e.g. Ad" },
 ];
 
@@ -43,6 +46,14 @@ export default function AdsTab() {
     });
     setAds((prev) => prev.map((a) => a.id === ad.id ? { ...a, is_active: !a.is_active } : a));
     setToggling(null);
+  }
+
+  async function toggleFullscreen(ad: AdRow) {
+    await fetch(`/api/admin/ads/${ad.id}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullscreen_enabled: !ad.fullscreen_enabled }),
+    });
+    setAds((prev) => prev.map((a) => a.id === ad.id ? { ...a, fullscreen_enabled: !a.fullscreen_enabled } : a));
   }
 
   async function saveAd(values: Record<string, string>) {
@@ -113,14 +124,12 @@ export default function AdsTab() {
               {/* Preview banner */}
               <div
                 className="relative min-h-[130px] flex items-end"
-                style={
-                  ad.unsplash_id
-                    ? {
-                        backgroundImage: `url(https://images.unsplash.com/${ad.unsplash_id}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=60&w=600)`,
-                        backgroundSize: "cover", backgroundPosition: "center",
-                      }
-                    : { background: "linear-gradient(135deg, #5A0F1B, #8E6A94)" }
-                }
+                style={(() => {
+                  const img = resolveImage(ad.image_url, ad.unsplash_id, 600);
+                  return img
+                    ? { backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center" }
+                    : { background: "linear-gradient(135deg, #5A0F1B, #8E6A94)" };
+                })()}
               >
                 <div className="absolute inset-0 bg-primary/70" />
                 <div className="relative z-10 px-4 py-3">
@@ -148,12 +157,25 @@ export default function AdsTab() {
                   )}
                 </button>
 
-                <button
-                  onClick={() => openEdit(ad)}
-                  className="w-7 h-7 rounded-lg bg-dark/5 flex items-center justify-center"
-                >
-                  <Edit2 size={13} className="text-dark/50" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleFullscreen(ad)}
+                    className="flex items-center gap-1 text-xs font-medium"
+                    title={ad.fullscreen_enabled ? "Disable fullscreen" : "Enable fullscreen on tap"}
+                  >
+                    {ad.fullscreen_enabled ? (
+                      <><Maximize2 size={14} className="text-primary" /><span className="text-primary">Fullscreen</span></>
+                    ) : (
+                      <><Minimize2 size={14} className="text-dark/30" /><span className="text-dark/30">Tap: off</span></>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => openEdit(ad)}
+                    className="w-7 h-7 rounded-lg bg-dark/5 flex items-center justify-center"
+                  >
+                    <Edit2 size={13} className="text-dark/50" />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -168,6 +190,7 @@ export default function AdsTab() {
         initialValues={editing ? {
           headline: editing.headline,
           subtitle: editing.subtitle ?? "",
+          image_url: editing.image_url ?? "",
           unsplash_id: editing.unsplash_id ?? "",
           badge_text: editing.badge_text ?? "",
         } : undefined}

@@ -26,6 +26,7 @@ export type DbCategory = {
   name_ar: string | null;
   subtitle: string | null;
   unsplash_id: string | null;
+  image_url: string | null;
   slug: string | null;
   display_order: number;
   created_at: string;
@@ -42,6 +43,7 @@ export type DbService = {
   group_label: string | null;
   note: string | null;
   unsplash_id: string | null;
+  image_url: string | null;
   display_order: number;
   is_active: boolean;
   created_at: string;
@@ -59,6 +61,8 @@ export type DbPackage = {
   currency: string;
   note: string | null;
   unsplash_id: string | null;
+  image_url: string | null;
+  icon: string | null;
   display_order: number;
   is_active: boolean;
   created_at: string;
@@ -70,8 +74,10 @@ export type DbAd = {
   headline: string;
   subtitle: string | null;
   unsplash_id: string | null;
+  image_url: string | null;
   badge_text: string | null;
   is_active: boolean;
+  fullscreen_enabled: boolean;
   display_order: number;
   created_at: string;
 };
@@ -99,6 +105,7 @@ export type ApiPackage = {
   price: number;
   currency: string;
   note: string | null;
+  icon: string | null;
   display_order: number;
 };
 
@@ -121,6 +128,7 @@ export type ApiCategory = {
   name: string;
   subtitle: string | null;
   unsplash_id: string | null;
+  image_url: string | null;
   slug: string | null;
   display_order: number;
   groups: ApiGroup[];
@@ -131,7 +139,9 @@ export type ApiAd = {
   headline: string;
   subtitle: string | null;
   unsplash_id: string | null;
+  image_url: string | null;
   badge_text: string | null;
+  fullscreen_enabled: boolean;
   display_order: number;
 };
 

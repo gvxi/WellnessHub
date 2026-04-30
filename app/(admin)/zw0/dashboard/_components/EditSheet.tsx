@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Upload } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type FieldDef = {
   key: string;
   label: string;
-  type?: "text" | "number" | "textarea" | "select";
+  type?: "text" | "number" | "textarea" | "select" | "image";
   placeholder?: string;
   required?: boolean;
   options?: { value: string; label: string }[];
+  uploadFolder?: string;
 };
 
 interface Props {
@@ -28,6 +30,7 @@ const SPRING = { type: "spring" as const, stiffness: 340, damping: 34 };
 export default function EditSheet({ open, title, fields, initialValues, onClose, onSave, onDelete }: Props) {
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -39,6 +42,21 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
 
   function set(key: string, val: string) {
     setDraft((d) => ({ ...d, [key]: val }));
+  }
+
+  async function handleImageUpload(f: FieldDef, file?: File) {
+    if (!file) return;
+    setUploading(f.key);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", f.uploadFolder ?? "misc");
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json();
+      if (json.url) set(f.key, json.url);
+    } finally {
+      setUploading(null);
+    }
   }
 
   async function handleSave() {
@@ -107,6 +125,36 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
                         <option key={o.value} value={o.value}>{o.label}</option>
                       ))}
                     </select>
+                  ) : f.type === "image" ? (
+                    <div className="space-y-2">
+                      {draft[f.key] && (
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-dark/10">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={draft[f.key]} alt="" className="w-full h-full object-cover" />
+                          {uploading === f.key && (
+                            <div className="absolute inset-0 bg-dark/50 flex items-center justify-center">
+                              <Loader2 size={16} className="animate-spin text-light" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <label className={cn(
+                        "inline-flex items-center gap-2 text-xs text-primary font-medium cursor-pointer py-1",
+                        uploading === f.key && "opacity-50 pointer-events-none"
+                      )}>
+                        {uploading === f.key
+                          ? <Loader2 size={12} className="animate-spin" />
+                          : <Upload size={12} />
+                        }
+                        {draft[f.key] ? "Change image" : "Upload image"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(f, e.target.files?.[0])}
+                        />
+                      </label>
+                    </div>
                   ) : (
                     <input
                       type={f.type ?? "text"}

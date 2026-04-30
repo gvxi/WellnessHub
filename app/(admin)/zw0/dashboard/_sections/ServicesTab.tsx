@@ -7,8 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import EditSheet, { type FieldDef } from "../_components/EditSheet";
 import ConfirmSheet from "../_components/ConfirmSheet";
+import { PACKAGE_ICONS } from "@/lib/package-icons";
 
-type PkgRow = { id: string; name: string; price: number; currency: string; display_order: number; is_active: boolean };
+type PkgRow = { id: string; name: string; price: number; currency: string; icon: string | null; display_order: number; is_active: boolean };
 type ServiceRow = {
   id: string; name: string; group_label: string | null; is_active: boolean;
   display_order: number; category_id: string | null;
@@ -38,12 +39,20 @@ type DeleteTarget =
 const CAT_FIELDS: FieldDef[] = [
   { key: "name", label: "Name", required: true, placeholder: "e.g. Fitness & Dance" },
   { key: "subtitle", label: "Subtitle", placeholder: "e.g. Classes for every level" },
-  { key: "unsplash_id", label: "Unsplash Photo ID", placeholder: "e.g. photo-1581009146145" },
+  { key: "image_url", label: "Banner Image", type: "image", uploadFolder: "categories" },
+  { key: "unsplash_id", label: "Unsplash Fallback ID", placeholder: "e.g. photo-1581009146145" },
   { key: "slug", label: "Slug", placeholder: "e.g. fitness" },
 ];
 const PKG_FIELDS: FieldDef[] = [
-  { key: "name", label: "Name", required: true, placeholder: "e.g. 8 Sessions" },
+  { key: "name", label: "Name", required: true, placeholder: "e.g. Single Session" },
   { key: "price", label: "Price (OMR)", type: "number", required: true },
+  {
+    key: "icon", label: "Icon Badge", type: "select",
+    options: [
+      { value: "", label: "None" },
+      ...Object.entries(PACKAGE_ICONS).map(([k, v]) => ({ value: k, label: `${v.emoji} ${v.label}` })),
+    ],
+  },
 ];
 
 export default function ServicesTab() {
@@ -159,7 +168,7 @@ export default function ServicesTab() {
       const { svcId, pkg } = editing;
       const res = await fetch(`/api/admin/packages/${pkg.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: values.name, price: Number(values.price) }),
+        body: JSON.stringify({ name: values.name, price: Number(values.price), icon: values.icon || null }),
       });
       const updated = await res.json();
       setServices((prev) => prev.map((s) =>
@@ -171,7 +180,7 @@ export default function ServicesTab() {
       const { svcId } = editing;
       const res = await fetch("/api/admin/packages", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ service_id: svcId, name: values.name, price: Number(values.price) }),
+        body: JSON.stringify({ service_id: svcId, name: values.name, price: Number(values.price), icon: values.icon || null }),
       });
       const created = await res.json();
       setServices((prev) => prev.map((s) =>
@@ -199,6 +208,7 @@ export default function ServicesTab() {
     if (!editing) return {};
     if (editing.kind === "cat") return {
       name: editing.item.name, subtitle: editing.item.subtitle ?? "",
+      image_url: (editing.item as { image_url?: string | null }).image_url ?? "",
       unsplash_id: editing.item.unsplash_id ?? "", slug: editing.item.slug ?? "",
     };
     if (editing.kind === "svc") return {
@@ -207,6 +217,7 @@ export default function ServicesTab() {
     };
     if (editing.kind === "pkg") return {
       name: editing.pkg.name, price: String(editing.pkg.price),
+      icon: editing.pkg.icon ?? "",
     };
     if (editing.kind === "addSvc") return { category_id: editing.categoryId ?? "" };
     return {};
@@ -376,7 +387,10 @@ export default function ServicesTab() {
                           >
                             {(svc.packages ?? []).map((pkg) => (
                               <div key={pkg.id} className="flex items-center justify-between py-2">
-                                <span className="text-xs text-dark/60 flex-1">{pkg.name}</span>
+                                <span className="text-xs text-dark/60 flex-1">
+                                  {pkg.icon && PACKAGE_ICONS[pkg.icon as keyof typeof PACKAGE_ICONS]?.emoji + " "}
+                                  {pkg.name}
+                                </span>
                                 <span className="text-xs font-semibold text-dark tabular-nums mr-3">
                                   {pkg.price} {pkg.currency}
                                 </span>

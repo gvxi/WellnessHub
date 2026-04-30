@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import type { ApiAd } from "@/lib/supabase/types";
+import { resolveImage } from "@/lib/utils";
+import AdLightbox from "./AdLightbox";
 
 interface AdBannerProps {
   ad: ApiAd;
 }
 
-export default function AdBanner({ ad }: AdBannerProps) {
+function BannerInner({ ad }: { ad: ApiAd }) {
+  const imgUrl = resolveImage(ad.image_url, ad.unsplash_id, 1400);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -18,11 +23,11 @@ export default function AdBanner({ ad }: AdBannerProps) {
                  flex items-center"
     >
       {/* Background */}
-      {ad.unsplash_id ? (
+      {imgUrl ? (
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `url(https://images.unsplash.com/${ad.unsplash_id}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=75&w=1400)`,
+            backgroundImage: `url(${imgUrl})`,
             filter: "saturate(0.7) contrast(1.0)",
           }}
         />
@@ -58,5 +63,22 @@ export default function AdBanner({ ad }: AdBannerProps) {
         )}
       </div>
     </motion.div>
+  );
+}
+
+export default function AdBanner({ ad }: AdBannerProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  return (
+    <>
+      {ad.fullscreen_enabled ? (
+        <button onClick={() => setLightboxOpen(true)} className="w-full text-left block">
+          <BannerInner ad={ad} />
+        </button>
+      ) : (
+        <BannerInner ad={ad} />
+      )}
+      <AdLightbox ad={ad} open={lightboxOpen} onClose={() => setLightboxOpen(false)} />
+    </>
   );
 }
