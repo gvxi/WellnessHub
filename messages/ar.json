@@ -303,7 +303,20 @@
     "failedBody": "حدث خطأ ما. يُرجى المحاولة مرة أخرى.",
     "tryAgain": "حاول مجدداً",
     "backHome": "العودة إلى الرئيسية",
-    "orderId": "الطلب"
+    "orderId": "الطلب",
+    "otpSent": "تم إرسال الرمز إلى {email}",
+    "otpPlaceholder": "رمز من 6 أرقام",
+    "otpVerify": "تحقق",
+    "otpVerifying": "جارٍ التحقق…",
+    "otpResend": "إعادة إرسال الرمز",
+    "otpInvalid": "رمز غير صالح أو منتهي الصلاحية",
+    "otpVerified": "تم التحقق",
+    "sendInvoice": "إرسال الفاتورة إلى البريد",
+    "resendInvoice": "إعادة إرسال الفاتورة",
+    "invoiceSending": "جارٍ الإرسال…",
+    "invoiceSent": "تم إرسال الفاتورة!",
+    "invoiceLimit": "تم إرسال الفاتورة 3 مرات بالفعل",
+    "invoiceCooldown": "انتظر {s} ثانية قبل الإرسال"
   },
   "lang": "ع"
 }

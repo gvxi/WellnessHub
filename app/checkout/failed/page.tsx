@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
-import { XCircle } from "lucide-react";
+import { XCircle, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/lib/lang-context";
 
-export default function CheckoutFailedPage() {
+function FailedContent() {
   const params = useSearchParams();
   const orderId = params.get("order_id");
   const { t } = useLang();
@@ -44,5 +45,17 @@ export default function CheckoutFailedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutFailedPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <Loader2 size={28} className="text-dark/20 animate-spin" />
+      </div>
+    }>
+      <FailedContent />
+    </Suspense>
   );
 }

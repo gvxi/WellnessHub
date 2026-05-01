@@ -30,7 +30,8 @@
       "mcp__plugin_playwright_playwright__browser_type",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\" -Recurse -ErrorAction SilentlyContinue)",
       "Bash(Select-Object -First 50 FullName)",
-      "Bash(xargs ls *)"
+      "Bash(xargs ls *)",
+      "Bash(Get-ChildItem *)"
     ]
   },
   "enabledPlugins": {

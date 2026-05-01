@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, CreditCard, Lock, Loader2, ShoppingBag,
   Minus, Plus, Trash2, UserCircle, AlertCircle,
+  Mail, CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/lib/shop-context";
@@ -16,6 +19,7 @@ import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
 
 type AuthState = "loading" | "unauthenticated" | "incomplete-profile" | "ready";
+type OtpState = "idle" | "sending" | "pending" | "verifying" | "verified";
 
 export default function CheckoutPage() {
   const { items, totalCount, removeItem, updateQty } = useCart();
@@ -29,24 +33,34 @@ export default function CheckoutPage() {
   const [user, setUser] = useState<User | null>(null);
   const [payLoading, setPayLoading] = useState(false);
 
+  const [otpState, setOtpState] = useState<OtpState>("idle");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const otpVerifiedThisSession = useRef(false);
+
   const subtotal = items.reduce(
     (sum, item) => sum + (item.snapshot.numericPrice ?? 0) * item.qty,
     0
   );
 
+  const otpRequired = subtotal > 20 || !otpVerifiedThisSession.current;
+
   // ── Auth + profile check ───────────────────────────────────────────────────
-  async function checkAuth(u: User | null) {
-    if (!u) { setAuthState("unauthenticated"); return; }
+  async function checkAuth(u: User | null): Promise<AuthState> {
+    if (!u) {
+      setAuthState("unauthenticated");
+      return "unauthenticated";
+    }
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, phone")
       .eq("id", u.id)
       .single();
-    if (!profile?.username || !profile?.phone) {
-      setAuthState("incomplete-profile");
-    } else {
-      setAuthState("ready");
-    }
+    const state: AuthState = (!profile?.username || !profile?.phone)
+      ? "incomplete-profile"
+      : "ready";
+    setAuthState(state);
+    return state;
   }
 
   useEffect(() => {
@@ -54,10 +68,14 @@ export default function CheckoutPage() {
       setUser(u);
       checkAuth(u);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null;
       setUser(u);
-      checkAuth(u);
+      checkAuth(u).then((state) => {
+        if (event === "SIGNED_IN" && state === "incomplete-profile") {
+          setTimeout(() => { setAuthStep("profile"); setAuthOpen(true); }, 300);
+        }
+      });
     });
     return () => subscription.unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,13 +88,71 @@ export default function CheckoutPage() {
     }
   }, [totalCount, authState, router]);
 
+  // ── OTP helpers ────────────────────────────────────────────────────────────
+  async function getToken(): Promise<string | null> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  }
+
+  async function sendOtp() {
+    const token = await getToken();
+    if (!token) { setAuthState("unauthenticated"); return; }
+    setOtpState("sending");
+    setOtpError("");
+    try {
+      const res = await fetch("/api/checkout/send-otp", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setOtpState("pending");
+      } else {
+        showToast(t("checkout.failedBody"), "cart");
+        setOtpState("idle");
+      }
+    } catch {
+      showToast(t("checkout.failedBody"), "cart");
+      setOtpState("idle");
+    }
+  }
+
+  async function verifyOtp() {
+    const token = await getToken();
+    if (!token) return;
+    setOtpState("verifying");
+    setOtpError("");
+    try {
+      const res = await fetch("/api/checkout/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ code: otpCode }),
+      });
+      if (res.ok) {
+        otpVerifiedThisSession.current = true;
+        setOtpState("verified");
+        handlePaymob(true);
+      } else {
+        setOtpError(t("checkout.otpInvalid"));
+        setOtpState("pending");
+      }
+    } catch {
+      setOtpError(t("checkout.otpInvalid"));
+      setOtpState("pending");
+    }
+  }
+
   // ── Paymob initiate ────────────────────────────────────────────────────────
-  async function handlePaymob() {
+  async function handlePaymob(skipOtpCheck = false) {
     if (authState !== "ready") return;
+
+    if (!skipOtpCheck && otpRequired && otpState !== "verified") {
+      await sendOtp();
+      return;
+    }
+
     setPayLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      const token = await getToken();
       if (!token) { setAuthState("unauthenticated"); return; }
 
       const res = await fetch("/api/checkout/initiate", {
@@ -112,7 +188,6 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Placeholder — booking created
       showToast(t("checkout.comingSoon"), "cart");
     } catch {
       showToast(t("checkout.failedBody"), "cart");
@@ -189,6 +264,8 @@ export default function CheckoutPage() {
   }
 
   // ── Main checkout ──────────────────────────────────────────────────────────
+  const showOtpBlock = otpState === "pending" || otpState === "verifying";
+
   return (
     <div className="px-4 md:px-10 py-10 md:py-16 max-w-[1100px] mx-auto" dir={isAr ? "rtl" : "ltr"}>
       <a
@@ -322,23 +399,96 @@ export default function CheckoutPage() {
             </div>
           )}
 
+          {/* OTP block */}
+          <AnimatePresence>
+            {otpState === "verified" && (
+              <motion.div
+                key="otp-verified"
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-2 px-3 py-2 bg-emerald-50 rounded-xl border border-emerald-200"
+              >
+                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                <span className="text-xs font-medium text-emerald-700">{t("checkout.otpVerified")}</span>
+              </motion.div>
+            )}
+
+            {showOtpBlock && (
+              <motion.div
+                key="otp-input"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.22 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-col gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 text-xs text-dark/50">
+                    <Mail size={12} />
+                    <span>{t("checkout.otpSent").replace("{email}", user?.email ?? "")}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder={t("checkout.otpPlaceholder")}
+                      value={otpCode}
+                      onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(""); }}
+                      className="flex-1 text-center tracking-[0.35em] font-bold text-lg py-2.5 rounded-xl
+                                 bg-dark/[0.04] border border-dark/10 outline-none
+                                 focus:border-primary/40 focus:bg-primary/[0.03] transition-all"
+                    />
+                    <button
+                      onClick={verifyOtp}
+                      disabled={otpCode.length !== 6 || otpState === "verifying"}
+                      className={cn(
+                        "px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shrink-0",
+                        otpCode.length === 6 && otpState !== "verifying"
+                          ? "bg-primary text-light hover:bg-primary/90"
+                          : "bg-dark/8 text-dark/30 cursor-not-allowed"
+                      )}
+                    >
+                      {otpState === "verifying"
+                        ? <Loader2 size={14} className="animate-spin" />
+                        : t("checkout.otpVerify")}
+                    </button>
+                  </div>
+                  {otpError && (
+                    <p className="text-xs text-red-500 px-1">{otpError}</p>
+                  )}
+                  <button
+                    onClick={sendOtp}
+                    disabled={otpState === "sending"}
+                    className="text-xs text-primary hover:underline text-start disabled:opacity-40"
+                  >
+                    {t("checkout.otpResend")}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <button
-            onClick={handlePaymob}
-            disabled={payLoading || totalCount === 0}
+            onClick={() => handlePaymob()}
+            disabled={payLoading || totalCount === 0 || otpState === "sending" || otpState === "verifying"}
             className={cn(
               "w-full py-4 rounded-2xl text-sm font-semibold transition-colors duration-200",
               "flex items-center justify-center gap-2",
-              payLoading || totalCount === 0
+              payLoading || totalCount === 0 || otpState === "sending" || otpState === "verifying"
                 ? "bg-primary/50 text-light cursor-not-allowed"
                 : "bg-primary text-light hover:bg-primary/90"
             )}
           >
-            {payLoading ? (
+            {payLoading || otpState === "sending" ? (
               <Loader2 size={17} className="animate-spin" />
             ) : (
               <CreditCard size={17} />
             )}
-            {payLoading ? t("checkout.processing") : t("checkout.payWithPaymob")}
+            {payLoading || otpState === "sending"
+              ? t("checkout.processing")
+              : t("checkout.payWithPaymob")}
           </button>
 
           <div className="flex items-center justify-center gap-1.5 text-dark/35">

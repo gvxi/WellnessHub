@@ -1,14 +1,68 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/lib/lang-context";
+import { supabase } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
-export default function CheckoutSuccessPage() {
+function SuccessContent() {
   const params = useSearchParams();
   const orderId = params.get("order_id") ?? params.get("id");
+  const bookingId = params.get("booking_id");
   const { t } = useLang();
+
+  const [invoiceState, setInvoiceState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [sendCount, setSendCount] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => (c <= 1 ? 0 : c - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  async function sendInvoice() {
+    if (!bookingId || sendCount >= 3 || cooldown > 0) return;
+    setInvoiceState("sending");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { setInvoiceState("error"); return; }
+
+      const res = await fetch("/api/checkout/send-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ booking_id: bookingId }),
+      });
+      const data = await res.json();
+
+      if (res.status === 429 && data.error === "cooldown") {
+        setCooldown(data.retry_in ?? 30);
+        setInvoiceState("idle");
+        return;
+      }
+
+      if (res.ok) {
+        const newCount = data.sent_count ?? sendCount + 1;
+        setSendCount(newCount);
+        setInvoiceState("sent");
+        setCooldown(30);
+        setTimeout(() => setInvoiceState("idle"), 3000);
+      } else {
+        setInvoiceState("error");
+        setTimeout(() => setInvoiceState("idle"), 3000);
+      }
+    } catch {
+      setInvoiceState("error");
+      setTimeout(() => setInvoiceState("idle"), 3000);
+    }
+  }
+
+  const canSend = !!bookingId && sendCount < 3 && cooldown === 0 && invoiceState === "idle";
+  const remaining = 3 - sendCount;
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
@@ -21,9 +75,46 @@ export default function CheckoutSuccessPage() {
         <p className="text-sm text-dark/55 leading-relaxed mb-6">{t("checkout.successBody")}</p>
 
         {orderId && (
-          <p className="text-xs text-dark/35 mb-8 font-mono">
+          <p className="text-xs text-dark/35 mb-4 font-mono">
             {t("checkout.orderId")} #{orderId}
           </p>
+        )}
+
+        {/* Invoice button */}
+        {bookingId && (
+          <div className="mb-6">
+            {sendCount >= 3 ? (
+              <p className="text-xs text-dark/35">{t("checkout.invoiceLimit")}</p>
+            ) : (
+              <button
+                onClick={sendInvoice}
+                disabled={!canSend}
+                className={cn(
+                  "inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-colors",
+                  canSend
+                    ? "bg-dark/6 text-dark hover:bg-dark/10"
+                    : "bg-dark/4 text-dark/30 cursor-not-allowed"
+                )}
+              >
+                {invoiceState === "sending" ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Mail size={14} />
+                )}
+                {invoiceState === "sending"
+                  ? t("checkout.invoiceSending")
+                  : invoiceState === "sent"
+                  ? t("checkout.invoiceSent")
+                  : invoiceState === "error"
+                  ? t("checkout.failedBody")
+                  : cooldown > 0
+                  ? t("checkout.invoiceCooldown").replace("{s}", String(cooldown))
+                  : sendCount === 0
+                  ? t("checkout.sendInvoice")
+                  : `${t("checkout.resendInvoice")} (${remaining} left)`}
+              </button>
+            )}
+          </div>
         )}
 
         <Link
@@ -35,5 +126,17 @@ export default function CheckoutSuccessPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <Loader2 size={28} className="text-dark/20 animate-spin" />
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }

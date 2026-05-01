@@ -303,7 +303,20 @@
     "failedBody": "Something went wrong. Please try again.",
     "tryAgain": "Try Again",
     "backHome": "Back to Home",
-    "orderId": "Order"
+    "orderId": "Order",
+    "otpSent": "Code sent to {email}",
+    "otpPlaceholder": "6-digit code",
+    "otpVerify": "Verify",
+    "otpVerifying": "Verifying…",
+    "otpResend": "Resend code",
+    "otpInvalid": "Invalid or expired code",
+    "otpVerified": "Verified",
+    "sendInvoice": "Send Invoice to Email",
+    "resendInvoice": "Resend Invoice",
+    "invoiceSending": "Sending…",
+    "invoiceSent": "Invoice sent!",
+    "invoiceLimit": "Invoice already sent 3 times",
+    "invoiceCooldown": "Wait {s}s before resending"
   },
   "lang": "EN"
 }
