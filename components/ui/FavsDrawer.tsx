@@ -50,6 +50,12 @@ export default function FavsDrawer({ open, onClose }: Props) {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={SPRING}
+            drag="x"
+            dragConstraints={{ left: 0, right: 400 }}
+            dragElastic={{ left: 0, right: 0.5 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.x > 80 || info.velocity.x > 500) onClose();
+            }}
             style={{ willChange: "transform" }}
             className="fixed z-50 right-0 top-0 bottom-0 bg-light flex flex-col
                        w-full max-w-[420px] rounded-l-3xl shadow-2xl overflow-hidden"

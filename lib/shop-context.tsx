@@ -101,6 +101,8 @@ export function useFavs() {
 
 // ─── UI ──────────────────────────────────────────────────────────────────────
 
+export type AuthStep = "signin" | "signup" | "profile";
+
 interface UIContextType {
   selectedItem: ServiceItem | null;
   setSelectedItem: (item: ServiceItem | null) => void;
@@ -108,6 +110,10 @@ interface UIContextType {
   setCartOpen: (open: boolean) => void;
   favsOpen: boolean;
   setFavsOpen: (open: boolean) => void;
+  authOpen: boolean;
+  setAuthOpen: (open: boolean) => void;
+  authStep: AuthStep;
+  setAuthStep: (step: AuthStep) => void;
 }
 
 const UIContext = createContext<UIContextType | null>(null);
@@ -127,6 +133,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [selectedItem, setSelectedItem] = useState<ServiceItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [favsOpen, setFavsOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authStep, setAuthStep] = useState<AuthStep>("signin");
 
   useEffect(() => {
     try {
@@ -191,6 +199,10 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setCartOpen,
     favsOpen,
     setFavsOpen,
+    authOpen,
+    setAuthOpen,
+    authStep,
+    setAuthStep,
   };
 
   return (

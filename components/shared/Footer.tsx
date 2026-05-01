@@ -22,9 +22,10 @@ export default function Footer() {
         {/* Links */}
         <nav className="flex items-center gap-6">
           {[
-            { label: "Services", href: "#fitness" },
-            { label: "About", href: "#about" },
-            { label: "Privacy", href: "#" },
+            { label: "Services", href: "/#fitness" },
+            { label: "About", href: "/about" },
+            { label: "Terms", href: "/terms" },
+            { label: "Privacy", href: "/privacy" },
           ].map((l) => (
             <Link
               key={l.label}

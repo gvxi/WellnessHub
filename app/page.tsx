@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Nav from "@/components/shared/Nav";
 import Footer from "@/components/shared/Footer";
+import FirstVisitGuard from "@/app/_components/FirstVisitGuard";
 import ServiceCategory from "@/app/(public)/_sections/ServiceCategory";
 import AdBanner from "@/app/(public)/_sections/AdBanner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -134,6 +135,7 @@ async function LandingContent() {
 export default function Home() {
   return (
     <main className="overflow-x-hidden w-full max-w-full">
+      <FirstVisitGuard />
       <Nav />
       <Suspense
         fallback={

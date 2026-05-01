@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Heart, Home, ShoppingBag, UserCircle } from "lucide-react";
+import { Heart, Home, Info, Phone, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart, useFavs, useUI } from "@/lib/shop-context";
@@ -21,14 +21,14 @@ export default function BottomNav() {
       <div className="relative bg-light/90 backdrop-blur-xl border-t border-dark/8 h-[68px]">
         <div className="grid grid-cols-5 h-full items-center px-1">
 
-          {/* Profile */}
-          <NavTab label="Profile" href="/profile">
-            <UserCircle size={22} strokeWidth={1.6} />
+          {/* About Us */}
+          <NavTab label="About" href="/#about">
+            <Info size={22} strokeWidth={1.6} />
           </NavTab>
 
-          {/* Notifications */}
-          <NavTab label="Alerts" href="/notifications">
-            <Bell size={22} strokeWidth={1.6} />
+          {/* Contact Us */}
+          <NavTab label="Contact" href="/#contact">
+            <Phone size={22} strokeWidth={1.6} />
           </NavTab>
 
           {/* Cart — center elevated circle */}

@@ -8,6 +8,7 @@ import BottomNav from "@/components/ui/BottomNav";
 import CartDrawer from "@/components/ui/CartDrawer";
 import FavsDrawer from "@/components/ui/FavsDrawer";
 import ItemDrawer from "@/components/ui/ItemDrawer";
+import AuthModal from "@/components/ui/AuthModal";
 import ToastStack from "@/components/ui/ToastStack";
 
 function ShellInner({ children }: { children: ReactNode }) {
@@ -22,6 +23,7 @@ function ShellInner({ children }: { children: ReactNode }) {
       {!isAdmin && <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />}
       {!isAdmin && <FavsDrawer open={favsOpen} onClose={() => setFavsOpen(false)} />}
       {!isAdmin && <ItemDrawer item={selectedItem} onClose={() => setSelectedItem(null)} />}
+      {!isAdmin && <AuthModal />}
       <ToastStack />
     </>
   );
