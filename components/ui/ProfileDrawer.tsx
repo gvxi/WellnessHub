@@ -15,13 +15,14 @@ type Profile = {
   age: number | null;
 };
 
+type CartItemJson = { name: string; qty: number; line_total: number; currency: string };
+
 type Booking = {
   id: string;
   created_at: string;
   status: string;
-  service_name: string | null;
-  total_price: number | null;
-  currency: string | null;
+  cart_items: CartItemJson[] | null;
+  total_amount: number | null;
 };
 
 function StatusIcon({ status }: { status: string }) {
@@ -57,7 +58,7 @@ export default function ProfileDrawer() {
       supabase.from("profiles").select("username, phone, age").eq("id", u.id).single()
         .then(({ data: p }) => setProfile(p ?? null));
       setLoadingBookings(true);
-      supabase.from("bookings").select("id, created_at, status, service_name, total_price, currency")
+      supabase.from("bookings").select("id, created_at, status, cart_items, total_amount")
         .eq("customer_id", u.id)
         .order("created_at", { ascending: false })
         .limit(20)
@@ -195,7 +196,10 @@ export default function ProfileDrawer() {
                         <StatusIcon status={b.status} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-dark font-medium truncate">
-                            {b.service_name || "—"}
+                            {b.cart_items?.[0]?.name ?? "—"}
+                            {(b.cart_items?.length ?? 0) > 1 && (
+                              <span className="text-dark/40 text-xs ms-1">+{b.cart_items!.length - 1}</span>
+                            )}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[11px] text-dark/40">
@@ -207,9 +211,9 @@ export default function ProfileDrawer() {
                             </span>
                           </div>
                         </div>
-                        {b.total_price != null && (
+                        {b.total_amount != null && (
                           <p className="text-sm font-semibold text-dark/70 shrink-0 tabular-nums">
-                            {b.total_price} {b.currency ?? "OMR"}
+                            {b.total_amount} OMR
                           </p>
                         )}
                       </div>
