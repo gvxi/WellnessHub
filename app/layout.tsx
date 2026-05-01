@@ -20,6 +20,9 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: "WellnessHub — Book Wellness Services",
   description: "Book beauty and wellness services — salons, spas, fitness centers",
+  appleWebApp: {
+    title: "WellnessHub",
+  },
 };
 
 export default function RootLayout({

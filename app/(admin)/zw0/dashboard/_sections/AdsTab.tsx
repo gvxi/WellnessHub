@@ -2,28 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ToggleLeft, ToggleRight, ImageOff, Edit2, Plus, Maximize2, Minimize2, Languages, Loader2 } from "lucide-react";
+import { ToggleLeft, ToggleRight, ImageOff, Edit2, Plus, Maximize2, Minimize2, Languages, Loader2, Search, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditSheet, { type FieldDef } from "../_components/EditSheet";
 import ConfirmSheet from "../_components/ConfirmSheet";
 import { resolveImage } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
 
 type Translations = Record<string, Record<string, string>>;
 
 type AdRow = {
   id: string; headline: string; subtitle: string | null;
   unsplash_id: string | null; image_url: string | null;
-  badge_text: string | null; is_active: boolean;
-  fullscreen_enabled: boolean; display_order: number;
-  translations: Translations;
+  badge_text: string | null; link_url: string | null;
+  is_active: boolean; fullscreen_enabled: boolean;
+  display_order: number; translations: Translations;
 };
 
 const AD_FIELDS: FieldDef[] = [
-  { key: "headline",    label: "Headline", required: true, placeholder: "e.g. Exclusive Offers", translatable: true },
-  { key: "subtitle",   label: "Subtitle",                  placeholder: "e.g. Book now and save", translatable: true },
-  { key: "image_url",  label: "Ad Image", type: "image",   uploadFolder: "ads" },
-  { key: "unsplash_id",label: "Unsplash Fallback ID",       placeholder: "e.g. photo-1581009146145-b5ef050c2e1e" },
-  { key: "badge_text", label: "Badge Text",                 placeholder: "e.g. Ad", translatable: true },
+  { key: "headline",    label: "Headline",   required: true, placeholder: "e.g. Exclusive Offers",            translatable: true },
+  { key: "subtitle",   label: "Subtitle",                   placeholder: "e.g. Book now and save",            translatable: true },
+  { key: "link_url",   label: "Link URL",                   placeholder: "https://…",                         translatable: true },
+  { key: "image_url",  label: "Ad Image",   type: "image",  uploadFolder: "ads" },
+  { key: "unsplash_id",label: "Unsplash Fallback ID",        placeholder: "e.g. photo-1581009146145-b5ef050c2e1e" },
+  { key: "badge_text", label: "Badge Text",                  placeholder: "e.g. Ad",                          translatable: true },
 ];
 
 function arValues(translations: Translations, keys: string[]): Record<string, string> {
@@ -50,6 +52,18 @@ export default function AdsTab() {
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<AdRow | null>(null);
   const [batchStatus, setBatchStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [query, setQuery] = useState("");
+  const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
+  const { t, isRTL } = useLang();
+
+  const filteredAds = ads
+    .filter((ad) =>
+      filterActive === "all" ? true : filterActive === "active" ? ad.is_active : !ad.is_active
+    )
+    .filter((ad) => {
+      const q = query.toLowerCase().trim();
+      return !q || ad.headline.toLowerCase().includes(q) || (ad.subtitle ?? "").toLowerCase().includes(q) || (ad.badge_text ?? "").toLowerCase().includes(q);
+    });
 
   useEffect(() => {
     fetch("/api/admin/ads")
@@ -77,9 +91,9 @@ export default function AdsTab() {
   }
 
   async function saveAd(values: Record<string, string>) {
-    const { headline, subtitle, image_url, unsplash_id, badge_text } = values;
-    const translations = buildTranslations(values, ["headline", "subtitle", "badge_text"]);
-    const payload = { headline, subtitle, image_url, unsplash_id, badge_text, translations };
+    const { headline, subtitle, link_url, image_url, unsplash_id, badge_text } = values;
+    const translations = buildTranslations(values, ["headline", "subtitle", "link_url", "badge_text"]);
+    const payload = { headline, subtitle, link_url, image_url, unsplash_id, badge_text, translations };
 
     if (editing) {
       const res = await fetch(`/api/admin/ads/${editing.id}`, {
@@ -150,10 +164,11 @@ export default function AdsTab() {
   const editInitialValues = editing ? {
     headline: editing.headline,
     subtitle: editing.subtitle ?? "",
+    link_url: editing.link_url ?? "",
     image_url: editing.image_url ?? "",
     unsplash_id: editing.unsplash_id ?? "",
     badge_text: editing.badge_text ?? "",
-    ...arValues(editing.translations, ["headline", "subtitle", "badge_text"]),
+    ...arValues(editing.translations, ["headline", "subtitle", "link_url", "badge_text"]),
   } : undefined;
 
   return (
@@ -164,7 +179,7 @@ export default function AdsTab() {
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
         >
           <Plus size={14} />
-          Add Ad
+          {t("admin.add_ad")}
         </button>
         <button
           onClick={handleBatchTranslate}
@@ -174,8 +189,35 @@ export default function AdsTab() {
                      disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
         >
           {batchStatus === "loading" ? <Loader2 size={13} className="animate-spin" /> : <Languages size={13} />}
-          {batchStatus === "done" ? "Done!" : batchStatus === "error" ? "Error" : "Translate All"}
+          {batchStatus === "done" ? "Done!" : batchStatus === "error" ? "Error" : t("admin.translate_all")}
         </button>
+      </div>
+
+      {/* Search + filter */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={13} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("admin.search_ads")}
+            className="w-full bg-dark/[0.04] border border-dark/8 rounded-xl ps-9 pe-8 py-2.5 text-xs text-dark placeholder:text-dark/30 outline-none focus:border-primary/30 transition-colors"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} className="absolute end-3 top-1/2 -translate-y-1/2 text-dark/30 hover:text-dark/60">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+        <select
+          value={filterActive}
+          onChange={(e) => setFilterActive(e.target.value as "all" | "active" | "inactive")}
+          className="bg-dark/[0.04] border border-dark/8 rounded-xl px-3 py-2.5 text-xs text-dark/70 outline-none focus:border-primary/30 shrink-0"
+        >
+          <option value="all">{t("admin.filter_all")}</option>
+          <option value="active">{t("admin.filter_active")}</option>
+          <option value="inactive">{t("admin.filter_inactive")}</option>
+        </select>
       </div>
 
       {loading ? (
@@ -183,10 +225,10 @@ export default function AdsTab() {
           <Skeleton className="h-36 rounded-2xl" />
           <Skeleton className="h-36 rounded-2xl" />
         </>
-      ) : ads.length === 0 ? (
+      ) : filteredAds.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <ImageOff size={32} className="text-dark/20 mb-3" />
-          <p className="text-sm text-dark/40">No ads yet</p>
+          <p className="text-sm text-dark/40">{ads.length === 0 ? t("admin.no_ads") : t("admin.no_ads_match")}</p>
         </div>
       ) : (
         <motion.div
@@ -195,7 +237,7 @@ export default function AdsTab() {
           animate="show"
           className="space-y-3"
         >
-          {ads.map((ad) => (
+          {filteredAds.map((ad) => (
             <motion.div
               key={ad.id}
               variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
@@ -221,13 +263,13 @@ export default function AdsTab() {
                   )}
                 </div>
                 {ad.badge_text && (
-                  <span className="absolute top-3 right-3 text-[9px] uppercase tracking-widest text-light/40 border border-light/20 px-1.5 py-0.5 rounded-full z-10">
+                  <span className="absolute top-3 end-3 text-[9px] uppercase tracking-widest text-light/40 border border-light/20 px-1.5 py-0.5 rounded-full z-10">
                     {ad.badge_text}
                   </span>
                 )}
                 {/* AR indicator dot */}
                 {ad.translations?.ar?.headline && (
-                  <span className="absolute top-3 left-3 text-[9px] font-bold text-accent bg-dark/40 px-1.5 py-0.5 rounded-full z-10">ع</span>
+                  <span className="absolute top-3 start-3 text-[9px] font-bold text-accent bg-dark/40 px-1.5 py-0.5 rounded-full z-10">ع</span>
                 )}
               </div>
 
@@ -239,8 +281,8 @@ export default function AdsTab() {
                   className="flex items-center gap-1.5 text-xs font-medium disabled:opacity-50"
                 >
                   {ad.is_active
-                    ? <><ToggleRight size={20} className="text-emerald-500" /><span className="text-emerald-600">Active</span></>
-                    : <><ToggleLeft size={20} className="text-dark/30" /><span className="text-dark/40">Off</span></>
+                    ? <><ToggleRight size={20} className="text-emerald-500" /><span className="text-emerald-600">{t("admin.active")}</span></>
+                    : <><ToggleLeft size={20} className="text-dark/30" /><span className="text-dark/40">{t("admin.inactive")}</span></>
                   }
                 </button>
 
@@ -251,8 +293,8 @@ export default function AdsTab() {
                     title={ad.fullscreen_enabled ? "Disable fullscreen" : "Enable fullscreen on tap"}
                   >
                     {ad.fullscreen_enabled
-                      ? <><Maximize2 size={14} className="text-primary" /><span className="text-primary">Fullscreen</span></>
-                      : <><Minimize2 size={14} className="text-dark/30" /><span className="text-dark/30">Tap: off</span></>
+                      ? <><Maximize2 size={14} className="text-primary" /><span className="text-primary">{t("admin.fullscreen_on")}</span></>
+                      : <><Minimize2 size={14} className="text-dark/30" /><span className="text-dark/30">{t("admin.fullscreen_off")}</span></>
                     }
                   </button>
                   <button
@@ -270,7 +312,7 @@ export default function AdsTab() {
 
       <EditSheet
         open={sheetOpen}
-        title={editing ? "Edit Ad" : "New Ad"}
+        title={editing ? t("admin.new_ad") : t("admin.new_ad")}
         fields={AD_FIELDS}
         initialValues={editInitialValues}
         onClose={() => { setEditing(null); setAdding(false); }}
@@ -280,7 +322,7 @@ export default function AdsTab() {
 
       <ConfirmSheet
         open={deleting !== null}
-        message={`Delete "${deleting?.headline}"? This cannot be undone.`}
+        message={`${t("admin.delete")} "${deleting?.headline}"? ${t("admin.cannot_undone")}`}
         onConfirm={deleteAd}
         onClose={() => setDeleting(null)}
       />

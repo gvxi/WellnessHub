@@ -11,6 +11,8 @@ export type ServiceItem = {
   nameAr?: string;
   description?: string;
   descriptionAr?: string;
+  groupLabel?: string;
+  groupLabelAr?: string;
   price?: string;
   numericPrice?: number;
   tiers?: PriceTier[];
@@ -21,6 +23,7 @@ export type ServiceItem = {
 
 export type SubCategory = {
   title: string;
+  titleAr?: string;
   items: ServiceItem[];
   note?: string;
 };

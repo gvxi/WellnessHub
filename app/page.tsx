@@ -80,11 +80,24 @@ async function fetchCategories(): Promise<ApiCategory[]> {
   });
 }
 
+async function fetchSectionArMap(): Promise<Map<string, string>> {
+  const supabase = makeSupabase();
+  const { data } = await supabase
+    .from("section_labels")
+    .select("name, translations");
+  const map = new Map<string, string>();
+  for (const row of data ?? []) {
+    const ar = (row.translations as { ar?: { name?: string } })?.ar?.name;
+    if (ar) map.set(row.name, ar);
+  }
+  return map;
+}
+
 async function fetchAds(): Promise<ApiAd[]> {
   const supabase = makeSupabase();
   const { data, error } = await supabase
     .from("ads")
-    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, fullscreen_enabled, display_order, translations")
+    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, link_url, fullscreen_enabled, display_order, translations")
     .eq("is_active", true)
     .order("display_order", { ascending: true });
 
@@ -97,6 +110,7 @@ async function fetchAds(): Promise<ApiAd[]> {
     unsplash_id: ad.unsplash_id,
     image_url: ad.image_url,
     badge_text: ad.badge_text,
+    link_url: ad.link_url ?? null,
     fullscreen_enabled: ad.fullscreen_enabled ?? false,
     display_order: ad.display_order,
     translations: (ad.translations as Translations) ?? {},
@@ -105,7 +119,7 @@ async function fetchAds(): Promise<ApiAd[]> {
 
 // ─── Adapter ─────────────────────────────────────────────────────────────────
 
-function apiToCategory(cat: ApiCategory): Category {
+function apiToCategory(cat: ApiCategory, sectionArMap: Map<string, string>): Category {
   return {
     id: cat.slug ?? cat.id,
     title: cat.name,
@@ -117,9 +131,12 @@ function apiToCategory(cat: ApiCategory): Category {
     subs: cat.groups.map((g) => {
       const sub: SubCategory = {
         title: g.label,
+        titleAr: sectionArMap.get(g.label),
         items: g.services
           .filter((svc) => svc.packages.length > 0)
           .map((svc): ServiceItem => {
+            const groupLabel = g.label;
+            const groupLabelAr = sectionArMap.get(g.label);
             if (svc.packages.length !== 1) {
               return {
                 id: svc.id,
@@ -127,6 +144,8 @@ function apiToCategory(cat: ApiCategory): Category {
                 nameAr: svc.translations?.ar?.name,
                 description: svc.description ?? undefined,
                 descriptionAr: svc.translations?.ar?.description,
+                groupLabel,
+                groupLabelAr,
                 tiers: svc.packages.map((p) => ({
                   label: p.name,
                   labelAr: p.translations?.ar?.name,
@@ -142,6 +161,8 @@ function apiToCategory(cat: ApiCategory): Category {
               nameAr: svc.translations?.ar?.name,
               description: svc.description ?? undefined,
               descriptionAr: svc.translations?.ar?.description,
+              groupLabel,
+              groupLabelAr,
               price: pkg.note === "Starting from"
                 ? `from ${pkg.price} ${pkg.currency}`
                 : `${pkg.price} ${pkg.currency}`,
@@ -189,9 +210,9 @@ function AdBannerSkeleton() {
 // ─── Async content ────────────────────────────────────────────────────────────
 
 async function LandingContent() {
-  const [categories, ads] = await Promise.all([fetchCategories(), fetchAds()]);
+  const [categories, ads, sectionArMap] = await Promise.all([fetchCategories(), fetchAds(), fetchSectionArMap()]);
 
-  const [fitness, salon, advanced, nails] = categories.map(apiToCategory);
+  const [fitness, salon, advanced, nails] = categories.map((c) => apiToCategory(c, sectionArMap));
   const [adA, adB] = ads;
 
   if (!fitness) {

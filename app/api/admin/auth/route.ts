@@ -91,6 +91,33 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ user: { id: user.id, email: user.email, role: ctx[0].role } });
 }
 
+// PUT /api/admin/auth — extend session (sliding expiry)
+export async function PUT(request: NextRequest) {
+  const token = request.cookies.get("admin-token")?.value;
+  const biz = request.cookies.get("admin-biz")?.value;
+  if (!token) return NextResponse.json({ error: "No session" }, { status: 401 });
+
+  const supabase = createClient(SUPABASE_URL, ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false },
+  });
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return NextResponse.json({ error: "Session expired" }, { status: 401 });
+
+  const response = NextResponse.json({ ok: true });
+  const cookieOpts = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: 60 * 60,
+  };
+  response.cookies.set("admin-token", token, cookieOpts);
+  if (biz) response.cookies.set("admin-biz", biz, cookieOpts);
+  return response;
+}
+
 // DELETE /api/admin/auth — logout
 export async function DELETE() {
   const response = NextResponse.json({ ok: true });

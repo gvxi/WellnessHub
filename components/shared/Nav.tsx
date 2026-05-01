@@ -13,7 +13,7 @@ import { useLang } from "@/lib/lang-context";
 export default function Nav() {
   const { totalCount } = useCart();
   const { ids } = useFavs();
-  const { setCartOpen, setFavsOpen, setAuthOpen, setAuthStep } = useUI();
+  const { setCartOpen, setFavsOpen, setAuthOpen, setAuthStep, setProfileDrawerOpen } = useUI();
   const { t, lang, setLang } = useLang();
   const [user, setUser] = useState<User | null>(null);
   const [avatarFailed, setAvatarFailed] = useState(false);
@@ -40,7 +40,18 @@ export default function Nav() {
           {user ? (
             <>
               <button
-                onClick={() => { setAuthStep("profile"); setAuthOpen(true); }}
+                onClick={async () => {
+                  const { data: { user: u } } = await supabase.auth.getUser();
+                  if (!u) return;
+                  const { data } = await supabase.from("profiles").select("username, phone, age").eq("id", u.id).single();
+                  const hasProfile = !!(data?.username || data?.phone || data?.age);
+                  if (hasProfile) {
+                    setProfileDrawerOpen(true);
+                  } else {
+                    setAuthStep("profile");
+                    setAuthOpen(true);
+                  }
+                }}
                 aria-label={t("nav.profile")}
                 className="w-9 h-9 rounded-full flex items-center justify-center
                            bg-primary/10 text-primary hover:bg-primary/18 transition-colors overflow-hidden"

@@ -10,6 +10,7 @@ import CartDrawer from "@/components/ui/CartDrawer";
 import FavsDrawer from "@/components/ui/FavsDrawer";
 import ItemDrawer from "@/components/ui/ItemDrawer";
 import AuthModal from "@/components/ui/AuthModal";
+import ProfileDrawer from "@/components/ui/ProfileDrawer";
 import ToastStack from "@/components/ui/ToastStack";
 
 function ShellInner({ children }: { children: ReactNode }) {
@@ -25,6 +26,7 @@ function ShellInner({ children }: { children: ReactNode }) {
       {!isAdmin && <FavsDrawer open={favsOpen} onClose={() => setFavsOpen(false)} />}
       {!isAdmin && <ItemDrawer item={selectedItem} onClose={() => setSelectedItem(null)} />}
       {!isAdmin && <AuthModal />}
+      {!isAdmin && <ProfileDrawer />}
       <ToastStack />
     </>
   );

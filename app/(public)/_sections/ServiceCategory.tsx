@@ -155,6 +155,8 @@ function ServiceRow({ item }: { item: ServiceItem }) {
 function PriceList({ category }: { category: Category }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+  const { lang } = useLang();
+  const isAr = lang === "ar";
 
   return (
     <div className="bg-light py-14 md:py-20 px-5 md:px-14 max-w-[1400px] mx-auto w-full">
@@ -168,7 +170,7 @@ function PriceList({ category }: { category: Category }) {
         {category.subs.map((sub) => (
           <motion.div key={sub.title} variants={rowVariants}>
             <h3 className="text-[10px] uppercase tracking-[0.22em] font-semibold text-secondary mb-4 pb-2 border-b border-dark/8">
-              {sub.title}
+              {(isAr && sub.titleAr) ? sub.titleAr : sub.title}
             </h3>
             {sub.note && (
               <p className="text-xs text-dark/40 italic mb-3">{sub.note}</p>

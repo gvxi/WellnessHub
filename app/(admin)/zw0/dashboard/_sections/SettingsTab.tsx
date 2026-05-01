@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Building2, Clock, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
 
 export default function SettingsTab() {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const { t } = useLang();
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -17,23 +19,21 @@ export default function SettingsTab() {
 
   return (
     <div className="px-4 py-5 pb-6 space-y-4">
-      {/* Business section */}
-      <SettingsSection icon={Building2} title="Business">
-        <SettingsRow label="Business Name" value="WellnessHub" />
-        <SettingsRow label="Timezone" value="Asia/Muscat" />
-        <SettingsRow label="Currency" value="OMR" />
+      <SettingsSection icon={Building2} title={t("admin.settings_business")}>
+        <SettingsRow label={t("admin.settings_business_name")} value="WellnessHub" />
+        <SettingsRow label={t("admin.settings_timezone")} value="Asia/Muscat" />
+        <SettingsRow label={t("admin.settings_currency")} value="OMR" />
       </SettingsSection>
 
-      <SettingsSection icon={Shield} title="Account">
-        <SettingsRow label="Role" value="Admin" />
-        <SettingsRow label="Email" value="admin@wellnesshub.com" />
+      <SettingsSection icon={Shield} title={t("admin.settings_account")}>
+        <SettingsRow label={t("admin.settings_role")} value="Admin" />
+        <SettingsRow label={t("admin.settings_email")} value="admin@wellnesshub.com" />
       </SettingsSection>
 
-      <SettingsSection icon={Clock} title="Working Hours">
-        <p className="text-xs text-dark/40 px-1 py-2">Configure working hours in the business settings.</p>
+      <SettingsSection icon={Clock} title={t("admin.settings_hours")}>
+        <p className="text-xs text-dark/40 px-1 py-2">{t("admin.settings_hours_hint")}</p>
       </SettingsSection>
 
-      {/* Logout */}
       <div className="pt-2">
         <button
           onClick={handleLogout}
@@ -46,7 +46,7 @@ export default function SettingsTab() {
           )}
         >
           <LogOut size={16} />
-          {loggingOut ? "Signing out…" : "Sign out"}
+          {loggingOut ? t("admin.signing_out") : t("admin.signOut")}
         </button>
       </div>
     </div>

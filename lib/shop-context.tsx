@@ -114,6 +114,8 @@ interface UIContextType {
   setAuthOpen: (open: boolean) => void;
   authStep: AuthStep;
   setAuthStep: (step: AuthStep) => void;
+  profileDrawerOpen: boolean;
+  setProfileDrawerOpen: (open: boolean) => void;
 }
 
 const UIContext = createContext<UIContextType | null>(null);
@@ -135,6 +137,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [favsOpen, setFavsOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authStep, setAuthStep] = useState<AuthStep>("signin");
+  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -203,6 +206,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setAuthOpen,
     authStep,
     setAuthStep,
+    profileDrawerOpen,
+    setProfileDrawerOpen,
   };
 
   return (

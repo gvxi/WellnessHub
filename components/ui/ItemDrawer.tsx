@@ -5,6 +5,7 @@ import { Heart, Minus, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCart, useFavs } from "@/lib/shop-context";
 import { useToast } from "@/lib/toast-context";
+import { useLang } from "@/lib/lang-context";
 import type { ServiceItem } from "@/lib/services-data";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ export default function ItemDrawer({ item, onClose }: Props) {
   const { addItem, isInCart } = useCart();
   const { toggle, isFav } = useFavs();
   const { showToast } = useToast();
+  const { t, lang } = useLang();
+  const isAr = lang === "ar";
   const [qty, setQty] = useState(1);
   const isDesktop = useIsDesktop();
 
@@ -50,7 +53,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
   function handleAddToCart() {
     if (!item) return;
     addItem(item, qty);
-    showToast(`${item.name} added to cart`, "cart");
+    showToast(t("item.addToCart"), "cart");
     onClose();
   }
 
@@ -58,8 +61,11 @@ export default function ItemDrawer({ item, onClose }: Props) {
     if (!item) return;
     const wasFav = isFav(item.id);
     toggle(item);
-    showToast(wasFav ? "Removed from favorites" : `${item.name} saved`, "fav");
+    showToast(wasFav ? t("favs.empty") : t("item.addToCart"), "fav");
   }
+
+  const displayName = item ? ((isAr && item.nameAr) ? item.nameAr : item.name) : "";
+  const displayDesc = item ? ((isAr && item.descriptionAr) ? item.descriptionAr : item.description) : undefined;
 
   const imageUrl = item?.unsplashId
     ? `https://images.unsplash.com/${item.unsplashId}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800`
@@ -72,7 +78,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
   };
 
   const panelClass = isDesktop
-    ? "fixed z-50 bg-light flex flex-col overflow-hidden right-0 top-0 bottom-0 rounded-l-3xl w-[min(33vw,440px)]"
+    ? cn("fixed z-50 bg-light flex flex-col overflow-hidden top-0 bottom-0 rounded-l-3xl w-[min(33vw,440px)]", isAr ? "left-0 rounded-l-none rounded-r-3xl" : "right-0")
     : "fixed z-50 bg-light flex flex-col overflow-hidden inset-x-0 bottom-0 rounded-t-3xl max-h-[88vh]";
 
   return (
@@ -98,12 +104,13 @@ export default function ItemDrawer({ item, onClose }: Props) {
             transition={SPRING}
             className={panelClass}
             style={{ willChange: "transform" }}
+            dir={isAr ? "rtl" : "ltr"}
           >
             {imageUrl && (
               <div className="relative w-full h-[220px] shrink-0">
                 <img
                   src={imageUrl}
-                  alt={item.name}
+                  alt={displayName}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-light/70 to-transparent" />
@@ -113,7 +120,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
             <button
               onClick={onClose}
               aria-label="Close"
-              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-dark/25 backdrop-blur-sm
+              className="absolute top-4 end-4 z-10 w-9 h-9 rounded-full bg-dark/25 backdrop-blur-sm
                          flex items-center justify-center text-light hover:bg-dark/40 transition-colors"
             >
               <X size={18} />
@@ -121,13 +128,20 @@ export default function ItemDrawer({ item, onClose }: Props) {
 
             <div className="flex flex-col flex-1 overflow-y-auto px-6 pt-5 pb-8 gap-4">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-xl font-bold text-dark leading-snug flex-1">{item.name}</h2>
+                <div className="flex-1 min-w-0">
+                  {item.groupLabel && (
+                    <p className="text-base font-semibold text-secondary mb-0.5">
+                      {(isAr && item.groupLabelAr) ? item.groupLabelAr : item.groupLabel}
+                    </p>
+                  )}
+                  <h2 className="text-sm font-medium text-dark/70 leading-snug">{displayName}</h2>
+                </div>
                 <motion.button
                   onClick={handleToggleFav}
                   whileTap={{ scale: 0.82 }}
                   className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center
                              hover:bg-secondary/10 transition-colors"
-                  aria-label={isFav(item.id) ? "Remove from favorites" : "Save to favorites"}
+                  aria-label={isFav(item.id) ? t("favs.title") : t("item.addToCart")}
                 >
                   <Heart
                     size={20}
@@ -139,8 +153,8 @@ export default function ItemDrawer({ item, onClose }: Props) {
                 </motion.button>
               </div>
 
-              {item.description && (
-                <p className="text-sm text-dark/60 leading-relaxed">{item.description}</p>
+              {displayDesc && (
+                <p className="text-sm text-dark/60 leading-relaxed">{displayDesc}</p>
               )}
 
               <div className="flex flex-col gap-1">
@@ -150,13 +164,15 @@ export default function ItemDrawer({ item, onClose }: Props) {
                       key={tier.label}
                       className="flex justify-between items-center py-2 border-b border-dark/6 last:border-0"
                     >
-                      <span className="text-sm text-dark/55">{tier.label}</span>
+                      <span className="text-sm text-dark/55">
+                        {(isAr && tier.labelAr) ? tier.labelAr : tier.label}
+                      </span>
                       <span className="text-sm font-semibold text-dark tabular-nums">{tier.price}</span>
                     </div>
                   ))
                 ) : (
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-dark/55">Price</span>
+                    <span className="text-sm text-dark/55">{t("item.price")}</span>
                     <span className="text-lg font-bold text-dark tabular-nums">{item.price}</span>
                   </div>
                 )}
@@ -167,7 +183,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
               )}
 
               <div className="flex items-center gap-4 pt-1">
-                <span className="text-sm font-medium text-dark/70">Qty</span>
+                <span className="text-sm font-medium text-dark/70">{t("item.qty")}</span>
                 <div className="flex items-center gap-3 bg-dark/5 rounded-2xl px-3 py-2">
                   <motion.button
                     whileTap={{ scale: 0.82 }}
@@ -203,7 +219,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
                     : "bg-primary text-light hover:bg-primary/90"
                 )}
               >
-                {isInCart(item.id) ? "Add More to Cart" : "Add to Cart"}
+                {isInCart(item.id) ? t("item.addMore") : t("item.addToCart")}
               </motion.button>
             </div>
           </motion.div>

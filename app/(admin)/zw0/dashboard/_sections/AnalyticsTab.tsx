@@ -4,18 +4,20 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLang } from "@/lib/lang-context";
 import type { ApiAnalytics } from "@/lib/supabase/types";
-
-const STAT_CARDS = (a: ApiAnalytics) => [
-  { label: "Total Bookings", value: a.total, icon: TrendingUp, color: "text-secondary bg-secondary/10" },
-  { label: "Pending", value: a.pending, icon: Clock, color: "text-amber-500 bg-amber-50" },
-  { label: "Approved", value: a.approved, icon: CheckCircle, color: "text-emerald-600 bg-emerald-50" },
-  { label: "Rejected", value: a.rejected, icon: XCircle, color: "text-red-500 bg-red-50" },
-];
 
 export default function AnalyticsTab() {
   const [data, setData] = useState<ApiAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useLang();
+
+  const STAT_CARDS = (a: ApiAnalytics) => [
+    { label: t("admin.stat_total"),    value: a.total,    icon: TrendingUp,  color: "text-secondary bg-secondary/10" },
+    { label: t("admin.stat_pending"),  value: a.pending,  icon: Clock,       color: "text-amber-500 bg-amber-50" },
+    { label: t("admin.stat_approved"), value: a.approved, icon: CheckCircle, color: "text-emerald-600 bg-emerald-50" },
+    { label: t("admin.stat_rejected"), value: a.rejected, icon: XCircle,     color: "text-red-500 bg-red-50" },
+  ];
 
   useEffect(() => {
     fetch("/api/admin/analytics")
@@ -60,7 +62,7 @@ export default function AnalyticsTab() {
       {!loading && data && data.top_services.length > 0 && (
         <div>
           <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-secondary mb-3">
-            Top Services
+            {t("admin.top_services")}
           </p>
           <div className="space-y-2">
             {data.top_services.map(({ service_name, count }, i) => {
@@ -70,7 +72,7 @@ export default function AnalyticsTab() {
                 <div key={service_name} className="space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-dark/70 truncate">{service_name}</span>
-                    <span className="text-dark font-semibold tabular-nums ml-2">{count}</span>
+                    <span className="text-dark font-semibold tabular-nums ms-2">{count}</span>
                   </div>
                   <div className="h-1.5 bg-dark/8 rounded-full overflow-hidden">
                     <motion.div
@@ -90,8 +92,8 @@ export default function AnalyticsTab() {
       {!loading && data && data.total === 0 && (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <TrendingUp size={32} className="text-dark/20 mb-3" />
-          <p className="text-sm text-dark/40">No data yet</p>
-          <p className="text-xs text-dark/30 mt-1">Stats will appear once bookings come in</p>
+          <p className="text-sm text-dark/40">{t("admin.no_data")}</p>
+          <p className="text-xs text-dark/30 mt-1">{t("admin.no_data_hint")}</p>
         </div>
       )}
     </div>

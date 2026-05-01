@@ -58,9 +58,6 @@ function BannerInner({ ad }: { ad: ApiAd }) {
 
       {/* Content */}
       <div className="relative z-10 px-8 md:px-14 py-10" dir={isAr ? "rtl" : "ltr"}>
-        <p className="text-accent/70 text-xs uppercase tracking-[0.2em] font-medium mb-1.5">
-          Coming Soon
-        </p>
         <h3 className="text-2xl md:text-3xl font-bold text-light tracking-tight mb-1">
           {headline}
         </h3>

@@ -3,17 +3,8 @@
 import { motion } from "framer-motion";
 import { CalendarDays, Layers, Plus, Megaphone, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
 import type { AdminTab } from "../page";
-
-const NAV_ITEMS = [
-  { tab: "bookings" as AdminTab, icon: CalendarDays, label: "Bookings" },
-  { tab: "services" as AdminTab, icon: Layers, label: "Services" },
-] as const;
-
-const NAV_ITEMS_RIGHT = [
-  { tab: "ads" as AdminTab, icon: Megaphone, label: "Ads" },
-  { tab: "analytics" as AdminTab, icon: BarChart2, label: "Analytics" },
-] as const;
 
 interface Props {
   activeTab: AdminTab;
@@ -22,10 +13,22 @@ interface Props {
 }
 
 export default function BottomNav({ activeTab, onTabChange, onAddPress }: Props) {
+  const { t } = useLang();
+
+  const NAV_ITEMS = [
+    { tab: "bookings" as AdminTab, icon: CalendarDays, label: t("admin.tab_bookings") },
+    { tab: "services" as AdminTab, icon: Layers,       label: t("admin.tab_services") },
+  ];
+
+  const NAV_ITEMS_RIGHT = [
+    { tab: "ads"       as AdminTab, icon: Megaphone, label: t("admin.tab_ads") },
+    { tab: "analytics" as AdminTab, icon: BarChart2, label: t("admin.tab_analytics") },
+  ];
+
   return (
     <nav className="flex-none h-[68px] bg-light border-t border-dark/8 flex items-center px-2 safe-area-pb">
       <div className="flex items-center justify-between w-full">
-        {/* Left items */}
+        {/* Start items */}
         <div className="flex flex-1 justify-around">
           {NAV_ITEMS.map(({ tab, icon: Icon, label }) => (
             <NavButton
@@ -49,7 +52,7 @@ export default function BottomNav({ activeTab, onTabChange, onAddPress }: Props)
           </motion.button>
         </div>
 
-        {/* Right items */}
+        {/* End items */}
         <div className="flex flex-1 justify-around">
           {NAV_ITEMS_RIGHT.map(({ tab, icon: Icon, label }) => (
             <NavButton

@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronDown, Edit2, Plus, Trash2, Languages, Loader2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronDown, Edit2, Plus, Languages, Loader2, Search, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import EditSheet, { type FieldDef } from "../_components/EditSheet";
 import ConfirmSheet from "../_components/ConfirmSheet";
 import { PACKAGE_ICONS } from "@/lib/package-icons";
+import { useLang } from "@/lib/lang-context";
 
 type Translations = Record<string, Record<string, string>>;
 
@@ -29,7 +30,9 @@ type CategoryRow = {
   translations: Translations;
 };
 
-type InnerTab = "categories" | "products";
+type InnerTab = "categories" | "products" | "sections";
+
+type SectionRow = { id: string; name: string; translations: Translations; display_order: number };
 
 type EditTarget =
   | { kind: "cat"; item: CategoryRow }
@@ -37,12 +40,15 @@ type EditTarget =
   | { kind: "svc"; item: ServiceRow }
   | { kind: "addSvc"; categoryId?: string }
   | { kind: "pkg"; pkg: PkgRow; svcId: string }
-  | { kind: "addPkg"; svcId: string };
+  | { kind: "addPkg"; svcId: string }
+  | { kind: "section"; item: SectionRow }
+  | { kind: "addSection" };
 
 type DeleteTarget =
   | { kind: "cat"; id: string; name: string }
   | { kind: "svc"; id: string; name: string }
-  | { kind: "pkg"; id: string; svcId: string; name: string };
+  | { kind: "pkg"; id: string; svcId: string; name: string }
+  | { kind: "section"; id: string; name: string };
 
 // ── Field definitions ──────────────────────────────────────────────────────
 
@@ -64,6 +70,10 @@ const PKG_FIELDS: FieldDef[] = [
       ...Object.entries(PACKAGE_ICONS).map(([k, v]) => ({ value: k, label: `${v.emoji} ${v.label}` })),
     ],
   },
+];
+
+const SECTION_FIELDS: FieldDef[] = [
+  { key: "name", label: "Section Name", required: true, placeholder: "e.g. Hair & Skin Care", translatable: true },
 ];
 
 // Helper: extract AR values from translations JSONB
@@ -88,22 +98,32 @@ export default function ServicesTab() {
   const [innerTab, setInnerTab] = useState<InnerTab>("categories");
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [services, setServices] = useState<ServiceRow[]>([]);
+  const [sections, setSections] = useState<SectionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSvc, setExpandedSvc] = useState<string | null>(null);
   const [toggling, setToggling] = useState<Set<string>>(new Set());
-
   const [editing, setEditing] = useState<EditTarget | null>(null);
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
   const [batchStatus, setBatchStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  // Search & filter state
+  const [query, setQuery] = useState("");
+  const [filterCatId, setFilterCatId] = useState("all");
+  const [filterGroup, setFilterGroup] = useState("all");
+
+  const { t, isRTL } = useLang();
+  const ChevronInline = isRTL ? ChevronLeft : ChevronRight;
 
   const load = useCallback(() => {
     setLoading(true);
     Promise.all([
       fetch("/api/admin/categories").then((r) => r.json()),
       fetch("/api/admin/services").then((r) => r.json()),
-    ]).then(([cats, svcs]) => {
+      fetch("/api/admin/sections").then((r) => r.json()),
+    ]).then(([cats, svcs, secs]) => {
       setCategories(Array.isArray(cats) ? cats : []);
       setServices(Array.isArray(svcs) ? svcs : []);
+      setSections(Array.isArray(secs) ? secs : []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -120,6 +140,32 @@ export default function ServicesTab() {
     }
     return { cat, groups: Array.from(groupMap.entries()) };
   });
+
+  // All unique group labels for the filter dropdown
+  const allGroupLabels = [...new Set(services.map((s) => s.group_label).filter((l): l is string => !!l))].sort();
+
+  // Filtered data
+  const q = query.toLowerCase().trim();
+  const visibleCategories = categories.filter((cat) =>
+    !q || cat.name.toLowerCase().includes(q) || (cat.subtitle ?? "").toLowerCase().includes(q)
+  );
+  const visibleGrouped = grouped
+    .filter(({ cat }) => filterCatId === "all" || cat.id === filterCatId)
+    .map(({ cat, groups }) => ({
+      cat,
+      groups: groups
+        .filter(([label]) => filterGroup === "all" || label === filterGroup)
+        .map(([label, svcs]): [string, ServiceRow[]] => [
+          label,
+          svcs.filter((svc) =>
+            !q ||
+            svc.name.toLowerCase().includes(q) ||
+            svc.packages?.some((p) => p.name.toLowerCase().includes(q))
+          ),
+        ])
+        .filter(([, svcs]) => svcs.length > 0),
+    }))
+    .filter(({ groups }) => groups.length > 0);
 
   // ── Category CRUD ──────────────────────────────────────────────────────────
   async function saveCat(values: Record<string, string>) {
@@ -151,10 +197,27 @@ export default function ServicesTab() {
   }
 
   // ── Service CRUD ───────────────────────────────────────────────────────────
-  function svcFields(cats: CategoryRow[]): FieldDef[] {
+  async function quickAddSection(name: string) {
+    const res = await fetch("/api/admin/sections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, translations: {}, display_order: sections.length }),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      setSections((prev) => [...prev, created]);
+    }
+  }
+
+  function svcFields(cats: CategoryRow[], secs: SectionRow[]): FieldDef[] {
     return [
       { key: "name",        label: "Name",        required: true, placeholder: "e.g. Yoga Beginner", translatable: true },
-      { key: "group_label", label: "Group Label",                 placeholder: "e.g. Hair & Skin Care" },
+      {
+        key: "group_label", label: "Section / Group", type: "combobox",
+        placeholder: "e.g. Hair & Skin Care",
+        options: secs.map((s) => ({ value: s.name, label: s.name })),
+        onAddOption: quickAddSection,
+      },
       { key: "description", label: "Description",  type: "textarea", placeholder: "Optional description", translatable: true },
       {
         key: "category_id", label: "Category", type: "select",
@@ -236,16 +299,46 @@ export default function ServicesTab() {
     ));
   }
 
+  // ── Section CRUD ───────────────────────────────────────────────────────────
+  async function saveSection(values: Record<string, string>) {
+    const translations = buildTranslations(values, ["name"]);
+    const payload = { name: values.name, translations };
+    if (editing?.kind === "section") {
+      const res = await fetch(`/api/admin/sections/${editing.item.id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      });
+      const updated = await res.json();
+      setSections((prev) => prev.map((s) => s.id === editing.item.id ? { ...s, ...updated } : s));
+    } else {
+      const res = await fetch("/api/admin/sections", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, display_order: sections.length }),
+      });
+      const created = await res.json();
+      setSections((prev) => [...prev, created]);
+    }
+  }
+
+  async function deleteSection(id: string) {
+    await fetch(`/api/admin/sections/${id}`, { method: "DELETE" });
+    setSections((prev) => prev.filter((s) => s.id !== id));
+  }
+
   // ── Edit sheet config ──────────────────────────────────────────────────────
   function editFields(): FieldDef[] {
     if (!editing) return [];
     if (editing.kind === "cat" || editing.kind === "addCat") return CAT_FIELDS;
-    if (editing.kind === "svc" || editing.kind === "addSvc") return svcFields(categories);
+    if (editing.kind === "svc" || editing.kind === "addSvc") return svcFields(categories, sections);
+    if (editing.kind === "section" || editing.kind === "addSection") return SECTION_FIELDS;
     return PKG_FIELDS;
   }
 
   function editInitial(): Record<string, string> {
     if (!editing) return {};
+    if (editing.kind === "section") return {
+      name: editing.item.name,
+      ...arValues(editing.item.translations, ["name"]),
+    };
     if (editing.kind === "cat") return {
       name: editing.item.name,
       subtitle: editing.item.subtitle ?? "",
@@ -273,18 +366,21 @@ export default function ServicesTab() {
 
   function editTitle(): string {
     if (!editing) return "";
-    if (editing.kind === "addCat") return "New Category";
-    if (editing.kind === "cat") return "Edit Category";
-    if (editing.kind === "addSvc") return "New Service";
-    if (editing.kind === "svc") return "Edit Service";
-    if (editing.kind === "addPkg") return "New Package";
-    return "Edit Package";
+    if (editing.kind === "addCat") return t("admin.new_category");
+    if (editing.kind === "cat") return t("admin.edit_category");
+    if (editing.kind === "addSvc") return t("admin.new_service");
+    if (editing.kind === "svc") return t("admin.edit_service");
+    if (editing.kind === "addPkg") return t("admin.new_package");
+    if (editing.kind === "addSection") return t("admin.new_section");
+    if (editing.kind === "section") return t("admin.edit_section");
+    return t("admin.edit_package");
   }
 
   async function handleSave(values: Record<string, string>) {
     if (!editing) return;
     if (editing.kind === "cat" || editing.kind === "addCat") return saveCat(values);
     if (editing.kind === "svc" || editing.kind === "addSvc") return saveSvc(values);
+    if (editing.kind === "section" || editing.kind === "addSection") return saveSection(values);
     return savePkg(values);
   }
 
@@ -293,6 +389,7 @@ export default function ServicesTab() {
     if (editing.kind === "cat") return () => setDeleting({ kind: "cat", id: editing.item.id, name: editing.item.name });
     if (editing.kind === "svc") return () => setDeleting({ kind: "svc", id: editing.item.id, name: editing.item.name });
     if (editing.kind === "pkg") return () => setDeleting({ kind: "pkg", id: editing.pkg.id, svcId: editing.svcId, name: editing.pkg.name });
+    if (editing.kind === "section") return () => setDeleting({ kind: "section", id: editing.item.id, name: editing.item.name });
     return undefined;
   }
 
@@ -300,6 +397,7 @@ export default function ServicesTab() {
     if (!deleting) return;
     if (deleting.kind === "cat") return deleteCat(deleting.id);
     if (deleting.kind === "svc") return deleteSvc(deleting.id);
+    if (deleting.kind === "section") return deleteSection(deleting.id);
     return deletePkg(deleting.id, (deleting as { kind: "pkg"; svcId: string }).svcId);
   }
 
@@ -366,19 +464,59 @@ export default function ServicesTab() {
   return (
     <div className="pb-6">
       {/* Inner tab switcher */}
-      <div className="flex gap-1 mx-4 mt-5 mb-4 bg-dark/[0.04] p-1 rounded-xl">
-        {(["categories", "products"] as InnerTab[]).map((t) => (
+      <div className="flex gap-1 mx-4 mt-5 mb-3 bg-dark/[0.04] p-1 rounded-xl">
+        {(["categories", "products", "sections"] as InnerTab[]).map((tab) => (
           <button
-            key={t}
-            onClick={() => setInnerTab(t)}
+            key={tab}
+            onClick={() => setInnerTab(tab)}
             className={cn(
               "flex-1 py-1.5 rounded-lg text-xs font-medium capitalize transition-all",
-              innerTab === t ? "bg-light text-dark shadow-sm" : "text-dark/45"
+              innerTab === tab ? "bg-light text-dark shadow-sm" : "text-dark/45"
             )}
           >
-            {t}
+            {tab === "categories" ? t("admin.tab_categories") : tab === "products" ? t("admin.tab_products") : t("admin.tab_sections")}
           </button>
         ))}
+      </div>
+
+      {/* Search + filters */}
+      <div className="px-4 mb-3 flex flex-col gap-2">
+        <div className="relative">
+          <Search size={13} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("admin.search_placeholder")}
+            className="w-full bg-dark/[0.04] border border-dark/8 rounded-xl ps-9 pe-8 py-2.5 text-sm text-dark placeholder:text-dark/30 outline-none focus:border-primary/30 transition-colors"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} className="absolute end-3 top-1/2 -translate-y-1/2 text-dark/30 hover:text-dark/60">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+
+        {innerTab === "products" && (
+          <div className="flex gap-2">
+            <select
+              value={filterCatId}
+              onChange={(e) => setFilterCatId(e.target.value)}
+              className="flex-1 bg-dark/[0.04] border border-dark/8 rounded-xl px-3 py-2 text-xs text-dark outline-none focus:border-primary/30 transition-colors"
+            >
+              <option value="all">{t("admin.all_categories")}</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select
+              value={filterGroup}
+              onChange={(e) => setFilterGroup(e.target.value)}
+              className="flex-1 bg-dark/[0.04] border border-dark/8 rounded-xl px-3 py-2 text-xs text-dark outline-none focus:border-primary/30 transition-colors"
+            >
+              <option value="all">{t("admin.all_groups")}</option>
+              {allGroupLabels.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -395,7 +533,7 @@ export default function ServicesTab() {
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
             >
               <Plus size={14} />
-              Add Category
+              {t("admin.add_category")}
             </button>
             <button
               onClick={handleBatchTranslate}
@@ -405,11 +543,14 @@ export default function ServicesTab() {
                          disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             >
               {batchStatus === "loading" ? <Loader2 size={13} className="animate-spin" /> : <Languages size={13} />}
-              {batchStatus === "done" ? "Done!" : batchStatus === "error" ? "Error" : "Translate All"}
+              {batchStatus === "done" ? t("admin.translate_done") : batchStatus === "error" ? t("admin.translate_error") : t("admin.translate_all")}
             </button>
           </div>
 
-          {categories.map((cat) => (
+          {visibleCategories.length === 0 && query && (
+            <p className="text-xs text-dark/30 text-center py-6">{t("admin.no_results")} &ldquo;{query}&rdquo;</p>
+          )}
+          {visibleCategories.map((cat) => (
             <div key={cat.id} className="p-4 rounded-2xl bg-dark/[0.03] flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-dark">{cat.name}</p>
@@ -420,14 +561,14 @@ export default function ServicesTab() {
               </div>
               <button
                 onClick={() => setEditing({ kind: "cat", item: cat })}
-                className="w-7 h-7 rounded-lg bg-dark/5 flex items-center justify-center shrink-0 ml-3"
+                className="w-7 h-7 rounded-lg bg-dark/5 flex items-center justify-center shrink-0 ms-3"
               >
                 <Edit2 size={13} className="text-dark/50" />
               </button>
             </div>
           ))}
         </div>
-      ) : (
+      ) : innerTab === "products" ? (
         <div className="px-4 space-y-5">
           <div className="flex gap-2">
             <button
@@ -435,7 +576,7 @@ export default function ServicesTab() {
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
             >
               <Plus size={14} />
-              Add Service
+              {t("admin.add_service")}
             </button>
             <button
               onClick={handleBatchTranslate}
@@ -445,11 +586,14 @@ export default function ServicesTab() {
                          disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
             >
               {batchStatus === "loading" ? <Loader2 size={13} className="animate-spin" /> : <Languages size={13} />}
-              {batchStatus === "done" ? "Done!" : batchStatus === "error" ? "Error" : "Translate All"}
+              {batchStatus === "done" ? t("admin.translate_done") : batchStatus === "error" ? t("admin.translate_error") : t("admin.translate_all")}
             </button>
           </div>
 
-          {grouped.map(({ cat, groups }) => (
+          {visibleGrouped.length === 0 && (query || filterCatId !== "all" || filterGroup !== "all") && (
+            <p className="text-xs text-dark/30 text-center py-6">{t("admin.no_results")}</p>
+          )}
+          {visibleGrouped.map(({ cat, groups }) => (
             <div key={cat.id}>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-secondary">{cat.name}</p>
@@ -461,9 +605,12 @@ export default function ServicesTab() {
                 </button>
               </div>
 
-              {groups.map(([label, svcs]) => (
+              {groups.map(([label, svcs]) => {
+                const sectionRow = sections.find((s) => s.name === label);
+                const displayLabel = (isRTL && sectionRow?.translations?.ar?.name) ? sectionRow.translations.ar.name : label;
+                return (
                 <div key={label} className="mb-3">
-                  <p className="text-[11px] text-dark/40 font-medium px-1 mb-1">{label}</p>
+                  <p className="text-[11px] text-dark/40 font-medium px-1 mb-1">{displayLabel}</p>
                   <div className="space-y-1">
                     {svcs.map((svc) => (
                       <div key={svc.id} className="rounded-xl bg-dark/[0.03] overflow-hidden">
@@ -471,7 +618,7 @@ export default function ServicesTab() {
                           <button
                             disabled={toggling.has(svc.id)}
                             onClick={() => toggleSvc(svc)}
-                            className="shrink-0 mr-2.5 disabled:opacity-40"
+                            className="shrink-0 me-2.5 disabled:opacity-40"
                           >
                             <div className={cn(
                               "w-2 h-2 rounded-full transition-colors",
@@ -492,13 +639,13 @@ export default function ServicesTab() {
                             </div>
                             {expandedSvc === svc.id
                               ? <ChevronDown size={14} className="text-dark/30 shrink-0" />
-                              : <ChevronRight size={14} className="text-dark/30 shrink-0" />
+                              : <ChevronInline size={14} className="text-dark/30 shrink-0" />
                             }
                           </button>
 
                           <button
                             onClick={() => setEditing({ kind: "svc", item: svc })}
-                            className="w-6 h-6 rounded-lg bg-dark/5 flex items-center justify-center shrink-0 ml-2"
+                            className="w-6 h-6 rounded-lg bg-dark/5 flex items-center justify-center shrink-0 ms-2"
                           >
                             <Edit2 size={11} className="text-dark/40" />
                           </button>
@@ -516,10 +663,10 @@ export default function ServicesTab() {
                                   {pkg.icon && PACKAGE_ICONS[pkg.icon as keyof typeof PACKAGE_ICONS]?.emoji + " "}
                                   {pkg.name}
                                   {pkg.translations?.ar?.name && (
-                                    <span className="ml-1 text-[9px] font-bold text-secondary bg-secondary/10 px-1 rounded">ع</span>
+                                    <span className="ms-1 text-[9px] font-bold text-secondary bg-secondary/10 px-1 rounded">ع</span>
                                   )}
                                 </span>
-                                <span className="text-xs font-semibold text-dark tabular-nums mr-3">
+                                <span className="text-xs font-semibold text-dark tabular-nums me-3">
                                   {pkg.price} {pkg.currency}
                                 </span>
                                 <button
@@ -536,7 +683,7 @@ export default function ServicesTab() {
                               className="mt-1 flex items-center gap-1.5 text-[11px] text-primary font-medium py-1"
                             >
                               <Plus size={11} />
-                              Add package
+                              {t("admin.add_package")}
                             </button>
                           </motion.div>
                         )}
@@ -544,11 +691,44 @@ export default function ServicesTab() {
                     ))}
                   </div>
                 </div>
-              ))}
+              );
+              })}
 
               {groups.length === 0 && (
-                <p className="text-xs text-dark/30 px-1 mb-2">No services yet</p>
+                <p className="text-xs text-dark/30 px-1 mb-2">{t("admin.no_services")}</p>
               )}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {/* Sections tab content */}
+      {!loading && innerTab === "sections" && (
+        <div className="px-4 space-y-2">
+          <button
+            onClick={() => setEditing({ kind: "addSection" })}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
+          >
+            <Plus size={14} />
+            {t("admin.new_section")}
+          </button>
+          {sections.length === 0 && (
+            <p className="text-xs text-dark/30 text-center py-8">{t("admin.no_sections")}</p>
+          )}
+          {sections.map((sec) => (
+            <div key={sec.id} className="p-4 rounded-2xl bg-dark/[0.03] flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-dark">{sec.name}</p>
+                {sec.translations?.ar?.name && (
+                  <p className="text-[10px] text-secondary/70 mt-0.5 truncate" dir="rtl">{sec.translations.ar.name}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setEditing({ kind: "section", item: sec })}
+                className="w-7 h-7 rounded-lg bg-dark/5 flex items-center justify-center shrink-0 ms-3"
+              >
+                <Edit2 size={13} className="text-dark/50" />
+              </button>
             </div>
           ))}
         </div>
@@ -566,7 +746,7 @@ export default function ServicesTab() {
 
       <ConfirmSheet
         open={deleting !== null}
-        message={`Delete "${deleting?.name}"? This cannot be undone.`}
+        message={`${t("admin.delete")} "${deleting?.name}"? ${t("admin.cannot_undone")}`}
         onConfirm={handleDelete}
         onClose={() => setDeleting(null)}
       />

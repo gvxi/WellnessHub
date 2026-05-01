@@ -5,23 +5,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, XCircle, AlertTriangle, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
 import type { ApiBooking } from "@/lib/supabase/types";
 
 type Filter = "all" | "pending" | "approved" | "rejected";
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "pending", label: "Pending" },
-  { key: "approved", label: "Approved" },
-  { key: "rejected", label: "Rejected" },
-];
-
-const STATUS_CONFIG = {
-  pending: { icon: Clock, color: "text-amber-500", bg: "bg-amber-50", label: "Pending" },
-  approved: { icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50", label: "Approved" },
-  rejected: { icon: XCircle, color: "text-red-500", bg: "bg-red-50", label: "Rejected" },
-  refunded: { icon: XCircle, color: "text-secondary", bg: "bg-accent/20", label: "Refunded" },
-};
 
 export default function BookingsTab() {
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
@@ -29,6 +16,21 @@ export default function BookingsTab() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const { t } = useLang();
+
+  const FILTERS: { key: Filter; label: string }[] = [
+    { key: "all",      label: t("admin.filter_all") },
+    { key: "pending",  label: t("admin.filter_pending") },
+    { key: "approved", label: t("admin.filter_approved") },
+    { key: "rejected", label: t("admin.filter_rejected") },
+  ];
+
+  const STATUS_CONFIG = {
+    pending:  { icon: Clock,        color: "text-amber-500",   bg: "bg-amber-50",    label: t("admin.status_pending") },
+    approved: { icon: CheckCircle,  color: "text-emerald-600", bg: "bg-emerald-50",  label: t("admin.status_approved") },
+    rejected: { icon: XCircle,      color: "text-red-500",     bg: "bg-red-50",      label: t("admin.status_rejected") },
+    refunded: { icon: XCircle,      color: "text-secondary",   bg: "bg-accent/20",   label: t("admin.status_refunded") },
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -82,7 +84,7 @@ export default function BookingsTab() {
       ) : bookings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <AlertTriangle size={32} className="text-dark/20 mb-3" />
-          <p className="text-sm text-dark/40">No bookings yet</p>
+          <p className="text-sm text-dark/40">{t("admin.no_bookings")}</p>
         </div>
       ) : (
         <motion.div
@@ -104,12 +106,12 @@ export default function BookingsTab() {
               >
                 <button
                   onClick={() => setExpanded(isExpanded ? null : booking.id)}
-                  className="w-full p-4 text-left"
+                  className="w-full p-4 text-start"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-dark truncate">
-                        {booking.customer_name ?? "Customer"}
+                        {booking.customer_name ?? t("admin.customer")}
                       </p>
                       <p className="text-xs text-dark/50 mt-0.5 truncate">
                         {booking.service_name ?? "—"}{booking.package_name ? ` · ${booking.package_name}` : ""}
@@ -142,14 +144,14 @@ export default function BookingsTab() {
                           onClick={() => updateStatus(booking.id, "approved")}
                           className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold disabled:opacity-50"
                         >
-                          Approve
+                          {t("admin.booking_approve")}
                         </button>
                         <button
                           disabled={updating === booking.id}
                           onClick={() => updateStatus(booking.id, "rejected")}
                           className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-xs font-semibold disabled:opacity-50"
                         >
-                          Reject
+                          {t("admin.booking_reject")}
                         </button>
                       </div>
                     </motion.div>

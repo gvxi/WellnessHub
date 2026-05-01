@@ -147,6 +147,7 @@ export type ApiAd = {
   unsplash_id: string | null;
   image_url: string | null;
   badge_text: string | null;
+  link_url: string | null;
   fullscreen_enabled: boolean;
   display_order: number;
   translations: Translations;

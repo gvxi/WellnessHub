@@ -1,19 +1,141 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Loader2, Upload, Globe, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Loader2, Upload, Globe, CheckCircle2, AlertCircle, Plus, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// ── Custom Combobox (fixed-position dropdown, works inside overflow containers) ──
+
+interface ComboboxProps {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  onAddOption?: (value: string) => Promise<void>;
+  inputClass: string;
+}
+
+function ComboboxField({ value, onChange, options, placeholder, onAddOption, inputClass }: ComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const [adding, setAdding] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const q = value.toLowerCase();
+  const filtered = q
+    ? options.filter((o) => o.label.toLowerCase().includes(q))
+    : options;
+  const isNew = value.trim() !== "" && !options.some((o) => o.value.toLowerCase() === value.trim().toLowerCase());
+
+  function openDropdown() {
+    if (!wrapRef.current) return;
+    const r = wrapRef.current.getBoundingClientRect();
+    setDropPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    setOpen(true);
+  }
+
+  function pick(v: string) {
+    onChange(v);
+    setOpen(false);
+  }
+
+  async function handleAdd() {
+    if (!onAddOption || !value.trim()) return;
+    setAdding(true);
+    try { await onAddOption(value.trim()); } finally { setAdding(false); }
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (wrapRef.current?.contains(e.target as Node)) return;
+      const drop = document.getElementById("editsheet-combobox-drop");
+      if (drop?.contains(e.target as Node)) return;
+      setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => { onChange(e.target.value); if (!open) openDropdown(); }}
+          onFocus={openDropdown}
+          className={cn(inputClass, "pe-8")}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => open ? setOpen(false) : openDropdown()}
+          className="absolute end-2 top-1/2 -translate-y-1/2 text-dark/30 hover:text-dark/60 p-1"
+        >
+          <ChevronDown size={14} className={cn("transition-transform", open && "rotate-180")} />
+        </button>
+      </div>
+
+      {open && typeof window !== "undefined" && (
+        <div
+          id="editsheet-combobox-drop"
+          style={{ position: "fixed", top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 9999 }}
+          className="bg-light border border-dark/10 rounded-xl shadow-xl overflow-hidden"
+        >
+          <div className="max-h-48 overflow-y-auto overscroll-contain">
+            {filtered.length === 0 && !isNew && (
+              <p className="text-xs text-dark/35 px-3 py-3">No matching sections</p>
+            )}
+            {filtered.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); pick(o.value); }}
+                className={cn(
+                  "w-full text-start px-3 py-2 text-sm hover:bg-primary/8 transition-colors",
+                  o.value === value ? "text-primary font-medium bg-primary/5" : "text-dark/80"
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {onAddOption && isNew && (
+            <div className="border-t border-dark/8 px-3 py-2">
+              <button
+                type="button"
+                disabled={adding}
+                onMouseDown={(e) => { e.preventDefault(); handleAdd(); }}
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary
+                           bg-primary/8 hover:bg-primary/14 px-2.5 py-1 rounded-lg transition-colors
+                           disabled:opacity-50 w-full justify-center"
+              >
+                {adding ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                Add &ldquo;{value.trim()}&rdquo; as new section
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export type FieldDef = {
   key: string;
   label: string;
-  type?: "text" | "number" | "textarea" | "select" | "image";
+  type?: "text" | "number" | "textarea" | "select" | "combobox" | "image";
   placeholder?: string;
   required?: boolean;
   options?: { value: string; label: string }[];
   uploadFolder?: string;
-  translatable?: boolean; // shows AR sub-field + included in auto-translate
+  translatable?: boolean;
+  onAddOption?: (value: string) => Promise<void>;
 };
 
 interface Props {
@@ -29,12 +151,14 @@ interface Props {
 const SPRING = { type: "spring" as const, stiffness: 340, damping: 34 };
 
 type TranslateStatus = "idle" | "loading" | "done" | "error";
+type TranslateDir = "en-ar" | "ar-en";
 
 export default function EditSheet({ open, title, fields, initialValues, onClose, onSave, onDelete }: Props) {
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [translateStatus, setTranslateStatus] = useState<TranslateStatus>("idle");
+  const [translateDir, setTranslateDir] = useState<TranslateDir>("en-ar");
 
   const translatableFields = fields.filter((f) => f.translatable && f.type !== "image" && f.type !== "select");
 
@@ -73,17 +197,29 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
 
   async function handleTranslate() {
     if (translatableFields.length === 0) return;
-    // Only translate EN fields that have content AND whose AR field is empty
+    const isEnToAr = translateDir === "en-ar";
+
+    // EN→AR: fill empty AR from non-empty EN
+    // AR→EN: fill empty EN from non-empty AR
     const toTranslate = translatableFields
-      .map((f) => ({ f, text: draft[f.key] ?? "" }))
-      .filter(({ text, f }) => text.trim() && !draft[`${f.key}_ar`]?.trim());
+      .map((f) => ({
+        f,
+        text: isEnToAr ? (draft[f.key] ?? "") : (draft[`${f.key}_ar`] ?? ""),
+        destEmpty: isEnToAr ? !draft[`${f.key}_ar`]?.trim() : !draft[f.key]?.trim(),
+      }))
+      .filter(({ text, destEmpty }) => text.trim() && destEmpty);
+
     if (toTranslate.length === 0) return;
     setTranslateStatus("loading");
     try {
       const res = await fetch("/api/admin/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texts: toTranslate.map(({ text }) => text), from: "en", to: "ar" }),
+        body: JSON.stringify({
+          texts: toTranslate.map(({ text }) => text),
+          from: isEnToAr ? "en" : "ar",
+          to: isEnToAr ? "ar" : "en",
+        }),
       });
       if (!res.ok) throw new Error("Translate API error");
       const json = await res.json();
@@ -91,7 +227,10 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
       setDraft((d) => {
         const next = { ...d };
         toTranslate.forEach(({ f }, idx) => {
-          if (translated[idx]) next[`${f.key}_ar`] = translated[idx];
+          if (translated[idx]) {
+            if (isEnToAr) next[`${f.key}_ar`] = translated[idx];
+            else next[f.key] = translated[idx];
+          }
         });
         return next;
       });
@@ -172,6 +311,18 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
         </select>
       );
     }
+    if (f.type === "combobox") {
+      return (
+        <ComboboxField
+          value={value}
+          onChange={(v) => set(key, v)}
+          options={f.options ?? []}
+          placeholder={f.placeholder}
+          onAddOption={f.onAddOption}
+          inputClass={inputClass}
+        />
+      );
+    }
     if (f.type === "image") {
       return (
         <div className="space-y-2">
@@ -215,9 +366,9 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
 
   const translateButtonContent = () => {
     if (translateStatus === "loading") return <><Loader2 size={12} className="animate-spin" />Translating…</>;
-    if (translateStatus === "done") return <><CheckCircle2 size={12} className="text-emerald-500" />Translated</>;
+    if (translateStatus === "done") return <><CheckCircle2 size={12} className="text-emerald-500" />Done</>;
     if (translateStatus === "error") return <><AlertCircle size={12} className="text-red-400" />Failed</>;
-    return <><Globe size={12} />Translate EN→AR</>;
+    return <><Globe size={12} />{translateDir === "en-ar" ? "EN→AR" : "AR→EN"}</>;
   };
 
   return (
@@ -247,22 +398,32 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
               <div className="flex items-center gap-2">
                 {/* Translate button — only show if there are translatable fields */}
                 {translatableFields.length > 0 && (
-                  <button
-                    type="button"
-                    disabled={translateStatus === "loading"}
-                    onClick={handleTranslate}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all",
-                      translateStatus === "done"
-                        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                        : translateStatus === "error"
-                          ? "bg-red-50 text-red-500 border border-red-200"
-                          : "bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/15",
-                      translateStatus === "loading" && "opacity-60"
-                    )}
-                  >
-                    {translateButtonContent()}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setTranslateDir((d) => d === "en-ar" ? "ar-en" : "en-ar")}
+                      className="w-6 h-6 rounded-lg bg-dark/6 flex items-center justify-center text-dark/40 hover:text-dark/70 hover:bg-dark/10 transition-colors text-[9px] font-bold"
+                      title="Toggle direction"
+                    >
+                      ⇄
+                    </button>
+                    <button
+                      type="button"
+                      disabled={translateStatus === "loading"}
+                      onClick={handleTranslate}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all",
+                        translateStatus === "done"
+                          ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                          : translateStatus === "error"
+                            ? "bg-red-50 text-red-500 border border-red-200"
+                            : "bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/15",
+                        translateStatus === "loading" && "opacity-60"
+                      )}
+                    >
+                      {translateButtonContent()}
+                    </button>
+                  </div>
                 )}
                 <button
                   onClick={onClose}
