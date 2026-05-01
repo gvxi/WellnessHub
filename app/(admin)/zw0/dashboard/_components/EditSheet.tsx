@@ -73,21 +73,25 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
 
   async function handleTranslate() {
     if (translatableFields.length === 0) return;
+    // Only translate EN fields that have content AND whose AR field is empty
+    const toTranslate = translatableFields
+      .map((f) => ({ f, text: draft[f.key] ?? "" }))
+      .filter(({ text, f }) => text.trim() && !draft[`${f.key}_ar`]?.trim());
+    if (toTranslate.length === 0) return;
     setTranslateStatus("loading");
     try {
-      const texts = translatableFields.map((f) => draft[f.key] ?? "");
       const res = await fetch("/api/admin/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ texts, from: "en", to: "ar" }),
+        body: JSON.stringify({ texts: toTranslate.map(({ text }) => text), from: "en", to: "ar" }),
       });
       if (!res.ok) throw new Error("Translate API error");
       const json = await res.json();
       const translated: string[] = json.translations;
       setDraft((d) => {
         const next = { ...d };
-        translatableFields.forEach((f, i) => {
-          if (translated[i]) next[`${f.key}_ar`] = translated[i];
+        toTranslate.forEach(({ f }, idx) => {
+          if (translated[idx]) next[`${f.key}_ar`] = translated[idx];
         });
         return next;
       });

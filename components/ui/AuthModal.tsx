@@ -212,6 +212,18 @@ function SignUpTab({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+function ReadonlyRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 py-3 px-3 rounded-2xl bg-dark/[0.03] border border-dark/8">
+      <Icon size={15} className="text-dark/30 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] text-dark/35 uppercase tracking-wider font-medium">{label}</p>
+        <p className="text-sm text-dark font-medium truncate">{value || "—"}</p>
+      </div>
+    </div>
+  );
+}
+
 function ProfileStep({ onDone }: { onDone: () => void }) {
   const { t } = useLang();
   const [username, setUsername] = useState("");
@@ -219,6 +231,35 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
   const [phoneNum, setPhoneNum] = useState("");
   const [age, setAge] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); setEditing(true); return; }
+      const { data } = await supabase.from("profiles").select("username, phone, age").eq("id", user.id).single();
+      if (data) {
+        setUsername(data.username ?? "");
+        setAge(data.age ? String(data.age) : "");
+        if (data.phone) {
+          const match = COUNTRIES.find((c) => data.phone!.startsWith(c.dial));
+          if (match) {
+            setDialCode(match.dial);
+            setPhoneNum(data.phone.slice(match.dial.length));
+          } else {
+            setPhoneNum(data.phone);
+          }
+        }
+        const hasData = !!(data.username || data.phone || data.age);
+        setEditing(!hasData);
+      } else {
+        setEditing(true);
+      }
+      setLoading(false);
+    }
+    loadProfile();
+  }, []);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -233,7 +274,29 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
       });
     }
     setSaving(false);
-    onDone();
+    setEditing(false);
+  }
+
+  if (loading) {
+    return <div className="flex justify-center py-8"><div className="w-5 h-5 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /></div>;
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex flex-col gap-2">
+        <ReadonlyRow icon={User} label={t("auth.usernamePlaceholder")} value={username} />
+        <ReadonlyRow icon={Phone} label={t("auth.phonePlaceholder")} value={phoneNum ? `${dialCode} ${phoneNum}` : ""} />
+        <ReadonlyRow icon={Calendar} label={t("auth.agePlaceholder")} value={age} />
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setEditing(true)}
+          className="w-full py-3 mt-1 rounded-2xl text-sm font-semibold bg-primary text-light
+                     hover:bg-primary/90 transition-colors"
+        >
+          {t("auth.editProfile")}
+        </motion.button>
+      </div>
+    );
   }
 
   return (
@@ -293,15 +356,26 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
         />
       </div>
 
-      <motion.button
-        type="submit"
-        whileTap={{ scale: 0.97 }}
-        disabled={saving}
-        className="w-full py-3 rounded-2xl text-sm font-semibold bg-primary text-light
-                   hover:bg-primary/90 transition-colors disabled:opacity-60"
-      >
-        {saving ? t("auth.saving") : t("auth.save")}
-      </motion.button>
+      <div className="flex gap-2">
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setEditing(false)}
+          className="flex-1 py-3 rounded-2xl text-sm font-semibold bg-dark/[0.06] text-dark/60
+                     hover:bg-dark/10 transition-colors"
+        >
+          {t("auth.cancel")}
+        </motion.button>
+        <motion.button
+          type="submit"
+          whileTap={{ scale: 0.97 }}
+          disabled={saving}
+          className="flex-1 py-3 rounded-2xl text-sm font-semibold bg-primary text-light
+                     hover:bg-primary/90 transition-colors disabled:opacity-60"
+        >
+          {saving ? t("auth.saving") : t("auth.save")}
+        </motion.button>
+      </div>
     </form>
   );
 }

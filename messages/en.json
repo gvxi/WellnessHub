@@ -2,7 +2,8 @@
   "nav": {
     "signIn": "Sign In",
     "about": "About",
-    "profile": "Profile"
+    "profile": "Profile",
+    "signOut": "Sign Out"
   },
   "bottomNav": {
     "about": "About",
@@ -49,7 +50,9 @@
     "passwordHint": "Password (min 6 chars)",
     "usernamePlaceholder": "Username (optional)",
     "phonePlaceholder": "Phone number",
-    "agePlaceholder": "Age"
+    "agePlaceholder": "Age",
+    "editProfile": "Edit Profile",
+    "cancel": "Cancel"
   },
   "about": {
     "heroSubtitle": "Our story",

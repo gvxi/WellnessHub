@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Globe, Heart, ShoppingBag, UserCircle } from "lucide-react";
+import { Globe, Heart, LogOut, ShoppingBag, UserCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -16,11 +16,13 @@ export default function Nav() {
   const { setCartOpen, setFavsOpen, setAuthOpen, setAuthStep } = useUI();
   const { t, lang, setLang } = useLang();
   const [user, setUser] = useState<User | null>(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
+      setAvatarFailed(false);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -33,21 +35,36 @@ export default function Nav() {
     <header className="fixed top-0 inset-x-0 z-50 bg-light/95 backdrop-blur-xl border-b border-dark/8">
       <div className="grid grid-cols-3 items-center h-16 px-5 md:px-10 max-w-[1400px] mx-auto w-full">
 
-        {/* LEFT — Sign In / Avatar */}
-        <div className="flex items-center">
+        {/* LEFT — Sign In / Avatar + Logout */}
+        <div className="flex items-center gap-1">
           {user ? (
-            <button
-              onClick={() => { setAuthStep("profile"); setAuthOpen(true); }}
-              aria-label={t("nav.profile")}
-              className="w-9 h-9 rounded-full flex items-center justify-center
-                         bg-primary/10 text-primary hover:bg-primary/18 transition-colors"
-            >
-              {user.user_metadata?.avatar_url ? (
-                <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <UserCircle size={20} strokeWidth={1.6} />
-              )}
-            </button>
+            <>
+              <button
+                onClick={() => { setAuthStep("profile"); setAuthOpen(true); }}
+                aria-label={t("nav.profile")}
+                className="w-9 h-9 rounded-full flex items-center justify-center
+                           bg-primary/10 text-primary hover:bg-primary/18 transition-colors overflow-hidden"
+              >
+                {user.user_metadata?.avatar_url && !avatarFailed ? (
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarFailed(true)}
+                  />
+                ) : (
+                  <UserCircle size={20} strokeWidth={1.6} />
+                )}
+              </button>
+              <button
+                onClick={() => supabase.auth.signOut()}
+                aria-label={t("nav.signOut")}
+                className="w-8 h-8 rounded-full flex items-center justify-center
+                           text-dark/35 hover:text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={15} strokeWidth={1.7} />
+              </button>
+            </>
           ) : (
             <button
               onClick={() => { setAuthStep("signin"); setAuthOpen(true); }}

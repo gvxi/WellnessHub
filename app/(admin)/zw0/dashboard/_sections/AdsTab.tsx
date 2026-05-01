@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ToggleLeft, ToggleRight, ImageOff, Edit2, Plus, Maximize2, Minimize2 } from "lucide-react";
+import { ToggleLeft, ToggleRight, ImageOff, Edit2, Plus, Maximize2, Minimize2, Languages, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditSheet, { type FieldDef } from "../_components/EditSheet";
 import ConfirmSheet from "../_components/ConfirmSheet";
@@ -49,6 +49,7 @@ export default function AdsTab() {
   const [editing, setEditing] = useState<AdRow | null>(null);
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<AdRow | null>(null);
+  const [batchStatus, setBatchStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
 
   useEffect(() => {
     fetch("/api/admin/ads")
@@ -105,6 +106,45 @@ export default function AdsTab() {
 
   function openEdit(ad: AdRow) { setAdding(false); setEditing(ad); }
 
+  async function handleBatchTranslate() {
+    const untranslated = ads.filter((a) => !a.translations?.ar?.headline);
+    if (untranslated.length === 0) return;
+    setBatchStatus("loading");
+    try {
+      const KEYS = ["headline", "subtitle", "badge_text"] as const;
+      const texts = untranslated.flatMap((a) => [a.headline, a.subtitle ?? "", a.badge_text ?? ""]);
+      const res = await fetch("/api/admin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texts, from: "en", to: "ar" }),
+      });
+      if (!res.ok) throw new Error("translate failed");
+      const { translations } = await res.json() as { translations: string[] };
+      await Promise.all(untranslated.map(async (ad, i) => {
+        const base = i * KEYS.length;
+        const ar: Record<string, string> = {};
+        if (translations[base]?.trim()) ar.headline = translations[base];
+        if (translations[base + 1]?.trim()) ar.subtitle = translations[base + 1];
+        if (translations[base + 2]?.trim()) ar.badge_text = translations[base + 2];
+        if (Object.keys(ar).length === 0) return;
+        const existing = ad.translations ?? {};
+        const merged = { ...existing, ar: { ...(existing.ar ?? {}), ...ar } };
+        await fetch(`/api/admin/ads/${ad.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ translations: merged }),
+        });
+      }));
+      const fresh = await fetch("/api/admin/ads").then((r) => r.json());
+      setAds(Array.isArray(fresh) ? fresh : ads);
+      setBatchStatus("done");
+      setTimeout(() => setBatchStatus("idle"), 3000);
+    } catch {
+      setBatchStatus("error");
+      setTimeout(() => setBatchStatus("idle"), 3000);
+    }
+  }
+
   const sheetOpen = editing !== null || adding;
 
   const editInitialValues = editing ? {
@@ -118,13 +158,25 @@ export default function AdsTab() {
 
   return (
     <div className="px-4 py-5 pb-6 space-y-4">
-      <button
-        onClick={() => { setEditing(null); setAdding(true); }}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
-      >
-        <Plus size={14} />
-        Add Ad
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setEditing(null); setAdding(true); }}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
+        >
+          <Plus size={14} />
+          Add Ad
+        </button>
+        <button
+          onClick={handleBatchTranslate}
+          disabled={batchStatus === "loading" || ads.every((a) => !!a.translations?.ar?.headline)}
+          className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-2xl
+                     bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors
+                     disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+        >
+          {batchStatus === "loading" ? <Loader2 size={13} className="animate-spin" /> : <Languages size={13} />}
+          {batchStatus === "done" ? "Done!" : batchStatus === "error" ? "Error" : "Translate All"}
+        </button>
+      </div>
 
       {loading ? (
         <>

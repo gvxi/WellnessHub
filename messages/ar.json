@@ -2,7 +2,8 @@
   "nav": {
     "signIn": "تسجيل الدخول",
     "about": "من نحن",
-    "profile": "الملف الشخصي"
+    "profile": "الملف الشخصي",
+    "signOut": "تسجيل الخروج"
   },
   "bottomNav": {
     "about": "عنّا",
@@ -33,7 +34,7 @@
     "welcomeBack": "مرحباً بعودتك",
     "createAccount": "إنشاء حساب",
     "completeProfile": "أكمل ملفك الشخصي",
-    "membersArea": "ويلنس هب · منطقة الأعضاء",
+    "membersArea": "WellnessHub · منطقة الأعضاء",
     "updateAnytime": "يمكنك التحديث في أي وقت",
     "signIn": "تسجيل الدخول",
     "signUp": "إنشاء حساب",
@@ -49,7 +50,9 @@
     "passwordHint": "كلمة المرور (٦ أحرف على الأقل)",
     "usernamePlaceholder": "اسم المستخدم (اختياري)",
     "phonePlaceholder": "رقم الهاتف",
-    "agePlaceholder": "العمر"
+    "agePlaceholder": "العمر",
+    "editProfile": "تعديل الملف الشخصي",
+    "cancel": "إلغاء"
   },
   "about": {
     "heroSubtitle": "قصتنا",
@@ -181,7 +184,7 @@
     "about": "من نحن",
     "terms": "الشروط",
     "privacy": "الخصوصية",
-    "brand": "ويلنس هب",
+    "brand": "WellnessHub",
     "tagline": "الجمال واللياقة والعافية — كل شيء في مكان واحد.",
     "links_services": "الخدمات",
     "links_about": "من نحن",

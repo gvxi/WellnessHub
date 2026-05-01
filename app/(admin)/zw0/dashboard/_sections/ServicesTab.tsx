@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronDown, Edit2, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown, Edit2, Plus, Trash2, Languages, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import EditSheet, { type FieldDef } from "../_components/EditSheet";
@@ -94,6 +94,7 @@ export default function ServicesTab() {
 
   const [editing, setEditing] = useState<EditTarget | null>(null);
   const [deleting, setDeleting] = useState<DeleteTarget | null>(null);
+  const [batchStatus, setBatchStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
 
   const load = useCallback(() => {
     setLoading(true);
@@ -302,6 +303,66 @@ export default function ServicesTab() {
     return deletePkg(deleting.id, (deleting as { kind: "pkg"; svcId: string }).svcId);
   }
 
+  async function handleBatchTranslate() {
+    setBatchStatus("loading");
+    try {
+      type TranslateJob = { type: "cat" | "svc" | "pkg"; id: string; svcId?: string; texts: string[]; keys: string[]; existing: Translations };
+      const jobs: TranslateJob[] = [];
+
+      for (const cat of categories) {
+        if (!cat.translations?.ar?.name) {
+          jobs.push({ type: "cat", id: cat.id, texts: [cat.name, cat.subtitle ?? ""], keys: ["name", "subtitle"], existing: cat.translations ?? {} });
+        }
+      }
+      for (const svc of services) {
+        if (!svc.translations?.ar?.name) {
+          jobs.push({ type: "svc", id: svc.id, texts: [svc.name], keys: ["name"], existing: svc.translations ?? {} });
+        }
+        for (const pkg of svc.packages ?? []) {
+          if (!pkg.translations?.ar?.name) {
+            jobs.push({ type: "pkg", id: pkg.id, svcId: svc.id, texts: [pkg.name], keys: ["name"], existing: pkg.translations ?? {} });
+          }
+        }
+      }
+
+      if (jobs.length === 0) { setBatchStatus("done"); setTimeout(() => setBatchStatus("idle"), 3000); return; }
+
+      const allTexts = jobs.flatMap((j) => j.texts);
+      const res = await fetch("/api/admin/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texts: allTexts, from: "en", to: "ar" }),
+      });
+      if (!res.ok) throw new Error("translate failed");
+      const { translations } = await res.json() as { translations: string[] };
+
+      let offset = 0;
+      await Promise.all(jobs.map(async (job) => {
+        const chunk = translations.slice(offset, offset + job.texts.length);
+        offset += job.texts.length;
+        const ar: Record<string, string> = {};
+        job.keys.forEach((k, i) => { if (chunk[i]?.trim()) ar[k] = chunk[i]; });
+        if (Object.keys(ar).length === 0) return;
+        const merged = { ...job.existing, ar: { ...(job.existing.ar ?? {}), ...ar } };
+
+        if (job.type === "cat") {
+          await fetch(`/api/admin/categories/${job.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ translations: merged }) });
+        } else if (job.type === "svc") {
+          await fetch(`/api/admin/services/${job.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ translations: merged }) });
+        } else {
+          await fetch(`/api/admin/packages/${job.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ translations: merged }) });
+        }
+      }));
+
+      load();
+      setBatchStatus("done");
+      setTimeout(() => setBatchStatus("idle"), 3000);
+    } catch {
+      setBatchStatus("error");
+      setTimeout(() => setBatchStatus("idle"), 3000);
+    }
+  }
+
   return (
     <div className="pb-6">
       {/* Inner tab switcher */}
@@ -328,13 +389,25 @@ export default function ServicesTab() {
         </div>
       ) : innerTab === "categories" ? (
         <div className="px-4 space-y-2">
-          <button
-            onClick={() => setEditing({ kind: "addCat" })}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
-          >
-            <Plus size={14} />
-            Add Category
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEditing({ kind: "addCat" })}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
+            >
+              <Plus size={14} />
+              Add Category
+            </button>
+            <button
+              onClick={handleBatchTranslate}
+              disabled={batchStatus === "loading"}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-2xl
+                         bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors
+                         disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              {batchStatus === "loading" ? <Loader2 size={13} className="animate-spin" /> : <Languages size={13} />}
+              {batchStatus === "done" ? "Done!" : batchStatus === "error" ? "Error" : "Translate All"}
+            </button>
+          </div>
 
           {categories.map((cat) => (
             <div key={cat.id} className="p-4 rounded-2xl bg-dark/[0.03] flex items-center justify-between">
@@ -356,13 +429,25 @@ export default function ServicesTab() {
         </div>
       ) : (
         <div className="px-4 space-y-5">
-          <button
-            onClick={() => setEditing({ kind: "addSvc" })}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
-          >
-            <Plus size={14} />
-            Add Service
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEditing({ kind: "addSvc" })}
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
+            >
+              <Plus size={14} />
+              Add Service
+            </button>
+            <button
+              onClick={handleBatchTranslate}
+              disabled={batchStatus === "loading"}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-2xl
+                         bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors
+                         disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              {batchStatus === "loading" ? <Loader2 size={13} className="animate-spin" /> : <Languages size={13} />}
+              {batchStatus === "done" ? "Done!" : batchStatus === "error" ? "Error" : "Translate All"}
+            </button>
+          </div>
 
           {grouped.map(({ cat, groups }) => (
             <div key={cat.id}>
