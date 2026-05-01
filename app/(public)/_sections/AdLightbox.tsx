@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import type { ApiAd } from "@/lib/supabase/types";
 import { resolveImage } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
 
 interface Props {
   ad: ApiAd;
@@ -12,6 +13,10 @@ interface Props {
 }
 
 export default function AdLightbox({ ad, open, onClose }: Props) {
+  const { lang } = useLang();
+  const isAr = lang === "ar";
+  const headline = (isAr && ad.translations?.ar?.headline) ? ad.translations.ar.headline : ad.headline;
+  const subtitle = (isAr && ad.translations?.ar?.subtitle) ? ad.translations.ar.subtitle : ad.subtitle;
   const imgUrl = resolveImage(ad.image_url, ad.unsplash_id, 1400);
 
   return (
@@ -44,10 +49,10 @@ export default function AdLightbox({ ad, open, onClose }: Props) {
               <div className="min-h-[60vh] bg-gradient-to-br from-primary to-secondary" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-dark/80 via-dark/15 to-transparent flex items-end">
-              <div className="px-6 pb-8">
-                <h3 className="text-2xl font-bold text-light tracking-tight">{ad.headline}</h3>
-                {ad.subtitle && (
-                  <p className="text-light/60 text-sm mt-1">{ad.subtitle}</p>
+              <div className="px-6 pb-8" dir={isAr ? "rtl" : "ltr"}>
+                <h3 className="text-2xl font-bold text-light tracking-tight">{headline}</h3>
+                {subtitle && (
+                  <p className="text-light/60 text-sm mt-1">{subtitle}</p>
                 )}
               </div>
             </div>

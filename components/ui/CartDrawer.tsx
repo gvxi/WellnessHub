@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useEffect } from "react";
 import { useCart } from "@/lib/shop-context";
+import { useLang } from "@/lib/lang-context";
 import { cn } from "@/lib/utils";
 
 const SPRING = { type: "spring" as const, stiffness: 260, damping: 26 };
@@ -15,6 +16,7 @@ interface Props {
 
 export default function CartDrawer({ open, onClose }: Props) {
   const { items, removeItem, updateQty, clearCart, totalCount } = useCart();
+  const { t } = useLang();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -64,7 +66,7 @@ export default function CartDrawer({ open, onClose }: Props) {
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-dark/8 shrink-0">
               <div className="flex items-center gap-2.5">
                 <ShoppingBag size={18} className="text-primary" />
-                <h2 className="text-base font-bold text-dark">Your Cart</h2>
+                <h2 className="text-base font-bold text-dark">{t("cart.title")}</h2>
                 {totalCount > 0 && (
                   <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full tabular-nums">
                     {totalCount}
@@ -87,8 +89,8 @@ export default function CartDrawer({ open, onClose }: Props) {
                   <div className="w-16 h-16 rounded-full bg-dark/5 flex items-center justify-center">
                     <ShoppingBag size={28} className="text-dark/20" />
                   </div>
-                  <p className="text-sm text-dark/40 font-medium">Your cart is empty</p>
-                  <p className="text-xs text-dark/30">Tap any service to add it</p>
+                  <p className="text-sm text-dark/40 font-medium">{t("cart.empty")}</p>
+                  <p className="text-xs text-dark/30">{t("cart.emptyHint")}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -164,7 +166,7 @@ export default function CartDrawer({ open, onClose }: Props) {
             {items.length > 0 && (
               <div className="px-6 pb-8 pt-4 border-t border-dark/8 flex flex-col gap-3 shrink-0">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-dark/55">Subtotal</span>
+                  <span className="text-sm text-dark/55">{t("cart.subtotal")}</span>
                   <span className="text-base font-bold text-dark tabular-nums">
                     {subtotal} OMR
                   </span>
@@ -175,7 +177,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                   className="block w-full py-3.5 rounded-2xl text-sm font-semibold text-center
                              bg-primary text-light hover:bg-primary/90 transition-colors"
                 >
-                  Go to Checkout
+                  {t("cart.checkout")}
                 </motion.a>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
@@ -185,7 +187,7 @@ export default function CartDrawer({ open, onClose }: Props) {
                     "text-dark/45 hover:text-dark/70 hover:bg-dark/5"
                   )}
                 >
-                  Clear Cart
+                  {t("cart.clear")}
                 </motion.button>
               </div>
             )}

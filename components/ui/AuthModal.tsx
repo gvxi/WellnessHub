@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { supabase } from "@/lib/supabase/client";
 import { useUI } from "@/lib/shop-context";
+import { useLang } from "@/lib/lang-context";
 import { cn } from "@/lib/utils";
 
 const SPRING = { type: "spring" as const, stiffness: 300, damping: 28 };
@@ -34,6 +35,7 @@ const COUNTRIES = [
 ];
 
 function GoogleButton({ onClick }: { onClick: () => void }) {
+  const { t } = useLang();
   return (
     <button
       onClick={onClick}
@@ -47,7 +49,7 @@ function GoogleButton({ onClick }: { onClick: () => void }) {
         <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
         <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
       </svg>
-      Continue with Google
+      {t("auth.google")}
     </button>
   );
 }
@@ -95,6 +97,7 @@ function InputField({
 }
 
 function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: () => void }) {
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -122,7 +125,7 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <GoogleButton onClick={handleGoogle} />
       <Divider />
-      <InputField icon={Mail} type="email" placeholder="Email address" value={email} onChange={setEmail} autoComplete="email" />
+      <InputField icon={Mail} type="email" placeholder={t("auth.emailPlaceholder")} value={email} onChange={setEmail} autoComplete="email" />
       <AnimatePresence>
         {showPassword && (
           <motion.div
@@ -133,7 +136,7 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <InputField icon={Lock} type="password" placeholder="Password" value={password} onChange={setPassword} autoComplete="current-password" />
+            <InputField icon={Lock} type="password" placeholder={t("auth.passwordPlaceholder")} value={password} onChange={setPassword} autoComplete="current-password" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -149,12 +152,12 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
             : "bg-dark/8 text-dark/30 cursor-not-allowed"
         )}
       >
-        {loading ? "Signing in…" : "Sign In"}
+        {loading ? t("auth.signingIn") : t("auth.signIn")}
       </motion.button>
       <p className="text-center text-xs text-dark/40 pt-1">
-        No account?{" "}
+        {t("auth.noAccount")}{" "}
         <button type="button" onClick={onSwitch} className="text-primary font-semibold hover:underline">
-          Sign up
+          {t("auth.signUp")}
         </button>
       </p>
     </form>
@@ -162,6 +165,7 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
 }
 
 function SignUpTab({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState<string | null>(null);
@@ -183,8 +187,8 @@ function SignUpTab({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <InputField icon={Mail} type="email" placeholder="Email address" value={email} onChange={setEmail} autoComplete="email" />
-      <InputField icon={Lock} type="password" placeholder="Password (min 6 chars)" value={password} onChange={setPassword} autoComplete="new-password" />
+      <InputField icon={Mail} type="email" placeholder={t("auth.emailPlaceholder")} value={email} onChange={setEmail} autoComplete="email" />
+      <InputField icon={Lock} type="password" placeholder={t("auth.passwordHint")} value={password} onChange={setPassword} autoComplete="new-password" />
       {siteKey && (
         <div className="flex justify-center">
           <Turnstile siteKey={siteKey} onSuccess={setToken} />
@@ -202,13 +206,14 @@ function SignUpTab({ onSuccess }: { onSuccess: () => void }) {
             : "bg-dark/8 text-dark/30 cursor-not-allowed"
         )}
       >
-        {loading ? "Creating account…" : "Create Account"}
+        {loading ? t("auth.creating") : t("auth.createAccount")}
       </motion.button>
     </form>
   );
 }
 
 function ProfileStep({ onDone }: { onDone: () => void }) {
+  const { t } = useLang();
   const [username, setUsername] = useState("");
   const [dialCode, setDialCode] = useState("+968");
   const [phoneNum, setPhoneNum] = useState("");
@@ -237,7 +242,7 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
         <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
         <input
           type="text"
-          placeholder="Username (optional)"
+          placeholder={t("auth.usernamePlaceholder")}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="w-full pl-10 pr-4 py-3 rounded-2xl bg-dark/[0.04] border border-dark/8
@@ -263,7 +268,7 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
           <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
           <input
             type="tel"
-            placeholder="Phone number"
+            placeholder={t("auth.phonePlaceholder")}
             value={phoneNum}
             onChange={(e) => setPhoneNum(e.target.value)}
             className="w-full pl-10 pr-4 py-3 rounded-2xl bg-dark/[0.04] border border-dark/8
@@ -277,7 +282,7 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
         <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
         <input
           type="number"
-          placeholder="Age"
+          placeholder={t("auth.agePlaceholder")}
           min={13}
           max={120}
           value={age}
@@ -295,7 +300,7 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
         className="w-full py-3 rounded-2xl text-sm font-semibold bg-primary text-light
                    hover:bg-primary/90 transition-colors disabled:opacity-60"
       >
-        {saving ? "Saving…" : "Save Profile"}
+        {saving ? t("auth.saving") : t("auth.save")}
       </motion.button>
     </form>
   );
@@ -303,6 +308,7 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
 
 export default function AuthModal() {
   const { authOpen, setAuthOpen, authStep, setAuthStep } = useUI();
+  const { t } = useLang();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setAuthOpen(false); };
@@ -348,10 +354,10 @@ export default function AuthModal() {
               <div className="flex items-start justify-between mb-5">
                 <div>
                   <h2 className="text-lg font-bold text-dark">
-                    {isProfile ? "Complete your profile" : tab === "signin" ? "Welcome back" : "Create account"}
+                    {isProfile ? t("auth.completeProfile") : tab === "signin" ? t("auth.welcomeBack") : t("auth.createAccount")}
                   </h2>
                   <p className="text-xs text-dark/40 mt-0.5">
-                    {isProfile ? "You can update this anytime" : "WellnessHub · Members area"}
+                    {isProfile ? t("auth.updateAnytime") : t("auth.membersArea")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -360,7 +366,7 @@ export default function AuthModal() {
                       onClick={close}
                       className="text-xs text-dark/40 hover:text-dark/70 font-medium transition-colors px-2"
                     >
-                      Skip
+                      {t("auth.skip")}
                     </button>
                   )}
                   <button
@@ -377,16 +383,16 @@ export default function AuthModal() {
               {/* Tab switcher (signin/signup only) */}
               {!isProfile && (
                 <div className="flex gap-1 bg-dark/[0.04] rounded-2xl p-1 mb-5">
-                  {(["signin", "signup"] as const).map((t) => (
+                  {(["signin", "signup"] as const).map((tabKey) => (
                     <button
-                      key={t}
-                      onClick={() => setAuthStep(t)}
+                      key={tabKey}
+                      onClick={() => setAuthStep(tabKey)}
                       className={cn(
                         "flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200",
-                        tab === t ? "bg-light text-dark shadow-sm" : "text-dark/45 hover:text-dark/70"
+                        tab === tabKey ? "bg-light text-dark shadow-sm" : "text-dark/45 hover:text-dark/70"
                       )}
                     >
-                      {t === "signin" ? "Sign In" : "Sign Up"}
+                      {tabKey === "signin" ? t("auth.signIn") : t("auth.signUp")}
                     </button>
                   ))}
                 </div>

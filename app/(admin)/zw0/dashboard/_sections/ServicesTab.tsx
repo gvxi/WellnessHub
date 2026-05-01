@@ -9,16 +9,24 @@ import EditSheet, { type FieldDef } from "../_components/EditSheet";
 import ConfirmSheet from "../_components/ConfirmSheet";
 import { PACKAGE_ICONS } from "@/lib/package-icons";
 
-type PkgRow = { id: string; name: string; price: number; currency: string; icon: string | null; display_order: number; is_active: boolean };
+type Translations = Record<string, Record<string, string>>;
+
+type PkgRow = {
+  id: string; name: string; price: number; currency: string;
+  icon: string | null; display_order: number; is_active: boolean;
+  translations: Translations;
+};
 type ServiceRow = {
   id: string; name: string; group_label: string | null; is_active: boolean;
   display_order: number; category_id: string | null;
   categories: { name: string } | null;
   packages: PkgRow[];
+  translations: Translations;
 };
 type CategoryRow = {
   id: string; name: string; subtitle: string | null;
   unsplash_id: string | null; slug: string | null; display_order: number;
+  translations: Translations;
 };
 
 type InnerTab = "categories" | "products";
@@ -36,15 +44,18 @@ type DeleteTarget =
   | { kind: "svc"; id: string; name: string }
   | { kind: "pkg"; id: string; svcId: string; name: string };
 
+// ── Field definitions ──────────────────────────────────────────────────────
+
 const CAT_FIELDS: FieldDef[] = [
-  { key: "name", label: "Name", required: true, placeholder: "e.g. Fitness & Dance" },
-  { key: "subtitle", label: "Subtitle", placeholder: "e.g. Classes for every level" },
-  { key: "image_url", label: "Banner Image", type: "image", uploadFolder: "categories" },
-  { key: "unsplash_id", label: "Unsplash Fallback ID", placeholder: "e.g. photo-1581009146145" },
-  { key: "slug", label: "Slug", placeholder: "e.g. fitness" },
+  { key: "name",        label: "Name",                required: true, placeholder: "e.g. Fitness & Dance", translatable: true },
+  { key: "subtitle",    label: "Subtitle",                            placeholder: "e.g. Classes for every level", translatable: true },
+  { key: "image_url",   label: "Banner Image",        type: "image",  uploadFolder: "categories" },
+  { key: "unsplash_id", label: "Unsplash Fallback ID",                placeholder: "e.g. photo-1581009146145" },
+  { key: "slug",        label: "Slug",                                placeholder: "e.g. fitness" },
 ];
+
 const PKG_FIELDS: FieldDef[] = [
-  { key: "name", label: "Name", required: true, placeholder: "e.g. Single Session" },
+  { key: "name",  label: "Name",       required: true, placeholder: "e.g. Single Session", translatable: true },
   { key: "price", label: "Price (OMR)", type: "number", required: true },
   {
     key: "icon", label: "Icon Badge", type: "select",
@@ -54,6 +65,24 @@ const PKG_FIELDS: FieldDef[] = [
     ],
   },
 ];
+
+// Helper: extract AR values from translations JSONB
+function arValues(translations: Translations, keys: string[]): Record<string, string> {
+  const ar = translations?.ar ?? {};
+  const out: Record<string, string> = {};
+  for (const k of keys) out[`${k}_ar`] = ar[k] ?? "";
+  return out;
+}
+
+// Helper: build translations JSONB from flat values with _ar suffix
+function buildTranslations(values: Record<string, string>, keys: string[]): Translations {
+  const ar: Record<string, string> = {};
+  for (const k of keys) {
+    const v = values[`${k}_ar`];
+    if (v?.trim()) ar[k] = v.trim();
+  }
+  return Object.keys(ar).length ? { ar } : {};
+}
 
 export default function ServicesTab() {
   const [innerTab, setInnerTab] = useState<InnerTab>("categories");
@@ -91,19 +120,23 @@ export default function ServicesTab() {
     return { cat, groups: Array.from(groupMap.entries()) };
   });
 
-  // ── Category CRUD ──────────────────────────────────────────
+  // ── Category CRUD ──────────────────────────────────────────────────────────
   async function saveCat(values: Record<string, string>) {
+    const { name, subtitle, unsplash_id, slug, image_url } = values;
+    const translations = buildTranslations(values, ["name", "subtitle"]);
+    const payload = { name, subtitle, unsplash_id, slug, image_url, translations };
+
     if (editing?.kind === "cat") {
       const res = await fetch(`/api/admin/categories/${editing.item.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       const updated = await res.json();
       setCategories((prev) => prev.map((c) => c.id === editing.item.id ? { ...c, ...updated } : c));
     } else {
       const res = await fetch("/api/admin/categories", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, display_order: categories.length }),
+        body: JSON.stringify({ ...payload, display_order: categories.length }),
       });
       const created = await res.json();
       setCategories((prev) => [...prev, created]);
@@ -116,12 +149,12 @@ export default function ServicesTab() {
     setServices((prev) => prev.filter((s) => s.category_id !== id));
   }
 
-  // ── Service CRUD ───────────────────────────────────────────
+  // ── Service CRUD ───────────────────────────────────────────────────────────
   function svcFields(cats: CategoryRow[]): FieldDef[] {
     return [
-      { key: "name", label: "Name", required: true, placeholder: "e.g. Yoga Beginner" },
-      { key: "group_label", label: "Group Label", placeholder: "e.g. Hair & Skin Care" },
-      { key: "description", label: "Description", type: "textarea", placeholder: "Optional description" },
+      { key: "name",        label: "Name",        required: true, placeholder: "e.g. Yoga Beginner", translatable: true },
+      { key: "group_label", label: "Group Label",                 placeholder: "e.g. Hair & Skin Care" },
+      { key: "description", label: "Description",  type: "textarea", placeholder: "Optional description", translatable: true },
       {
         key: "category_id", label: "Category", type: "select",
         options: cats.map((c) => ({ value: c.id, label: c.name })),
@@ -130,17 +163,21 @@ export default function ServicesTab() {
   }
 
   async function saveSvc(values: Record<string, string>) {
+    const { name, group_label, description, category_id } = values;
+    const translations = buildTranslations(values, ["name", "description"]);
+    const payload = { name, group_label, description, category_id, translations };
+
     if (editing?.kind === "svc") {
       const res = await fetch(`/api/admin/services/${editing.item.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       const updated = await res.json();
       setServices((prev) => prev.map((s) => s.id === editing.item.id ? { ...s, ...updated } : s));
     } else {
       const res = await fetch("/api/admin/services", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, display_order: services.length }),
+        body: JSON.stringify({ ...payload, display_order: services.length }),
       });
       const created = await res.json();
       setServices((prev) => [...prev, { ...created, categories: null, packages: [] }]);
@@ -162,13 +199,15 @@ export default function ServicesTab() {
     setToggling((s) => { const n = new Set(s); n.delete(svc.id); return n; });
   }
 
-  // ── Package CRUD ───────────────────────────────────────────
+  // ── Package CRUD ───────────────────────────────────────────────────────────
   async function savePkg(values: Record<string, string>) {
+    const translations = buildTranslations(values, ["name"]);
+
     if (editing?.kind === "pkg") {
       const { svcId, pkg } = editing;
       const res = await fetch(`/api/admin/packages/${pkg.id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: values.name, price: Number(values.price), icon: values.icon || null }),
+        body: JSON.stringify({ name: values.name, price: Number(values.price), icon: values.icon || null, translations }),
       });
       const updated = await res.json();
       setServices((prev) => prev.map((s) =>
@@ -180,7 +219,7 @@ export default function ServicesTab() {
       const { svcId } = editing;
       const res = await fetch("/api/admin/packages", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ service_id: svcId, name: values.name, price: Number(values.price), icon: values.icon || null }),
+        body: JSON.stringify({ service_id: svcId, name: values.name, price: Number(values.price), icon: values.icon || null, translations }),
       });
       const created = await res.json();
       setServices((prev) => prev.map((s) =>
@@ -196,7 +235,7 @@ export default function ServicesTab() {
     ));
   }
 
-  // ── Edit sheet config ──────────────────────────────────────
+  // ── Edit sheet config ──────────────────────────────────────────────────────
   function editFields(): FieldDef[] {
     if (!editing) return [];
     if (editing.kind === "cat" || editing.kind === "addCat") return CAT_FIELDS;
@@ -207,17 +246,25 @@ export default function ServicesTab() {
   function editInitial(): Record<string, string> {
     if (!editing) return {};
     if (editing.kind === "cat") return {
-      name: editing.item.name, subtitle: editing.item.subtitle ?? "",
+      name: editing.item.name,
+      subtitle: editing.item.subtitle ?? "",
       image_url: (editing.item as { image_url?: string | null }).image_url ?? "",
-      unsplash_id: editing.item.unsplash_id ?? "", slug: editing.item.slug ?? "",
+      unsplash_id: editing.item.unsplash_id ?? "",
+      slug: editing.item.slug ?? "",
+      ...arValues(editing.item.translations, ["name", "subtitle"]),
     };
     if (editing.kind === "svc") return {
-      name: editing.item.name, group_label: editing.item.group_label ?? "",
-      description: "", category_id: editing.item.category_id ?? "",
+      name: editing.item.name,
+      group_label: editing.item.group_label ?? "",
+      description: "",
+      category_id: editing.item.category_id ?? "",
+      ...arValues(editing.item.translations, ["name", "description"]),
     };
     if (editing.kind === "pkg") return {
-      name: editing.pkg.name, price: String(editing.pkg.price),
+      name: editing.pkg.name,
+      price: String(editing.pkg.price),
       icon: editing.pkg.icon ?? "",
+      ...arValues(editing.pkg.translations, ["name"]),
     };
     if (editing.kind === "addSvc") return { category_id: editing.categoryId ?? "" };
     return {};
@@ -242,15 +289,9 @@ export default function ServicesTab() {
 
   function editDeleteHandler(): (() => void) | undefined {
     if (!editing) return undefined;
-    if (editing.kind === "cat") {
-      return () => setDeleting({ kind: "cat", id: editing.item.id, name: editing.item.name });
-    }
-    if (editing.kind === "svc") {
-      return () => setDeleting({ kind: "svc", id: editing.item.id, name: editing.item.name });
-    }
-    if (editing.kind === "pkg") {
-      return () => setDeleting({ kind: "pkg", id: editing.pkg.id, svcId: editing.svcId, name: editing.pkg.name });
-    }
+    if (editing.kind === "cat") return () => setDeleting({ kind: "cat", id: editing.item.id, name: editing.item.name });
+    if (editing.kind === "svc") return () => setDeleting({ kind: "svc", id: editing.item.id, name: editing.item.name });
+    if (editing.kind === "pkg") return () => setDeleting({ kind: "pkg", id: editing.pkg.id, svcId: editing.svcId, name: editing.pkg.name });
     return undefined;
   }
 
@@ -287,7 +328,6 @@ export default function ServicesTab() {
         </div>
       ) : innerTab === "categories" ? (
         <div className="px-4 space-y-2">
-          {/* Add category button */}
           <button
             onClick={() => setEditing({ kind: "addCat" })}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
@@ -301,6 +341,9 @@ export default function ServicesTab() {
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-dark">{cat.name}</p>
                 {cat.subtitle && <p className="text-xs text-dark/45 mt-0.5 truncate">{cat.subtitle}</p>}
+                {cat.translations?.ar?.name && (
+                  <p className="text-[10px] text-secondary/70 mt-0.5 truncate" dir="rtl">{cat.translations.ar.name}</p>
+                )}
               </div>
               <button
                 onClick={() => setEditing({ kind: "cat", item: cat })}
@@ -313,7 +356,6 @@ export default function ServicesTab() {
         </div>
       ) : (
         <div className="px-4 space-y-5">
-          {/* Add service button */}
           <button
             onClick={() => setEditing({ kind: "addSvc" })}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-primary/30 text-primary text-xs font-medium hover:bg-primary/4 transition-colors"
@@ -325,9 +367,7 @@ export default function ServicesTab() {
           {grouped.map(({ cat, groups }) => (
             <div key={cat.id}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-secondary">
-                  {cat.name}
-                </p>
+                <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-secondary">{cat.name}</p>
                 <button
                   onClick={() => setEditing({ kind: "addSvc", categoryId: cat.id })}
                   className="w-6 h-6 rounded-lg bg-secondary/10 flex items-center justify-center"
@@ -343,7 +383,6 @@ export default function ServicesTab() {
                     {svcs.map((svc) => (
                       <div key={svc.id} className="rounded-xl bg-dark/[0.03] overflow-hidden">
                         <div className="flex items-center px-4 py-3">
-                          {/* Active toggle dot */}
                           <button
                             disabled={toggling.has(svc.id)}
                             onClick={() => toggleSvc(svc)}
@@ -355,13 +394,15 @@ export default function ServicesTab() {
                             )} />
                           </button>
 
-                          {/* Expand toggle */}
                           <button
                             onClick={() => setExpandedSvc(expandedSvc === svc.id ? null : svc.id)}
                             className="flex-1 flex items-center justify-between text-left min-w-0"
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="text-sm text-dark truncate">{svc.name}</span>
+                              {svc.translations?.ar?.name && (
+                                <span className="text-[9px] font-bold text-secondary bg-secondary/10 px-1 rounded shrink-0">ع</span>
+                              )}
                               <span className="text-xs text-dark/35 shrink-0">{svc.packages?.length ?? 0} pkg</span>
                             </div>
                             {expandedSvc === svc.id
@@ -370,7 +411,6 @@ export default function ServicesTab() {
                             }
                           </button>
 
-                          {/* Edit button */}
                           <button
                             onClick={() => setEditing({ kind: "svc", item: svc })}
                             className="w-6 h-6 rounded-lg bg-dark/5 flex items-center justify-center shrink-0 ml-2"
@@ -390,6 +430,9 @@ export default function ServicesTab() {
                                 <span className="text-xs text-dark/60 flex-1">
                                   {pkg.icon && PACKAGE_ICONS[pkg.icon as keyof typeof PACKAGE_ICONS]?.emoji + " "}
                                   {pkg.name}
+                                  {pkg.translations?.ar?.name && (
+                                    <span className="ml-1 text-[9px] font-bold text-secondary bg-secondary/10 px-1 rounded">ع</span>
+                                  )}
                                 </span>
                                 <span className="text-xs font-semibold text-dark tabular-nums mr-3">
                                   {pkg.price} {pkg.currency}
@@ -403,7 +446,6 @@ export default function ServicesTab() {
                               </div>
                             ))}
 
-                            {/* Add package */}
                             <button
                               onClick={() => setEditing({ kind: "addPkg", svcId: svc.id })}
                               className="mt-1 flex items-center gap-1.5 text-[11px] text-primary font-medium py-1"
@@ -427,7 +469,6 @@ export default function ServicesTab() {
         </div>
       )}
 
-      {/* Edit / Create sheet */}
       <EditSheet
         open={editing !== null}
         title={editTitle()}
@@ -438,7 +479,6 @@ export default function ServicesTab() {
         onDelete={editDeleteHandler()}
       />
 
-      {/* Confirm delete */}
       <ConfirmSheet
         open={deleting !== null}
         message={`Delete "${deleting?.name}"? This cannot be undone.`}

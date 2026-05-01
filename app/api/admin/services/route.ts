@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("services")
     .select(`
-      id, name, description, group_label, unsplash_id, display_order, is_active, category_id,
+      id, name, description, group_label, unsplash_id, display_order, is_active, category_id, translations,
       categories ( name ),
-      packages ( id, name, price, currency, icon, display_order, is_active )
+      packages ( id, name, price, currency, icon, display_order, is_active, translations )
     `)
     .eq("business_id", ctx.businessId)
     .order("display_order");
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { name, category_id, group_label, description, unsplash_id, display_order } = body;
+  const { name, category_id, group_label, description, unsplash_id, display_order, translations } = body;
 
   if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 });
 
@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       description,
       unsplash_id,
       display_order: display_order ?? 0,
+      translations: translations ?? {},
     })
     .select()
     .single();

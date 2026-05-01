@@ -19,16 +19,19 @@ export type DbBusiness = {
   created_at: string;
 };
 
+// translations shape: { ar: { name?: string; subtitle?: string; description?: string; ... } }
+export type Translations = Record<string, Record<string, string>>;
+
 export type DbCategory = {
   id: string;
   business_id: string;
   name: string;
-  name_ar: string | null;
   subtitle: string | null;
   unsplash_id: string | null;
   image_url: string | null;
   slug: string | null;
   display_order: number;
+  translations: Translations;
   created_at: string;
 };
 
@@ -37,15 +40,14 @@ export type DbService = {
   business_id: string;
   category_id: string | null;
   name: string;
-  name_ar: string | null;
   description: string | null;
-  description_ar: string | null;
   group_label: string | null;
   note: string | null;
   unsplash_id: string | null;
   image_url: string | null;
   display_order: number;
   is_active: boolean;
+  translations: Translations;
   created_at: string;
 };
 
@@ -54,7 +56,6 @@ export type DbPackage = {
   service_id: string;
   business_id: string;
   name: string;
-  name_ar: string | null;
   description: string | null;
   sessions_count: number | null;
   price: number;
@@ -65,6 +66,7 @@ export type DbPackage = {
   icon: string | null;
   display_order: number;
   is_active: boolean;
+  translations: Translations;
   created_at: string;
 };
 
@@ -79,6 +81,7 @@ export type DbAd = {
   is_active: boolean;
   fullscreen_enabled: boolean;
   display_order: number;
+  translations: Translations;
   created_at: string;
 };
 
@@ -107,6 +110,7 @@ export type ApiPackage = {
   note: string | null;
   icon: string | null;
   display_order: number;
+  translations: Translations;
 };
 
 export type ApiService = {
@@ -116,6 +120,7 @@ export type ApiService = {
   group_label: string | null;
   unsplash_id: string | null;
   packages: ApiPackage[];
+  translations: Translations;
 };
 
 export type ApiGroup = {
@@ -132,6 +137,7 @@ export type ApiCategory = {
   slug: string | null;
   display_order: number;
   groups: ApiGroup[];
+  translations: Translations;
 };
 
 export type ApiAd = {
@@ -143,6 +149,7 @@ export type ApiAd = {
   badge_text: string | null;
   fullscreen_enabled: boolean;
   display_order: number;
+  translations: Translations;
 };
 
 export type ApiBooking = {

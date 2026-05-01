@@ -10,7 +10,7 @@ const supabase = createClient(
 export async function GET() {
   const { data, error } = await supabase
     .from("ads")
-    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, fullscreen_enabled, display_order")
+    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, fullscreen_enabled, display_order, translations")
     .eq("is_active", true)
     .order("display_order", { ascending: true });
 
@@ -27,6 +27,7 @@ export async function GET() {
     badge_text: ad.badge_text,
     fullscreen_enabled: ad.fullscreen_enabled ?? false,
     display_order: ad.display_order,
+    translations: (ad.translations as Record<string, Record<string, string>>) ?? {},
   }));
 
   return NextResponse.json(ads, {

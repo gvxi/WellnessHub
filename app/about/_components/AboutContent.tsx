@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import { Heart, Sparkles, Star, Phone, MapPin, Clock } from "lucide-react";
+import { useLang } from "@/lib/lang-context";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -21,31 +22,9 @@ function Section({ children, className = "" }: { children: React.ReactNode; clas
   );
 }
 
-const values = [
-  {
-    icon: Heart,
-    title: "Care First",
-    body: "Every treatment is delivered with genuine attention and warmth. You are not just a booking — you are a guest.",
-  },
-  {
-    icon: Sparkles,
-    title: "Quality Craft",
-    body: "Our specialists hold international certifications and train continuously. Excellence is our baseline.",
-  },
-  {
-    icon: Star,
-    title: "Real Results",
-    body: "We use proven techniques and premium products so every visit leaves you looking and feeling noticeably better.",
-  },
-];
-
-const info = [
-  { icon: MapPin, label: "Location", value: "Muscat, Oman" },
-  { icon: Phone, label: "Phone", value: "+968 9X XX XXXX" },
-  { icon: Clock, label: "Hours", value: "Sat – Thu · 9 AM – 9 PM" },
-];
-
 export default function AboutContent() {
+  const { t } = useLang();
+
   useEffect(() => {
     try {
       localStorage.setItem("au", "1");
@@ -53,6 +32,18 @@ export default function AboutContent() {
       // ignore
     }
   }, []);
+
+  const values = [
+    { icon: Heart,    titleKey: "about.val1Title", bodyKey: "about.val1Body" },
+    { icon: Sparkles, titleKey: "about.val2Title", bodyKey: "about.val2Body" },
+    { icon: Star,     titleKey: "about.val3Title", bodyKey: "about.val3Body" },
+  ];
+
+  const info = [
+    { icon: MapPin, labelKey: "about.location", valueKey: "about.locationValue" },
+    { icon: Phone,  labelKey: "about.phone",    valueKey: "about.phoneValue"    },
+    { icon: Clock,  labelKey: "about.hours",    valueKey: "about.hoursValue"    },
+  ];
 
   return (
     <>
@@ -78,7 +69,7 @@ export default function AboutContent() {
             transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="text-accent/80 text-xs uppercase tracking-[0.22em] font-medium mb-3"
           >
-            Our story
+            {t("about.heroSubtitle")}
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -86,7 +77,7 @@ export default function AboutContent() {
             transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="text-4xl md:text-6xl font-bold text-light tracking-tight leading-tight max-w-[640px]"
           >
-            Where wellness meets artistry.
+            {t("about.heroHeadline")}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -94,7 +85,7 @@ export default function AboutContent() {
             transition={{ delay: 0.42, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="text-light/55 text-base md:text-lg mt-5 max-w-[520px] leading-relaxed"
           >
-            WellnessHub is Muscat&apos;s destination for expert beauty, fitness, and self-care — all in one place.
+            {t("about.heroBody")}
           </motion.p>
 
           <motion.div
@@ -108,14 +99,14 @@ export default function AboutContent() {
               className="inline-flex items-center px-5 py-2.5 rounded-2xl bg-primary text-light
                          text-sm font-semibold hover:bg-primary/90 transition-colors"
             >
-              Explore Services
+              {t("about.exploreServices")}
             </Link>
             <a
               href="#contact"
               className="inline-flex items-center px-5 py-2.5 rounded-2xl bg-light/12 text-light
                          text-sm font-medium hover:bg-light/20 transition-colors backdrop-blur-sm"
             >
-              Contact Us
+              {t("about.contactUs")}
             </a>
           </motion.div>
         </div>
@@ -126,18 +117,16 @@ export default function AboutContent() {
         <Section className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
           <div>
             <motion.p variants={fadeUp} className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-3">
-              Who we are
+              {t("about.whoWeAre")}
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-3xl md:text-4xl font-bold text-dark leading-tight mb-5 tracking-tight">
-              More than a salon. A sanctuary.
+              {t("about.missionHeadline")}
             </motion.h2>
             <motion.p variants={fadeUp} className="text-dark/55 text-sm leading-relaxed mb-4">
-              Founded in Muscat, WellnessHub brings together the finest beauty specialists, fitness instructors, and
-              skin therapists under one roof. We believe self-care is not a luxury — it&apos;s a right.
+              {t("about.missionP1")}
             </motion.p>
             <motion.p variants={fadeUp} className="text-dark/55 text-sm leading-relaxed">
-              Whether you&apos;re here for a quick blow-dry or a full advanced skin treatment, every visit is designed
-              to leave you refreshed, confident, and cared for.
+              {t("about.missionP2")}
             </motion.p>
           </div>
 
@@ -157,25 +146,25 @@ export default function AboutContent() {
         <div className="max-w-[1400px] mx-auto">
           <Section>
             <motion.p variants={fadeUp} className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-3">
-              Our values
+              {t("about.ourValues")}
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-2xl md:text-3xl font-bold text-dark mb-12 tracking-tight">
-              What drives everything we do
+              {t("about.valuesHeadline")}
             </motion.h2>
           </Section>
 
           <Section className="grid md:grid-cols-3 gap-6">
-            {values.map(({ icon: Icon, title, body }) => (
+            {values.map(({ icon: Icon, titleKey, bodyKey }) => (
               <motion.div
-                key={title}
+                key={titleKey}
                 variants={fadeUp}
                 className="bg-light rounded-3xl p-7 flex flex-col gap-4 shadow-sm shadow-dark/5"
               >
                 <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center">
                   <Icon size={20} className="text-primary" strokeWidth={1.7} />
                 </div>
-                <h3 className="text-base font-bold text-dark">{title}</h3>
-                <p className="text-sm text-dark/55 leading-relaxed">{body}</p>
+                <h3 className="text-base font-bold text-dark">{t(titleKey)}</h3>
+                <p className="text-sm text-dark/55 leading-relaxed">{t(bodyKey)}</p>
               </motion.div>
             ))}
           </Section>
@@ -186,13 +175,13 @@ export default function AboutContent() {
       <section className="bg-primary py-12 px-6 md:px-14">
         <Section className="max-w-[1400px] mx-auto grid grid-cols-3 gap-6 text-center">
           {[
-            { num: "5+", label: "Years of excellence" },
-            { num: "2,000+", label: "Happy clients" },
-            { num: "30+", label: "Services offered" },
-          ].map(({ num, label }) => (
-            <motion.div key={label} variants={fadeUp}>
+            { num: "5+",     labelKey: "about.stat1" },
+            { num: "2,000+", labelKey: "about.stat2" },
+            { num: "30+",    labelKey: "about.stat3" },
+          ].map(({ num, labelKey }) => (
+            <motion.div key={labelKey} variants={fadeUp}>
               <p className="text-3xl md:text-4xl font-bold text-light tabular-nums">{num}</p>
-              <p className="text-xs md:text-sm text-light/55 mt-1 font-medium">{label}</p>
+              <p className="text-xs md:text-sm text-light/55 mt-1 font-medium">{t(labelKey)}</p>
             </motion.div>
           ))}
         </Section>
@@ -203,23 +192,23 @@ export default function AboutContent() {
         <div className="max-w-[1400px] mx-auto">
           <Section>
             <motion.p variants={fadeUp} className="text-secondary text-xs uppercase tracking-[0.2em] font-semibold mb-3">
-              Get in touch
+              {t("about.getInTouch")}
             </motion.p>
             <motion.h2 variants={fadeUp} className="text-2xl md:text-3xl font-bold text-dark mb-10 tracking-tight">
-              Visit us or reach out
+              {t("about.contactHeadline")}
             </motion.h2>
           </Section>
 
           <Section className="grid md:grid-cols-2 gap-10 items-start">
             <div className="flex flex-col gap-5">
-              {info.map(({ icon: Icon, label, value }) => (
-                <motion.div key={label} variants={fadeUp} className="flex items-center gap-4">
+              {info.map(({ icon: Icon, labelKey, valueKey }) => (
+                <motion.div key={labelKey} variants={fadeUp} className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-2xl bg-primary/8 flex items-center justify-center shrink-0">
                     <Icon size={17} className="text-primary" strokeWidth={1.7} />
                   </div>
                   <div>
-                    <p className="text-xs text-dark/40 font-medium uppercase tracking-wider">{label}</p>
-                    <p className="text-sm font-semibold text-dark mt-0.5">{value}</p>
+                    <p className="text-xs text-dark/40 font-medium uppercase tracking-wider">{t(labelKey)}</p>
+                    <p className="text-sm font-semibold text-dark mt-0.5">{t(valueKey)}</p>
                   </div>
                 </motion.div>
               ))}
@@ -230,7 +219,7 @@ export default function AboutContent() {
                   className="inline-flex items-center px-5 py-2.5 rounded-2xl bg-primary text-light
                              text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
-                  Book Now
+                  {t("about.bookNow")}
                 </Link>
               </motion.div>
             </div>

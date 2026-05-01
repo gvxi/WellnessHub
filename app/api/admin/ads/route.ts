@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("ads")
-    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, is_active, fullscreen_enabled, display_order")
+    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, is_active, fullscreen_enabled, display_order, translations")
     .eq("business_id", ctx.businessId)
     .order("display_order");
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { headline, subtitle, unsplash_id, image_url, badge_text, fullscreen_enabled, display_order } = body;
+  const { headline, subtitle, unsplash_id, image_url, badge_text, fullscreen_enabled, display_order, translations } = body;
 
   if (!headline) return NextResponse.json({ error: "Headline required" }, { status: 400 });
 
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       badge_text: badge_text ?? "Ad",
       fullscreen_enabled: fullscreen_enabled ?? false,
       display_order: display_order ?? 0,
+      translations: translations ?? {},
     })
     .select()
     .single();

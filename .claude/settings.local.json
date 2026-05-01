@@ -20,7 +20,10 @@
       "Bash(grep -E \"\\\\.\\(tsx?|js\\)$\")",
       "Bash(grep -v \"^$\")",
       "Bash(grep -E \"\\\\.tsx$|\\\\.ts$\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(ls messages/)",
+      "Bash(cat middleware.ts)",
+      "Bash(cat i18n.ts)"
     ]
   },
   "enabledPlugins": {

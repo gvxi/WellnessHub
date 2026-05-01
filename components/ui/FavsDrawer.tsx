@@ -5,6 +5,7 @@ import { Heart, ShoppingBag, X } from "lucide-react";
 import { useEffect } from "react";
 import { useCart, useFavs, useUI } from "@/lib/shop-context";
 import { useToast } from "@/lib/toast-context";
+import { useLang } from "@/lib/lang-context";
 
 const SPRING = { type: "spring" as const, stiffness: 260, damping: 26 };
 
@@ -18,6 +19,7 @@ export default function FavsDrawer({ open, onClose }: Props) {
   const { addItem, isInCart } = useCart();
   const { setSelectedItem } = useUI();
   const { showToast } = useToast();
+  const { t } = useLang();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -63,7 +65,7 @@ export default function FavsDrawer({ open, onClose }: Props) {
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-dark/8 shrink-0">
               <div className="flex items-center gap-2.5">
                 <Heart size={18} className="text-secondary fill-secondary" />
-                <h2 className="text-base font-bold text-dark">Favorites</h2>
+                <h2 className="text-base font-bold text-dark">{t("favs.title")}</h2>
                 {ids.size > 0 && (
                   <span className="text-xs font-semibold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full tabular-nums">
                     {ids.size}
@@ -86,8 +88,8 @@ export default function FavsDrawer({ open, onClose }: Props) {
                   <div className="w-16 h-16 rounded-full bg-dark/5 flex items-center justify-center">
                     <Heart size={28} className="text-dark/20" />
                   </div>
-                  <p className="text-sm text-dark/40 font-medium">No favorites yet</p>
-                  <p className="text-xs text-dark/30">Tap the heart on any service to save it</p>
+                  <p className="text-sm text-dark/40 font-medium">{t("favs.empty")}</p>
+                  <p className="text-xs text-dark/30">{t("favs.emptyHint")}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">

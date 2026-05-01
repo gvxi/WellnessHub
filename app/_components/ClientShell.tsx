@@ -4,6 +4,7 @@ import { type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ShopProvider, useUI } from "@/lib/shop-context";
 import { ToastProvider } from "@/lib/toast-context";
+import { LangProvider } from "@/lib/lang-context";
 import BottomNav from "@/components/ui/BottomNav";
 import CartDrawer from "@/components/ui/CartDrawer";
 import FavsDrawer from "@/components/ui/FavsDrawer";
@@ -31,10 +32,12 @@ function ShellInner({ children }: { children: ReactNode }) {
 
 export default function ClientShell({ children }: { children: ReactNode }) {
   return (
-    <ToastProvider>
-      <ShopProvider>
-        <ShellInner>{children}</ShellInner>
-      </ShopProvider>
-    </ToastProvider>
+    <LangProvider>
+      <ToastProvider>
+        <ShopProvider>
+          <ShellInner>{children}</ShellInner>
+        </ShopProvider>
+      </ToastProvider>
+    </LangProvider>
   );
 }

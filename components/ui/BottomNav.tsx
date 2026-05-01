@@ -5,6 +5,7 @@ import { Heart, Home, Info, Phone, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart, useFavs, useUI } from "@/lib/shop-context";
+import { useLang } from "@/lib/lang-context";
 import { cn } from "@/lib/utils";
 
 export default function BottomNav() {
@@ -12,6 +13,7 @@ export default function BottomNav() {
   const { totalCount } = useCart();
   const { ids } = useFavs();
   const { setCartOpen, setFavsOpen } = useUI();
+  const { t } = useLang();
 
   const isHome = pathname === "/";
 
@@ -22,12 +24,12 @@ export default function BottomNav() {
         <div className="grid grid-cols-5 h-full items-center px-1">
 
           {/* About Us */}
-          <NavTab label="About" href="/#about">
+          <NavTab label={t("bottomNav.about")} href="/about">
             <Info size={22} strokeWidth={1.6} />
           </NavTab>
 
           {/* Contact Us */}
-          <NavTab label="Contact" href="/#contact">
+          <NavTab label={t("bottomNav.contact")} href="/about#contact">
             <Phone size={22} strokeWidth={1.6} />
           </NavTab>
 
@@ -91,11 +93,11 @@ export default function BottomNav() {
                 )}
               </AnimatePresence>
             </div>
-            <span className="text-[10px] font-medium">Favs</span>
+            <span className="text-[10px] font-medium">{t("bottomNav.favs")}</span>
           </button>
 
           {/* Home */}
-          <NavTab label="Home" href="/" active={isHome}>
+          <NavTab label={t("bottomNav.home")} href="/" active={isHome}>
             <Home size={22} strokeWidth={1.6} />
           </NavTab>
         </div>
@@ -116,7 +118,7 @@ function NavTab({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isActive = active ?? pathname === href;
+  const isActive = active ?? (href === "/about" ? pathname.startsWith("/about") : pathname === href);
 
   return (
     <Link

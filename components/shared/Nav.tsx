@@ -8,11 +8,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { useCart, useFavs, useUI } from "@/lib/shop-context";
+import { useLang } from "@/lib/lang-context";
 
 export default function Nav() {
   const { totalCount } = useCart();
   const { ids } = useFavs();
   const { setCartOpen, setFavsOpen, setAuthOpen, setAuthStep } = useUI();
+  const { t, lang, setLang } = useLang();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -23,6 +25,10 @@ export default function Nav() {
     return () => subscription.unsubscribe();
   }, []);
 
+  function toggleLang() {
+    setLang(lang === "en" ? "ar" : "en");
+  }
+
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-light/95 backdrop-blur-xl border-b border-dark/8">
       <div className="grid grid-cols-3 items-center h-16 px-5 md:px-10 max-w-[1400px] mx-auto w-full">
@@ -32,7 +38,7 @@ export default function Nav() {
           {user ? (
             <button
               onClick={() => { setAuthStep("profile"); setAuthOpen(true); }}
-              aria-label="Your profile"
+              aria-label={t("nav.profile")}
               className="w-9 h-9 rounded-full flex items-center justify-center
                          bg-primary/10 text-primary hover:bg-primary/18 transition-colors"
             >
@@ -49,7 +55,7 @@ export default function Nav() {
                          bg-dark/[0.04] hover:bg-dark/[0.08] hover:text-dark
                          transition-all duration-200"
             >
-              Sign In
+              {t("nav.signIn")}
             </button>
           )}
         </div>
@@ -71,17 +77,17 @@ export default function Nav() {
         {/* RIGHT — Favs + Globe + Cart */}
         <div className="flex items-center justify-end gap-1">
           <Link
-            href="#about"
+            href="/about"
             className="hidden sm:flex text-xs font-medium text-dark/50 hover:text-dark/80
                        px-3 py-1.5 rounded-xl hover:bg-dark/5 transition-all duration-200"
           >
-            About
+            {t("nav.about")}
           </Link>
 
           {/* Favs — hidden on mobile, bottom nav handles it */}
           <button
             onClick={() => setFavsOpen(true)}
-            aria-label={`Favorites${ids.size > 0 ? `, ${ids.size} saved` : ""}`}
+            aria-label={`${t("favs.title")}${ids.size > 0 ? `, ${ids.size}` : ""}`}
             className="hidden md:flex relative w-9 h-9 items-center justify-center rounded-xl
                        text-dark/45 hover:text-secondary hover:bg-secondary/8 transition-all duration-200"
           >
@@ -108,19 +114,23 @@ export default function Nav() {
             </AnimatePresence>
           </button>
 
-          {/* Globe */}
+          {/* Globe — language toggle */}
           <button
+            onClick={toggleLang}
             aria-label="Switch language"
             className="w-9 h-9 flex items-center justify-center rounded-xl
-                       text-dark/40 hover:text-dark/70 hover:bg-dark/5 transition-all duration-200"
+                       text-dark/40 hover:text-dark/70 hover:bg-dark/5 transition-all duration-200 relative"
           >
             <Globe size={17} strokeWidth={1.7} />
+            <span className="absolute -bottom-0.5 -right-0.5 text-[8px] font-bold text-primary leading-none">
+              {t("lang")}
+            </span>
           </button>
 
           {/* Cart — hidden on mobile, bottom nav handles it */}
           <motion.button
             onClick={() => setCartOpen(true)}
-            aria-label={`Cart${totalCount > 0 ? `, ${totalCount} items` : ""}`}
+            aria-label={`${t("cart.title")}${totalCount > 0 ? `, ${totalCount}` : ""}`}
             whileTap={{ scale: 0.88 }}
             className="hidden md:flex relative w-9 h-9 items-center justify-center rounded-xl
                        text-dark/45 hover:text-primary hover:bg-primary/8 transition-all duration-200"

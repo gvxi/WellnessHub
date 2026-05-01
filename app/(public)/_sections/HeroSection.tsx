@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { useRef } from "react";
-import ar from "@/messages/ar.json";
+import { useLang } from "@/lib/lang-context";
 
 const HERO_BG =
   "https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=85&w=1920";
@@ -55,9 +55,22 @@ function MagneticButton({ children, className, href }: { children: React.ReactNo
 }
 
 export default function HeroSection() {
+  const { t, lang } = useLang();
+
+  const stats = lang === "ar"
+    ? [
+        { v: "٢٠٠+",    l: t("hero.stat1") },
+        { v: "١٤,٨٧٣", l: t("hero.stat2") },
+        { v: "٩٧.٤٪",  l: t("hero.stat3") },
+      ]
+    : [
+        { v: "200+",    l: t("hero.stat1") },
+        { v: "14,873",  l: t("hero.stat2") },
+        { v: "97.4%",   l: t("hero.stat3") },
+      ];
+
   return (
     <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden" id="hero">
-      {/* Full-bleed Unsplash background */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -65,11 +78,9 @@ export default function HeroSection() {
           filter: "contrast(1.1) saturate(0.75)",
         }}
       />
-      {/* Multi-layer dramatic overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-dark/70 via-dark/50 to-dark/90" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(90,15,27,0.25),transparent)]" />
 
-      {/* Grain — fixed, pointer-events-none */}
       <div
         className="fixed inset-0 z-[1] pointer-events-none opacity-[0.04]"
         style={{
@@ -78,14 +89,12 @@ export default function HeroSection() {
         }}
       />
 
-      {/* Content */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
         className="relative z-10 flex flex-col items-center text-center px-5 max-w-5xl mx-auto"
       >
-        {/* Badge */}
         <motion.div
           variants={itemVariants}
           className="mb-10 inline-flex items-center gap-2.5 px-5 py-2 rounded-full
@@ -93,33 +102,30 @@ export default function HeroSection() {
                      shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse inline-block" />
-          {ar.hero.badge}
+          {t("hero.badge")}
         </motion.div>
 
-        {/* H1 — inline pill image embedded (gpt-taste: Inline Typography Images) */}
         <motion.h1
           variants={itemVariants}
           className="text-[clamp(3.2rem,7vw,6rem)] font-extrabold tracking-tighter leading-[1.05]
                      text-light mb-7 w-full"
         >
-          {ar.hero.headline_1}{" "}
+          {t("hero.headline_1")}{" "}
           <span
             className="inline-block w-[4.5rem] h-[2.8rem] rounded-2xl align-middle bg-cover bg-center mx-2
                        border border-white/20 shadow-md"
             style={{ backgroundImage: `url(${PILL_IMG})`, filter: "saturate(0.8)" }}
           />
-          {" "}{ar.hero.headline_2}
+          {" "}{t("hero.headline_2")}
         </motion.h1>
 
-        {/* Subheading */}
         <motion.p
           variants={itemVariants}
           className="text-base md:text-lg text-light/65 leading-loose max-w-[52ch] mb-12"
         >
-          {ar.hero.subheading}
+          {t("hero.subheading")}
         </motion.p>
 
-        {/* CTAs — magnetic primary button */}
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-4">
           <MagneticButton
             href="#book"
@@ -127,27 +133,22 @@ export default function HeroSection() {
                        hover:bg-primary/90 transition-colors duration-200 shadow-[0_8px_32px_rgba(90,15,27,0.5)]
                        border border-primary/50"
           >
-            {ar.hero.cta_primary}
+            {t("hero.cta_primary")}
           </MagneticButton>
           <MagneticButton
             href="#services"
             className="border border-light/25 text-light font-medium px-9 py-4 rounded-2xl text-base
                        hover:bg-light/10 transition-colors duration-200 backdrop-blur-sm"
           >
-            {ar.hero.cta_secondary}
+            {t("hero.cta_secondary")}
           </MagneticButton>
         </motion.div>
 
-        {/* Micro-stats strip */}
         <motion.div
           variants={itemVariants}
           className="mt-14 flex items-center gap-8 flex-wrap justify-center"
         >
-          {[
-            { v: "٢٠٠+", l: "مركز موثوق" },
-            { v: "١٤,٨٧٣", l: "حجز مكتمل" },
-            { v: "٩٧.٤٪", l: "رضا العملاء" },
-          ].map((s) => (
+          {stats.map((s) => (
             <div key={s.l} className="flex flex-col items-center gap-0.5">
               <span className="text-2xl font-bold text-light/90">{s.v}</span>
               <span className="text-xs text-light/45 tracking-wide">{s.l}</span>
@@ -156,7 +157,6 @@ export default function HeroSection() {
         </motion.div>
       </motion.div>
 
-      {/* Bottom fade to light */}
       <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-light to-transparent z-10" />
     </section>
   );

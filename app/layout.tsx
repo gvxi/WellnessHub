@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Outfit, Cairo } from "next/font/google";
 import "./globals.css";
 import ClientShell from "@/app/_components/ClientShell";
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -23,7 +31,7 @@ export default function RootLayout({
     <html
       lang="en"
       dir="ltr"
-      className={`${outfit.variable} h-full antialiased`}
+      className={`${outfit.variable} ${cairo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-light text-dark pb-[68px] md:pb-0">
         <ClientShell>{children}</ClientShell>

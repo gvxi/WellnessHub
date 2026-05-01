@@ -11,10 +11,10 @@ export async function GET() {
   const { data, error } = await supabase
     .from("categories")
     .select(`
-      id, name, subtitle, unsplash_id, image_url, slug, display_order,
+      id, name, subtitle, unsplash_id, image_url, slug, display_order, translations,
       services (
-        id, name, description, group_label, unsplash_id, display_order,
-        packages ( id, name, description, price, currency, note, icon, display_order )
+        id, name, description, group_label, unsplash_id, display_order, translations,
+        packages ( id, name, description, price, currency, note, icon, display_order, translations )
       )
     `)
     .order("display_order", { ascending: true });
@@ -38,6 +38,7 @@ export async function GET() {
         description: svc.description,
         group_label: svc.group_label,
         unsplash_id: svc.unsplash_id,
+        translations: (svc.translations as Record<string, Record<string, string>>) ?? {},
         packages: [...(svc.packages ?? [])]
           .sort((a, b) => a.display_order - b.display_order)
           .map((p) => ({
@@ -49,6 +50,7 @@ export async function GET() {
             note: p.note,
             icon: p.icon,
             display_order: p.display_order,
+            translations: (p.translations as Record<string, Record<string, string>>) ?? {},
           })),
       });
     }
@@ -66,6 +68,7 @@ export async function GET() {
       image_url: cat.image_url,
       slug: cat.slug,
       display_order: cat.display_order,
+      translations: (cat.translations as Record<string, Record<string, string>>) ?? {},
       groups,
     };
   });

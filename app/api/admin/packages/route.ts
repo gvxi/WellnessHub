@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { service_id, name, price, currency, icon, display_order } = body;
+  const { service_id, name, price, currency, icon, display_order, translations } = body;
 
   if (!service_id || !name || price == null) {
     return NextResponse.json({ error: "service_id, name, price required" }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       currency: currency ?? "OMR",
       icon: icon || null,
       display_order: display_order ?? 0,
+      translations: translations ?? {},
     })
     .select()
     .single();

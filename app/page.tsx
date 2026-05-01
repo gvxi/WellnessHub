@@ -15,7 +15,9 @@ function apiToCategory(cat: ApiCategory): Category {
   return {
     id: cat.slug ?? cat.id,
     title: cat.name,
+    titleAr: cat.translations?.ar?.name,
     subtitle: cat.subtitle ?? "",
+    subtitleAr: cat.translations?.ar?.subtitle,
     unsplashId: cat.unsplash_id ?? "",
     imageUrl: cat.image_url ?? undefined,
     subs: cat.groups.map((g) => {
@@ -28,9 +30,12 @@ function apiToCategory(cat: ApiCategory): Category {
               return {
                 id: svc.id,
                 name: svc.name,
+                nameAr: svc.translations?.ar?.name,
                 description: svc.description ?? undefined,
+                descriptionAr: svc.translations?.ar?.description,
                 tiers: svc.packages.map((p) => ({
                   label: p.name,
+                  labelAr: p.translations?.ar?.name,
                   price: `${p.price} ${p.currency}`,
                   numericPrice: p.price,
                 })),
@@ -40,7 +45,9 @@ function apiToCategory(cat: ApiCategory): Category {
             return {
               id: svc.id,
               name: svc.name,
+              nameAr: svc.translations?.ar?.name,
               description: svc.description ?? undefined,
+              descriptionAr: svc.translations?.ar?.description,
               price: pkg.note === "Starting from"
                 ? `from ${pkg.price} ${pkg.currency}`
                 : `${pkg.price} ${pkg.currency}`,

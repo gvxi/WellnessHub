@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import type { ApiAd } from "@/lib/supabase/types";
 import { resolveImage } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
 import AdLightbox from "./AdLightbox";
 
 interface AdBannerProps {
@@ -11,6 +12,11 @@ interface AdBannerProps {
 }
 
 function BannerInner({ ad }: { ad: ApiAd }) {
+  const { lang } = useLang();
+  const isAr = lang === "ar";
+  const headline = (isAr && ad.translations?.ar?.headline) ? ad.translations.ar.headline : ad.headline;
+  const subtitle = (isAr && ad.translations?.ar?.subtitle) ? ad.translations.ar.subtitle : ad.subtitle;
+  const badgeText = (isAr && ad.translations?.ar?.badge_text) ? ad.translations.ar.badge_text : ad.badge_text;
   const imgUrl = resolveImage(ad.image_url, ad.unsplash_id, 1400);
 
   return (
@@ -42,24 +48,24 @@ function BannerInner({ ad }: { ad: ApiAd }) {
       <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]" />
 
       {/* Ad label */}
-      {ad.badge_text && (
+      {badgeText && (
         <div className="absolute top-4 end-4 z-10">
           <span className="text-[10px] uppercase tracking-widest text-light/30 font-medium border border-light/20 px-2 py-0.5 rounded-full">
-            {ad.badge_text}
+            {badgeText}
           </span>
         </div>
       )}
 
       {/* Content */}
-      <div className="relative z-10 px-8 md:px-14 py-10">
+      <div className="relative z-10 px-8 md:px-14 py-10" dir={isAr ? "rtl" : "ltr"}>
         <p className="text-accent/70 text-xs uppercase tracking-[0.2em] font-medium mb-1.5">
           Coming Soon
         </p>
         <h3 className="text-2xl md:text-3xl font-bold text-light tracking-tight mb-1">
-          {ad.headline}
+          {headline}
         </h3>
-        {ad.subtitle && (
-          <p className="text-light/55 text-sm">{ad.subtitle}</p>
+        {subtitle && (
+          <p className="text-light/55 text-sm">{subtitle}</p>
         )}
       </div>
     </motion.div>

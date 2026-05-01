@@ -7,6 +7,7 @@ import type { Category, ServiceItem } from "@/lib/services-data";
 import { useCart, useFavs, useUI, registerItem } from "@/lib/shop-context";
 import { cn, resolveImage } from "@/lib/utils";
 import { PACKAGE_ICONS } from "@/lib/package-icons";
+import { useLang } from "@/lib/lang-context";
 
 const rowVariants = {
   hidden: { opacity: 0, y: 12 },
@@ -23,6 +24,11 @@ const listVariants = {
 };
 
 function Banner({ category }: { category: Category }) {
+  const { lang } = useLang();
+  const isAr = lang === "ar";
+  const title = (isAr && category.titleAr) ? category.titleAr : category.title;
+  const subtitle = (isAr && category.subtitleAr) ? category.subtitleAr : category.subtitle;
+
   return (
     <div className="relative w-full min-h-[340px] md:min-h-[420px] overflow-hidden flex items-end">
       <motion.div
@@ -43,12 +49,13 @@ function Banner({ category }: { category: Category }) {
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
         className="relative z-10 px-6 md:px-14 pb-10 md:pb-14"
+        dir={isAr ? "rtl" : "ltr"}
       >
         <p className="text-accent/80 text-xs uppercase tracking-[0.2em] font-medium mb-2">
-          {category.subtitle}
+          {subtitle}
         </p>
         <h2 className="text-3xl md:text-5xl font-bold text-light tracking-tight leading-tight">
-          {category.title}
+          {title}
         </h2>
       </motion.div>
     </div>
@@ -95,7 +102,11 @@ function ItemIndicators({ itemId }: { itemId: string }) {
 
 function ServiceRow({ item }: { item: ServiceItem }) {
   const { setSelectedItem } = useUI();
+  const { lang } = useLang();
+  const isAr = lang === "ar";
   registerItem(item);
+
+  const displayName = (isAr && item.nameAr) ? item.nameAr : item.name;
 
   return (
     <motion.button
@@ -106,23 +117,28 @@ function ServiceRow({ item }: { item: ServiceItem }) {
       className="w-full text-left transition-colors rounded-xl -mx-2 px-2"
     >
       {item.tiers ? (
-        <div className="py-3 border-b border-dark/6 last:border-0">
+        <div className="py-3 border-b border-dark/6 last:border-0" dir={isAr ? "rtl" : "ltr"}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-dark/80">{item.name}</p>
+            <p className="text-sm font-medium text-dark/80">{displayName}</p>
             <ItemIndicators itemId={item.id} />
           </div>
           {item.tiers.map((tier, j) => (
             <div key={j} className="flex justify-between items-center py-1 ps-3">
-              <span className="text-sm text-dark/55">{tier.label}</span>
+              <span className="text-sm text-dark/55">
+                {(isAr && tier.labelAr) ? tier.labelAr : tier.label}
+              </span>
               <span className="text-sm font-semibold text-dark tabular-nums">{tier.price}</span>
             </div>
           ))}
         </div>
       ) : (
-        <div className="flex justify-between items-center py-3 border-b border-dark/6 last:border-0 gap-3">
+        <div
+          className="flex justify-between items-center py-3 border-b border-dark/6 last:border-0 gap-3"
+          dir={isAr ? "rtl" : "ltr"}
+        >
           <span className="text-sm text-dark/80">
             {item.icon && PACKAGE_ICONS[item.icon as keyof typeof PACKAGE_ICONS]?.emoji + " "}
-            {item.name}
+            {displayName}
           </span>
           <div className="flex items-center gap-2 shrink-0">
             <ItemIndicators itemId={item.id} />

@@ -1,5 +1,6 @@
 export type PriceTier = {
   label: string;
+  labelAr?: string;
   price: string;
   numericPrice: number;
 };
@@ -7,7 +8,9 @@ export type PriceTier = {
 export type ServiceItem = {
   id: string;
   name: string;
+  nameAr?: string;
   description?: string;
+  descriptionAr?: string;
   price?: string;
   numericPrice?: number;
   tiers?: PriceTier[];
@@ -25,7 +28,9 @@ export type SubCategory = {
 export type Category = {
   id: string;
   title: string;
+  titleAr?: string;
   subtitle: string;
+  subtitleAr?: string;
   unsplashId: string;
   imageUrl?: string;
   subs: SubCategory[];

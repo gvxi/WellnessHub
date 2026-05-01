@@ -1,12 +1,192 @@
 {
   "nav": {
-    "sign_in": "Sign In",
-    "about": "About Us"
+    "signIn": "Sign In",
+    "about": "About",
+    "profile": "Profile"
+  },
+  "bottomNav": {
+    "about": "About",
+    "contact": "Contact",
+    "favs": "Favs",
+    "home": "Home"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "emptyHint": "Tap any service to add it",
+    "subtotal": "Subtotal",
+    "checkout": "Go to Checkout",
+    "clear": "Clear Cart"
+  },
+  "favs": {
+    "title": "Favorites",
+    "empty": "No favorites yet",
+    "emptyHint": "Tap the heart on any service to save it"
+  },
+  "item": {
+    "price": "Price",
+    "qty": "Qty",
+    "addToCart": "Add to Cart",
+    "addMore": "Add More to Cart"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "createAccount": "Create account",
+    "completeProfile": "Complete your profile",
+    "membersArea": "WellnessHub · Members area",
+    "updateAnytime": "You can update this anytime",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signingIn": "Signing in…",
+    "creating": "Creating account…",
+    "saving": "Saving…",
+    "save": "Save Profile",
+    "skip": "Skip",
+    "noAccount": "No account?",
+    "google": "Continue with Google",
+    "emailPlaceholder": "Email address",
+    "passwordPlaceholder": "Password",
+    "passwordHint": "Password (min 6 chars)",
+    "usernamePlaceholder": "Username (optional)",
+    "phonePlaceholder": "Phone number",
+    "agePlaceholder": "Age"
+  },
+  "about": {
+    "heroSubtitle": "Our story",
+    "heroHeadline": "Where wellness meets artistry.",
+    "heroBody": "WellnessHub is Muscat's destination for expert beauty, fitness, and self-care — all in one place.",
+    "exploreServices": "Explore Services",
+    "contactUs": "Contact Us",
+    "whoWeAre": "Who we are",
+    "missionHeadline": "More than a salon. A sanctuary.",
+    "missionP1": "Founded in Muscat, WellnessHub brings together the finest beauty specialists, fitness instructors, and skin therapists under one roof. We believe self-care is not a luxury — it's a right.",
+    "missionP2": "Whether you're here for a quick blow-dry or a full advanced skin treatment, every visit is designed to leave you refreshed, confident, and cared for.",
+    "ourValues": "Our values",
+    "valuesHeadline": "What drives everything we do",
+    "val1Title": "Care First",
+    "val1Body": "Every treatment is delivered with genuine attention and warmth. You are not just a booking — you are a guest.",
+    "val2Title": "Quality Craft",
+    "val2Body": "Our specialists hold international certifications and train continuously. Excellence is our baseline.",
+    "val3Title": "Real Results",
+    "val3Body": "We use proven techniques and premium products so every visit leaves you looking and feeling noticeably better.",
+    "stat1": "Years of excellence",
+    "stat2": "Happy clients",
+    "stat3": "Services offered",
+    "getInTouch": "Get in touch",
+    "contactHeadline": "Visit us or reach out",
+    "location": "Location",
+    "locationValue": "Muscat, Oman",
+    "phone": "Phone",
+    "phoneValue": "+968 9X XX XXXX",
+    "hours": "Hours",
+    "hoursValue": "Sat – Thu · 9 AM – 9 PM",
+    "bookNow": "Book Now"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "updated": "Last updated: April 2026",
+    "s1h": "1. Acceptance of Terms",
+    "s1b": "By accessing or using WellnessHub services, you agree to be bound by these Terms of Service. If you do not agree, please do not use our platform.",
+    "s2h": "2. Services",
+    "s2b": "WellnessHub provides an online platform for browsing, booking, and purchasing wellness and beauty services. All services listed are provided by qualified professionals. Availability may vary.",
+    "s3h": "3. Bookings & Payments",
+    "s3b": "Bookings are confirmed upon receipt of payment. Prices are displayed in Omani Rial (OMR) and are subject to change. Cancellations must be made at least 24 hours in advance for a full refund.",
+    "s4h": "4. User Accounts",
+    "s4b": "You are responsible for maintaining the confidentiality of your account credentials. WellnessHub is not liable for any loss resulting from unauthorized use of your account.",
+    "s5h": "5. Prohibited Conduct",
+    "s5b": "You agree not to misuse the platform, attempt unauthorized access, post false information, or engage in any conduct that may harm WellnessHub or its users.",
+    "s6h": "6. Limitation of Liability",
+    "s6b": "WellnessHub is not liable for any indirect, incidental, or consequential damages arising from your use of our services. Our total liability shall not exceed the amount paid for the relevant service.",
+    "s7h": "7. Changes to Terms",
+    "s7b": "We reserve the right to update these terms at any time. Continued use of the platform after changes constitutes acceptance of the updated terms.",
+    "s8h": "8. Contact",
+    "s8b": "For questions about these terms, contact us at",
+    "backHome": "← Back to home",
+    "viewPrivacy": "Privacy Policy"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "updated": "Last updated: April 2026",
+    "s1h": "1. Information We Collect",
+    "s1b": "We collect information you provide directly — such as your name, email address, phone number, and age when you create an account or make a booking. We also collect usage data and device information automatically.",
+    "s2h": "2. How We Use Your Information",
+    "s2b": "Your information is used to process bookings, send confirmations, improve our services, and communicate relevant offers. We do not sell your personal data to third parties.",
+    "s3h": "3. Data Storage",
+    "s3b": "Data is stored securely using Supabase infrastructure hosted in the EU. We apply industry-standard encryption at rest and in transit.",
+    "s4h": "4. Cookies & Local Storage",
+    "s4b": "We use browser local storage to remember your preferences (such as cart items and favorites). No tracking cookies are used for advertising purposes.",
+    "s5h": "5. Third-Party Services",
+    "s5b": "We use Google OAuth for optional sign-in. Images may be served via Unsplash or our own Supabase Storage. Cloudflare Turnstile is used for spam protection during registration.",
+    "s6h": "6. Your Rights",
+    "s6b": "You may request deletion of your account and associated data at any time by contacting us. You can also update your profile information from your account settings.",
+    "s7h": "7. Children's Privacy",
+    "s7b": "Our services are not directed to children under 13. We do not knowingly collect personal data from children.",
+    "s8h": "8. Contact",
+    "s8b": "For privacy-related requests, contact us at",
+    "backHome": "← Back to home",
+    "viewTerms": "Terms of Service"
+  },
+  "hero": {
+    "badge": "Now Open in Muscat",
+    "headline_1": "Your wellness,",
+    "headline_2": "elevated.",
+    "subheading": "Muscat's premier destination for beauty, fitness, and advanced skin care. Expert specialists. Exceptional results.",
+    "cta_primary": "Book Now",
+    "cta_secondary": "Explore Services",
+    "stat1": "Trusted centres",
+    "stat2": "Completed bookings",
+    "stat3": "Client satisfaction"
+  },
+  "cta": {
+    "headline": "Ready to transform your wellness journey?",
+    "sub": "Join thousands of clients who trust WellnessHub for expert care, every visit.",
+    "button": "Get Started Today",
+    "chip1": "No credit card required",
+    "chip2": "Free cancellation",
+    "chip3": "24/7 support"
+  },
+  "testimonials": {
+    "headline": "Loved by our clients",
+    "reviewCount": "Based on {n} verified reviews"
+  },
+  "services": {
+    "comingSoon": "Services coming soon",
+    "checkBack": "Check back shortly",
+    "section_headline": "Everything you need, under one roof.",
+    "section_sub": "From advanced skin treatments to fitness coaching — WellnessHub brings expert care together in one place.",
+    "spa": {
+      "title": "Spa & Relaxation",
+      "desc": "Rejuvenating treatments designed to restore balance, calm, and deep relaxation."
+    },
+    "salon": {
+      "title": "Salon",
+      "desc": "Expert hair styling, colour, and beauty services by certified professionals."
+    },
+    "fitness": {
+      "title": "Fitness",
+      "desc": "Guided workouts, personal training, and group classes for every level."
+    },
+    "skincare": {
+      "title": "Advanced Skincare",
+      "desc": "Science-backed treatments and cutting-edge technology for radiant, healthy skin."
+    },
+    "massage": {
+      "title": "Massage Therapy",
+      "desc": "Therapeutic and relaxation massage to relieve tension and restore energy."
+    }
   },
   "footer": {
     "copyright": "© 2026 WellnessHub. All rights reserved.",
     "services": "Services",
     "about": "About",
-    "privacy": "Privacy"
-  }
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "brand": "WellnessHub",
+    "tagline": "Beauty, fitness, and wellness — all in one place.",
+    "links_services": "Services",
+    "links_about": "About",
+    "links_privacy": "Privacy",
+    "links_terms": "Terms"
+  },
+  "lang": "EN"
 }

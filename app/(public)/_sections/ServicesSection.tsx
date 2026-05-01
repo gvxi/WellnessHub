@@ -2,7 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import ar from "@/messages/ar.json";
+import { useLang } from "@/lib/lang-context";
 
 const IMGS = {
   spa:      "https://images.unsplash.com/photo-1630595632518-8217c0bceb8f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
@@ -12,39 +12,12 @@ const IMGS = {
   massage:  "https://images.unsplash.com/photo-1542729553-6775aaa1eb3c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
 };
 
-/* Explicit grid placement — 3 cols x 3 rows = 9 slots, zero gaps
-   spa(2x2)=4 + salon(1x1)=1 + fitness(1x1)=1 + skincare(2x1)=2 + massage(1x1)=1 = 9 */
 const cards = [
-  {
-    key: "spa",
-    img: IMGS.spa,
-    grid: "col-start-1 col-end-3 row-start-1 row-end-3",
-    large: true,
-  },
-  {
-    key: "salon",
-    img: IMGS.salon,
-    grid: "col-start-3 row-start-1",
-    large: false,
-  },
-  {
-    key: "fitness",
-    img: IMGS.fitness,
-    grid: "col-start-3 row-start-2",
-    large: false,
-  },
-  {
-    key: "skincare",
-    img: IMGS.skincare,
-    grid: "col-start-1 col-end-3 row-start-3",
-    large: false,
-  },
-  {
-    key: "massage",
-    img: IMGS.massage,
-    grid: "col-start-3 row-start-3",
-    large: false,
-  },
+  { key: "spa",      img: IMGS.spa,      grid: "col-start-1 col-end-3 row-start-1 row-end-3", large: true  },
+  { key: "salon",    img: IMGS.salon,    grid: "col-start-3 row-start-1",                      large: false },
+  { key: "fitness",  img: IMGS.fitness,  grid: "col-start-3 row-start-2",                      large: false },
+  { key: "skincare", img: IMGS.skincare, grid: "col-start-1 col-end-3 row-start-3",            large: false },
+  { key: "massage",  img: IMGS.massage,  grid: "col-start-3 row-start-3",                      large: false },
 ] as const;
 
 const containerVariants = {
@@ -62,12 +35,12 @@ const cardVariants = {
 };
 
 export default function ServicesSection() {
+  const { t } = useLang();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
     <section id="services" className="py-32 md:py-48 px-5 max-w-[1400px] mx-auto">
-      {/* Left-aligned header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -76,14 +49,13 @@ export default function ServicesSection() {
         className="mb-14 max-w-lg"
       >
         <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-dark leading-tight mb-4">
-          {ar.services.section_headline}
+          {t("services.section_headline")}
         </h2>
         <p className="text-dark/55 text-base leading-relaxed">
-          {ar.services.section_sub}
+          {t("services.section_sub")}
         </p>
       </motion.div>
 
-      {/* Perfect 3x3 bento grid — grid-flow-dense prevents any gaps */}
       <motion.div
         ref={ref}
         variants={containerVariants}
@@ -92,40 +64,33 @@ export default function ServicesSection() {
         className="grid grid-cols-3 gap-3 md:gap-4"
         style={{ gridTemplateRows: "repeat(3, clamp(180px, 22vw, 320px))" }}
       >
-        {cards.map((card) => {
-          const svc = ar.services[card.key];
-          return (
-            <motion.div
-              key={card.key}
-              variants={cardVariants}
-              className={`group relative overflow-hidden rounded-2xl md:rounded-3xl cursor-pointer ${card.grid}`}
-            >
-              {/* Image — scale on hover */}
-              <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out
-                           group-hover:scale-[1.06] will-change-transform"
-                style={{
-                  backgroundImage: `url(${card.img})`,
-                  filter: "saturate(0.82) contrast(1.05)",
-                }}
-              />
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-dark/85 via-dark/20 to-transparent" />
-              {/* Hover tint */}
-              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/15 transition-colors duration-500" />
+        {cards.map((card) => (
+          <motion.div
+            key={card.key}
+            variants={cardVariants}
+            className={`group relative overflow-hidden rounded-2xl md:rounded-3xl cursor-pointer ${card.grid}`}
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out
+                         group-hover:scale-[1.06] will-change-transform"
+              style={{
+                backgroundImage: `url(${card.img})`,
+                filter: "saturate(0.82) contrast(1.05)",
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-dark/85 via-dark/20 to-transparent" />
+            <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/15 transition-colors duration-500" />
 
-              {/* Text */}
-              <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
-                <h3 className={`text-light font-bold leading-snug mb-1 ${card.large ? "text-xl md:text-2xl" : "text-sm md:text-base"}`}>
-                  {svc.title}
-                </h3>
-                <p className={`text-light/60 leading-relaxed ${card.large ? "text-sm" : "text-xs"} hidden sm:block`}>
-                  {svc.desc}
-                </p>
-              </div>
-            </motion.div>
-          );
-        })}
+            <div className="absolute bottom-0 inset-x-0 p-4 md:p-6">
+              <h3 className={`text-light font-bold leading-snug mb-1 ${card.large ? "text-xl md:text-2xl" : "text-sm md:text-base"}`}>
+                {t(`services.${card.key}.title`)}
+              </h3>
+              <p className={`text-light/60 leading-relaxed ${card.large ? "text-sm" : "text-xs"} hidden sm:block`}>
+                {t(`services.${card.key}.desc`)}
+              </p>
+            </div>
+          </motion.div>
+        ))}
       </motion.div>
     </section>
   );
