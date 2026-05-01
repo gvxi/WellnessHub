@@ -280,5 +280,30 @@
     "bookingHistory": "Booking History",
     "noBookings": "No bookings yet"
   },
+  "checkout": {
+    "title": "Checkout",
+    "orderSummary": "Order Summary",
+    "payment": "Payment",
+    "emptyCart": "Your cart is empty",
+    "emptyCartHint": "Add services before checking out",
+    "backToServices": "Back to Services",
+    "payWithPaymob": "Pay with Paymob",
+    "processing": "Processing…",
+    "securePayment": "Secured by Paymob · OMR",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "comingSoon": "Payment coming soon — Paymob integration in progress",
+    "signInRequired": "Sign in to continue",
+    "signInHint": "You need an account to complete your booking.",
+    "profileRequired": "Complete your profile first",
+    "profileHint": "We need your name and phone number to confirm your booking.",
+    "successTitle": "Booking Confirmed!",
+    "successBody": "Your booking is pending approval. We'll notify you once confirmed.",
+    "failedTitle": "Payment Unsuccessful",
+    "failedBody": "Something went wrong. Please try again.",
+    "tryAgain": "Try Again",
+    "backHome": "Back to Home",
+    "orderId": "Order"
+  },
   "lang": "EN"
 }

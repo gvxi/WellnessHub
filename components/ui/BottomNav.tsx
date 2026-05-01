@@ -16,9 +16,19 @@ export default function BottomNav() {
   const { t } = useLang();
 
   const isHome = pathname === "/";
+  const isCheckout = pathname.startsWith("/checkout");
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden">
+    <AnimatePresence>
+    {!isCheckout && (
+    <motion.nav
+      key="bottom-nav"
+      initial={{ y: 0 }}
+      animate={{ y: 0 }}
+      exit={{ y: 100 }}
+      transition={{ type: "spring", stiffness: 380, damping: 34 }}
+      className="fixed bottom-0 inset-x-0 z-50 md:hidden"
+    >
       {/* Glass bar */}
       <div className="relative bg-light/90 backdrop-blur-xl border-t border-dark/8 h-[68px]">
         <div className="grid grid-cols-5 h-full items-center px-1">
@@ -102,7 +112,9 @@ export default function BottomNav() {
           </NavTab>
         </div>
       </div>
-    </nav>
+    </motion.nav>
+    )}
+    </AnimatePresence>
   );
 }
 

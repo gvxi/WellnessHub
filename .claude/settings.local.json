@@ -27,7 +27,10 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\app\" -Recurse -Directory -Filter \"*admin*\")",
       "Bash(Select-Object -ExpandProperty FullName)",
       "PowerShell(Test-Path \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\modules\" && \\(Get-ChildItem \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\modules\" | Select-Object Name\\) || Write-Host \"modules directory does not exist\")",
-      "mcp__plugin_playwright_playwright__browser_type"
+      "mcp__plugin_playwright_playwright__browser_type",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\" -Recurse -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -First 50 FullName)",
+      "Bash(xargs ls *)"
     ]
   },
   "enabledPlugins": {

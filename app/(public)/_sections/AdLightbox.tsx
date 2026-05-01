@@ -55,8 +55,7 @@ export default function AdLightbox({ ad, open, onClose }: Props) {
               <img
                 src={imgUrl}
                 alt={headline}
-                className="w-full object-cover"
-                style={{ maxHeight: "60vh" }}
+                className="w-full h-auto block"
               />
             ) : (
               <div className="w-full h-56 bg-gradient-to-br from-primary to-secondary" />

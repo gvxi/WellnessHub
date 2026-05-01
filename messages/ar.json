@@ -280,5 +280,30 @@
     "bookingHistory": "سجل الحجوزات",
     "noBookings": "لا توجد حجوزات بعد"
   },
+  "checkout": {
+    "title": "إتمام الطلب",
+    "orderSummary": "ملخص الطلب",
+    "payment": "الدفع",
+    "emptyCart": "السلة فارغة",
+    "emptyCartHint": "أضف خدمات قبل إتمام الطلب",
+    "backToServices": "العودة إلى الخدمات",
+    "payWithPaymob": "الدفع عبر Paymob",
+    "processing": "جارٍ المعالجة…",
+    "securePayment": "مدفوعات آمنة عبر Paymob · ريال عُماني",
+    "subtotal": "الإجمالي",
+    "total": "المجموع",
+    "comingSoon": "الدفع قريباً — جاري تفعيل Paymob",
+    "signInRequired": "سجّل الدخول للمتابعة",
+    "signInHint": "تحتاج إلى حساب لإتمام حجزك.",
+    "profileRequired": "أكمل ملفك الشخصي أولاً",
+    "profileHint": "نحتاج إلى اسمك ورقم هاتفك لتأكيد حجزك.",
+    "successTitle": "تم تأكيد الحجز!",
+    "successBody": "حجزك قيد المراجعة. سنخطرك بمجرد تأكيده.",
+    "failedTitle": "فشلت عملية الدفع",
+    "failedBody": "حدث خطأ ما. يُرجى المحاولة مرة أخرى.",
+    "tryAgain": "حاول مجدداً",
+    "backHome": "العودة إلى الرئيسية",
+    "orderId": "الطلب"
+  },
   "lang": "ع"
 }
