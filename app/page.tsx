@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { createClient } from "@supabase/supabase-js";
 import Nav from "@/components/shared/Nav";
 import Footer from "@/components/shared/Footer";
 import FirstVisitGuard from "@/app/_components/FirstVisitGuard";
@@ -6,10 +7,103 @@ import ServiceCategory from "@/app/(public)/_sections/ServiceCategory";
 import AdBanner from "@/app/(public)/_sections/AdBanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Category, ServiceItem, SubCategory } from "@/lib/services-data";
-import type { ApiCategory, ApiAd } from "@/lib/supabase/types";
+import type { ApiCategory, ApiAd, ApiGroup, ApiService, Translations } from "@/lib/supabase/types";
 import { Sparkles } from "lucide-react";
 
-// ─── Adapters ─────────────────────────────────────────────────────────────────
+// ─── Direct Supabase fetch (server-side, no HTTP round-trip) ─────────────────
+
+function makeSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+async function fetchCategories(): Promise<ApiCategory[]> {
+  const supabase = makeSupabase();
+  const { data, error } = await supabase
+    .from("categories")
+    .select(`
+      id, name, subtitle, unsplash_id, image_url, slug, display_order, translations,
+      services (
+        id, name, description, group_label, unsplash_id, display_order, translations,
+        packages ( id, name, description, price, currency, note, icon, display_order, translations )
+      )
+    `)
+    .order("display_order", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((cat) => {
+    const services = [...(cat.services ?? [])].sort((a, b) => a.display_order - b.display_order);
+    const groupMap = new Map<string, ApiService[]>();
+
+    for (const svc of services) {
+      const label = svc.group_label ?? "Other";
+      if (!groupMap.has(label)) groupMap.set(label, []);
+      groupMap.get(label)!.push({
+        id: svc.id,
+        name: svc.name,
+        description: svc.description,
+        group_label: svc.group_label,
+        unsplash_id: svc.unsplash_id,
+        translations: (svc.translations as Translations) ?? {},
+        packages: [...(svc.packages ?? [])]
+          .sort((a, b) => a.display_order - b.display_order)
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            currency: p.currency,
+            note: p.note,
+            icon: p.icon,
+            display_order: p.display_order,
+            translations: (p.translations as Translations) ?? {},
+          })),
+      });
+    }
+
+    const groups: ApiGroup[] = Array.from(groupMap.entries()).map(([label, svcs]) => ({ label, services: svcs }));
+
+    return {
+      id: cat.id,
+      name: cat.name,
+      subtitle: cat.subtitle,
+      unsplash_id: cat.unsplash_id,
+      image_url: cat.image_url,
+      slug: cat.slug,
+      display_order: cat.display_order,
+      translations: (cat.translations as Translations) ?? {},
+      groups,
+    };
+  });
+}
+
+async function fetchAds(): Promise<ApiAd[]> {
+  const supabase = makeSupabase();
+  const { data, error } = await supabase
+    .from("ads")
+    .select("id, headline, subtitle, unsplash_id, image_url, badge_text, fullscreen_enabled, display_order, translations")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((ad) => ({
+    id: ad.id,
+    headline: ad.headline,
+    subtitle: ad.subtitle,
+    unsplash_id: ad.unsplash_id,
+    image_url: ad.image_url,
+    badge_text: ad.badge_text,
+    fullscreen_enabled: ad.fullscreen_enabled ?? false,
+    display_order: ad.display_order,
+    translations: (ad.translations as Translations) ?? {},
+  }));
+}
+
+// ─── Adapter ─────────────────────────────────────────────────────────────────
 
 function apiToCategory(cat: ApiCategory): Category {
   return {
@@ -63,7 +157,7 @@ function apiToCategory(cat: ApiCategory): Category {
   };
 }
 
-// ─── Skeleton placeholders ─────────────────────────────────────────────────────
+// ─── Skeletons ────────────────────────────────────────────────────────────────
 
 function ServiceCategorySkeleton() {
   return (
@@ -92,23 +186,10 @@ function AdBannerSkeleton() {
   return <Skeleton className="mx-4 md:mx-10 my-3 rounded-2xl min-h-[180px] md:min-h-[220px]" />;
 }
 
-// ─── Async content ─────────────────────────────────────────────────────────────
+// ─── Async content ────────────────────────────────────────────────────────────
 
 async function LandingContent() {
-  const apiBase =
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
-
-  const [categoriesRaw, adsRaw] = await Promise.all([
-    fetch(`${apiBase}/categories`, { next: { revalidate: 60 } })
-      .then((r) => r.json())
-      .catch(() => []),
-    fetch(`${apiBase}/ads`, { next: { revalidate: 60 } })
-      .then((r) => r.json())
-      .catch(() => []),
-  ]);
-
-  const categories: ApiCategory[] = Array.isArray(categoriesRaw) ? categoriesRaw : [];
-  const ads: ApiAd[] = Array.isArray(adsRaw) ? adsRaw : [];
+  const [categories, ads] = await Promise.all([fetchCategories(), fetchAds()]);
 
   const [fitness, salon, advanced, nails] = categories.map(apiToCategory);
   const [adA, adB] = ads;
@@ -127,12 +208,12 @@ async function LandingContent() {
 
   return (
     <>
-      {fitness && <ServiceCategory category={fitness} />}
-      {adA && <AdBanner ad={adA} />}
-      {salon && <ServiceCategory category={salon} />}
+      {fitness  && <ServiceCategory category={fitness} />}
+      {adA      && <AdBanner ad={adA} />}
+      {salon    && <ServiceCategory category={salon} />}
       {advanced && <ServiceCategory category={advanced} />}
-      {adB && <AdBanner ad={adB} />}
-      {nails && <ServiceCategory category={nails} />}
+      {adB      && <AdBanner ad={adB} />}
+      {nails    && <ServiceCategory category={nails} />}
     </>
   );
 }
