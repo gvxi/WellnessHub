@@ -460,7 +460,7 @@ export default function CheckoutPage() {
                   )}
                   <button
                     onClick={sendOtp}
-                    disabled={otpState === "sending"}
+                    disabled={otpState === "verifying"}
                     className="text-xs text-primary hover:underline text-start disabled:opacity-40"
                   >
                     {t("checkout.otpResend")}
