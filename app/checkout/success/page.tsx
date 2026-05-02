@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/lib/lang-context";
+import { useCart } from "@/lib/shop-context";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -13,11 +14,14 @@ function SuccessContent() {
   const orderId = params.get("order_id") ?? params.get("id");
   const bookingId = params.get("booking_id");
   const { t } = useLang();
+  const { clearCart } = useCart();
 
   useEffect(() => {
+    clearCart();
     if (typeof window !== "undefined" && window.self !== window.top) {
       window.top!.location.href = window.location.href;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [invoiceState, setInvoiceState] = useState<"idle" | "sending" | "sent" | "error">("idle");

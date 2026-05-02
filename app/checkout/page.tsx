@@ -107,11 +107,11 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    if (totalCount === 0 && authState !== "loading") {
+    if (totalCount === 0 && authState !== "loading" && !iframeUrl) {
       const timer = setTimeout(() => router.push("/"), 2000);
       return () => clearTimeout(timer);
     }
-  }, [totalCount, authState, router]);
+  }, [totalCount, authState, router, iframeUrl]);
 
   // ── OTP helpers ────────────────────────────────────────────────────────────
   async function getToken(): Promise<string | null> {
@@ -209,6 +209,14 @@ export default function CheckoutPage() {
       }
 
       if (data.booking_id) {
+        // External payment gateway (Paymob) — embed as iframe; clear cart after payment succeeds
+        if (data.payment_url && !data.payment_url.startsWith("/")) {
+          setIframeLoaded(false);
+          setIframeUrl(data.payment_url);
+          return;
+        }
+
+        // DEV_MODE / non-payment path — clear cart and confirm immediately
         fetch("/api/checkout/send-invoice", {
           method: "POST",
           headers: {
@@ -218,14 +226,6 @@ export default function CheckoutPage() {
           body: JSON.stringify({ booking_id: data.booking_id, lang }),
         }).catch(() => {});
         clearCart();
-
-        // External payment gateway (Paymob) — embed as iframe
-        if (data.payment_url && !data.payment_url.startsWith("/")) {
-          setIframeLoaded(false);
-          setIframeUrl(data.payment_url);
-          return;
-        }
-
         showToast(t("checkout.bookingConfirmed"), "cart");
         return;
       }
