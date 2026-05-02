@@ -14,6 +14,12 @@ function SuccessContent() {
   const bookingId = params.get("booking_id");
   const { t } = useLang();
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.self !== window.top) {
+      window.top!.location.href = window.location.href;
+    }
+  }, []);
+
   const [invoiceState, setInvoiceState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [sendCount, setSendCount] = useState(0);
   const [cooldown, setCooldown] = useState(0);

@@ -40,6 +40,8 @@ export default function CheckoutPage() {
   const otpVerifiedThisSession = useRef(false);
 
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const subtotal = items.reduce(
     (sum, item) => sum + (item.snapshot.numericPrice ?? 0) * item.qty,
@@ -217,9 +219,10 @@ export default function CheckoutPage() {
         }).catch(() => {});
         clearCart();
 
-        // External payment gateway (Paymob) — redirect without showing toast
+        // External payment gateway (Paymob) — embed as iframe
         if (data.payment_url && !data.payment_url.startsWith("/")) {
-          router.push(data.payment_url);
+          setIframeLoaded(false);
+          setIframeUrl(data.payment_url);
           return;
         }
 
@@ -307,6 +310,52 @@ export default function CheckoutPage() {
 
   return (
     <div className="px-4 md:px-10 py-10 md:py-16 max-w-[1100px] mx-auto" dir={isAr ? "rtl" : "ltr"}>
+
+      {/* ── Paymob iframe overlay ── */}
+      <AnimatePresence>
+        {iframeUrl && (
+          <motion.div
+            key="paymob-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-dark/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-lg bg-light rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+              style={{ height: "min(620px, 90vh)" }}
+            >
+              <div className="px-5 py-3.5 border-b border-dark/8 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2 text-sm font-semibold text-dark/70">
+                  <Lock size={13} className="text-primary" />
+                  {t("checkout.securePayment")}
+                </div>
+                {!iframeLoaded && (
+                  <Loader2 size={15} className="animate-spin text-dark/30" />
+                )}
+              </div>
+              <div className="relative flex-1">
+                {!iframeLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-light">
+                    <Loader2 size={28} className="animate-spin text-dark/20" />
+                  </div>
+                )}
+                <iframe
+                  src={iframeUrl}
+                  className="w-full h-full border-0"
+                  title="Paymob Payment"
+                  allow="payment"
+                  onLoad={() => setIframeLoaded(true)}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <a
         href="/"
         className={cn(

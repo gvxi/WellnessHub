@@ -38,7 +38,10 @@
       "mcp__supabase__deploy_edge_function",
       "Bash(Select-Object FullName)",
       "Bash(dir \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\supabase\")",
-      "Bash(dir)"
+      "Bash(dir)",
+      "WebFetch(domain:paymob.com)",
+      "Bash(Select-Object -First 30)",
+      "PowerShell(Get-ChildItem *)"
     ]
   },
   "enabledPlugins": {

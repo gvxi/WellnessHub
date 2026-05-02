@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { XCircle, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -10,6 +10,12 @@ function FailedContent() {
   const params = useSearchParams();
   const orderId = params.get("order_id");
   const { t } = useLang();
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.self !== window.top) {
+      window.top!.location.href = window.location.href;
+    }
+  }, []);
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
