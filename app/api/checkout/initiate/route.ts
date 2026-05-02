@@ -123,7 +123,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
   }
 
-  // ── 6. Paymob (only if all env vars set) ──────────────────────────────────
+  // ── 6. DEV_MODE bypass ───────────────────────────────────────────────────
+  if (process.env.DEV_MODE === "TRUE") {
+    await supabase
+      .from("bookings")
+      .update({ status: "approved" })
+      .eq("id", booking.id);
+    return NextResponse.json({ status: "ok", payment_url: "/checkout/success", booking_id: booking.id });
+  }
+
+  // ── 7. Paymob (only if all env vars set) ──────────────────────────────────
   const {
     PAYMOB_API_KEY,
     PAYMOB_INTEGRATION_ID,

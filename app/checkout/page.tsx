@@ -36,6 +36,7 @@ export default function CheckoutPage() {
   const [otpState, setOtpState] = useState<OtpState>("idle");
   const [otpCode, setOtpCode] = useState("");
   const [otpError, setOtpError] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const otpVerifiedThisSession = useRef(false);
 
   const subtotal = items.reduce(
@@ -481,13 +482,47 @@ export default function CheckoutPage() {
             )}
           </AnimatePresence>
 
+          {/* Terms checkbox */}
+          <label className="flex items-start gap-2.5 cursor-pointer group">
+            <div className="relative mt-0.5 shrink-0">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className={cn(
+                "w-4 h-4 rounded flex items-center justify-center border transition-colors",
+                termsAccepted
+                  ? "bg-primary border-primary"
+                  : "border-dark/25 group-hover:border-primary/50"
+              )}>
+                {termsAccepted && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+            </div>
+            <span className="text-xs text-dark/50 leading-relaxed">
+              {isAr ? "أوافق على " : "I agree to the "}
+              <a href="/terms" target="_blank" className="text-primary hover:underline font-medium">
+                {isAr ? "الشروط والأحكام" : "Terms & Conditions"}
+              </a>
+              {isAr ? " و" : " and "}
+              <a href="/privacy" target="_blank" className="text-primary hover:underline font-medium">
+                {isAr ? "سياسة الخصوصية" : "Privacy Policy"}
+              </a>
+            </span>
+          </label>
+
           <button
             onClick={() => handlePaymob()}
-            disabled={payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"}
+            disabled={!termsAccepted || payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"}
             className={cn(
               "w-full py-4 rounded-2xl text-sm font-semibold transition-colors duration-200",
               "flex items-center justify-center gap-2",
-              payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"
+              !termsAccepted || payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"
                 ? "bg-primary/50 text-light cursor-not-allowed"
                 : "bg-primary text-light hover:bg-primary/90"
             )}
