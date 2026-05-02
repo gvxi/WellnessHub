@@ -148,6 +148,8 @@ function apiToCategory(cat: ApiCategory, sectionArMap: Map<string, string>): Cat
                 descriptionAr: svc.translations?.ar?.description,
                 groupLabel,
                 groupLabelAr,
+                unsplashId: svc.unsplash_id ?? undefined,
+                imageUrl: svc.image_url ?? undefined,
                 tiers: svc.packages.map((p) => ({
                   label: p.name,
                   labelAr: p.translations?.ar?.name,
@@ -171,6 +173,7 @@ function apiToCategory(cat: ApiCategory, sectionArMap: Map<string, string>): Cat
               numericPrice: pkg.price,
               note: pkg.note ?? undefined,
               unsplashId: svc.unsplash_id ?? undefined,
+              imageUrl: svc.image_url ?? undefined,
               icon: pkg.icon ?? undefined,
             };
           }),

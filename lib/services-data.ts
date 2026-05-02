@@ -18,6 +18,7 @@ export type ServiceItem = {
   tiers?: PriceTier[];
   note?: string;
   unsplashId?: string;
+  imageUrl?: string;
   icon?: string;
 };
 

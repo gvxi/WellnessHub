@@ -15,7 +15,7 @@ import { useUI } from "@/lib/shop-context";
 import { useLang } from "@/lib/lang-context";
 import { useToast } from "@/lib/toast-context";
 import { supabase } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, resolveImage } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
 
 type AuthState = "loading" | "unauthenticated" | "incomplete-profile" | "ready";
@@ -43,7 +43,7 @@ export default function CheckoutPage() {
     0
   );
 
-  const otpRequired = subtotal > 20 || !otpVerifiedThisSession.current;
+  const otpRequired = subtotal > 20 && !otpVerifiedThisSession.current;
 
   // ── Auth + profile check ───────────────────────────────────────────────────
   async function checkAuth(u: User | null): Promise<AuthState> {
@@ -310,11 +310,19 @@ export default function CheckoutPage() {
                     transition={{ duration: 0.2 }}
                     className="px-5 py-4"
                   >
-                    {/* Row 1: icon + name + delete */}
+                    {/* Row 1: image/icon + name + delete */}
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                        <span className="text-secondary text-lg">{cartItem.snapshot.icon ?? "✦"}</span>
-                      </div>
+                      {resolveImage(cartItem.snapshot.imageUrl, cartItem.snapshot.unsplashId, 120) ? (
+                        <img
+                          src={resolveImage(cartItem.snapshot.imageUrl, cartItem.snapshot.unsplashId, 120)!}
+                          alt={name}
+                          className="w-10 h-10 rounded-xl object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                          <span className="text-secondary text-lg">{cartItem.snapshot.icon ?? "✦"}</span>
+                        </div>
+                      )}
 
                       <div className="flex-1 min-w-0">
                         {group && (

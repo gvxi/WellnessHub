@@ -13,7 +13,7 @@ export async function GET() {
     .select(`
       id, name, subtitle, unsplash_id, image_url, slug, display_order, translations,
       services (
-        id, name, description, group_label, unsplash_id, display_order, translations,
+        id, name, description, group_label, unsplash_id, image_url, display_order, translations,
         packages ( id, name, description, price, currency, note, icon, display_order, translations )
       )
     `)
@@ -38,6 +38,7 @@ export async function GET() {
         description: svc.description,
         group_label: svc.group_label,
         unsplash_id: svc.unsplash_id,
+        image_url: svc.image_url,
         translations: (svc.translations as Record<string, Record<string, string>>) ?? {},
         packages: [...(svc.packages ?? [])]
           .sort((a, b) => a.display_order - b.display_order)

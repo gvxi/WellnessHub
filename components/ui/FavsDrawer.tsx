@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useCart, useFavs, useUI } from "@/lib/shop-context";
 import { useToast } from "@/lib/toast-context";
 import { useLang } from "@/lib/lang-context";
+import { resolveImage } from "@/lib/utils";
 
 const SPRING = { type: "spring" as const, stiffness: 260, damping: 26 };
 
@@ -105,9 +106,9 @@ export default function FavsDrawer({ open, onClose }: Props) {
                         className="flex items-center gap-3 p-3 rounded-2xl bg-dark/[0.03] hover:bg-dark/[0.05] transition-colors cursor-pointer"
                         onClick={() => { setSelectedItem(info); onClose(); }}
                       >
-                        {info.unsplashId && (
+                        {resolveImage(info.imageUrl, info.unsplashId, 120) && (
                           <img
-                            src={`https://images.unsplash.com/${info.unsplashId}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=120`}
+                            src={resolveImage(info.imageUrl, info.unsplashId, 120)!}
                             alt={info.name}
                             className="w-12 h-12 rounded-xl object-cover shrink-0"
                           />

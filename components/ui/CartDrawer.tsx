@@ -5,7 +5,7 @@ import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useEffect } from "react";
 import { useCart } from "@/lib/shop-context";
 import { useLang } from "@/lib/lang-context";
-import { cn } from "@/lib/utils";
+import { cn, resolveImage } from "@/lib/utils";
 
 const SPRING = { type: "spring" as const, stiffness: 260, damping: 26 };
 
@@ -107,9 +107,9 @@ export default function CartDrawer({ open, onClose }: Props) {
                           transition={{ duration: 0.22 }}
                           className="flex items-center gap-3 p-3 rounded-2xl bg-dark/[0.03] hover:bg-dark/[0.05] transition-colors"
                         >
-                          {info.unsplashId && (
+                          {resolveImage(info.imageUrl, info.unsplashId, 120) && (
                             <img
-                              src={`https://images.unsplash.com/${info.unsplashId}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=120`}
+                              src={resolveImage(info.imageUrl, info.unsplashId, 120)!}
                               alt={info.name}
                               className="w-12 h-12 rounded-xl object-cover shrink-0"
                             />

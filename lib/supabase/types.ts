@@ -119,6 +119,7 @@ export type ApiService = {
   description: string | null;
   group_label: string | null;
   unsplash_id: string | null;
+  image_url: string | null;
   packages: ApiPackage[];
   translations: Translations;
 };
