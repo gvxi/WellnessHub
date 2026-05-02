@@ -18,7 +18,7 @@ type PkgRow = {
   translations: Translations;
 };
 type ServiceRow = {
-  id: string; name: string; group_label: string | null; is_active: boolean;
+  id: string; name: string; description: string | null; group_label: string | null; is_active: boolean;
   display_order: number; category_id: string | null;
   categories: { name: string } | null;
   packages: PkgRow[];
@@ -350,7 +350,7 @@ export default function ServicesTab() {
     if (editing.kind === "svc") return {
       name: editing.item.name,
       group_label: editing.item.group_label ?? "",
-      description: "",
+      description: editing.item.description ?? "",
       category_id: editing.item.category_id ?? "",
       ...arValues(editing.item.translations, ["name", "description"]),
     };
@@ -413,8 +413,15 @@ export default function ServicesTab() {
         }
       }
       for (const svc of services) {
-        if (!svc.translations?.ar?.name) {
-          jobs.push({ type: "svc", id: svc.id, texts: [svc.name], keys: ["name"], existing: svc.translations ?? {} });
+        const needsName = !svc.translations?.ar?.name;
+        const hasDesc = !!svc.description?.trim();
+        const needsDesc = hasDesc && !svc.translations?.ar?.description;
+        if (needsName || needsDesc) {
+          const texts: string[] = [];
+          const keys: string[] = [];
+          if (needsName) { texts.push(svc.name); keys.push("name"); }
+          if (needsDesc) { texts.push(svc.description!); keys.push("description"); }
+          jobs.push({ type: "svc", id: svc.id, texts, keys, existing: svc.translations ?? {} });
         }
         for (const pkg of svc.packages ?? []) {
           if (!pkg.translations?.ar?.name) {
