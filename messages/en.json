@@ -19,7 +19,8 @@
     "checkout": "Go to Checkout",
     "clear": "Clear Cart",
     "unavailable": "Unavailable",
-    "unavailableCheckout": "Some items are no longer available. Please remove them to proceed."
+    "unavailableCheckout": "Some items are no longer available. Please remove them to proceed.",
+    "remove": "Remove"
   },
   "favs": {
     "title": "Favorites",

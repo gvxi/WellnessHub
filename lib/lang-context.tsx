@@ -9,6 +9,7 @@ import {
 } from "react";
 import en from "@/messages/en.json";
 import ar from "@/messages/ar.json";
+import { supabase } from "@/lib/supabase/client";
 
 export type Lang = "en" | "ar";
 
@@ -58,7 +59,14 @@ export function LangProvider({ children }: { children: ReactNode }) {
     root.dir = lang === "ar" ? "rtl" : "ltr";
   }, [lang]);
 
-  function setLang(l: Lang) { setLangState(l); }
+  function setLang(l: Lang) {
+    setLangState(l);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.rpc("set_user_language", { p_lang: l });
+      }
+    });
+  }
 
   const messages = MESSAGES[lang] as unknown as Record<string, unknown>;
   const t = (key: string) => resolve(messages, key);

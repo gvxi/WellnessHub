@@ -317,6 +317,7 @@ export default function CheckoutPage() {
                   ? cartItem.snapshot.groupLabelAr
                   : cartItem.snapshot.groupLabel;
                 const linePrice = (cartItem.snapshot.numericPrice ?? 0) * cartItem.qty;
+                const unavailable = isRegistryReady() && !isItemVisible(cartItem.id);
 
                 return (
                   <motion.li
@@ -326,15 +327,28 @@ export default function CheckoutPage() {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="px-5 py-4"
+                    className={cn("px-5 py-4", unavailable && "bg-red-50/60")}
                   >
+                    {unavailable && (
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-semibold text-red-500 uppercase tracking-wide">
+                          {t("cart.unavailable")}
+                        </span>
+                        <button
+                          onClick={() => removeItem(cartItem.id)}
+                          className="text-[10px] font-semibold text-red-400 hover:text-red-600 underline"
+                        >
+                          {t("cart.remove")}
+                        </button>
+                      </div>
+                    )}
                     {/* Row 1: image/icon + name + delete */}
-                    <div className="flex items-start gap-3">
+                    <div className={cn("flex items-start gap-3", unavailable && "opacity-50")}>
                       {resolveImage(cartItem.snapshot.imageUrl, cartItem.snapshot.unsplashId, 120) ? (
                         <img
                           src={resolveImage(cartItem.snapshot.imageUrl, cartItem.snapshot.unsplashId, 120)!}
                           alt={name}
-                          className="w-10 h-10 rounded-xl object-cover shrink-0"
+                          className="w-10 h-10 rounded-xl object-cover shrink-0 grayscale"
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
@@ -346,7 +360,7 @@ export default function CheckoutPage() {
                         {group && (
                           <p className="text-xs font-medium text-secondary mb-0.5">{group}</p>
                         )}
-                        <p className="text-sm font-semibold text-dark leading-snug">{name}</p>
+                        <p className="text-sm font-semibold text-dark leading-snug line-through">{name}</p>
                       </div>
 
                       <motion.button
@@ -360,7 +374,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Row 2: qty controls + price (indented to align with name) */}
-                    <div className="flex items-center justify-between mt-3 ms-[52px]">
+                    <div className={cn("flex items-center justify-between mt-3 ms-[52px]", unavailable && "pointer-events-none opacity-40")}>
                       <div className="flex items-center gap-1.5 bg-dark/5 rounded-xl px-2 py-1.5">
                         <motion.button
                           whileTap={{ scale: 0.82 }}
