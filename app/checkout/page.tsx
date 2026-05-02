@@ -431,7 +431,7 @@ export default function CheckoutPage() {
                         {group && (
                           <p className="text-xs font-medium text-secondary mb-0.5">{group}</p>
                         )}
-                        <p className="text-sm font-semibold text-dark leading-snug line-through">{name}</p>
+                        <p className={cn("text-sm font-semibold text-dark leading-snug", unavailable && "line-through")}>{name}</p>
                       </div>
 
                       <motion.button
