@@ -39,7 +39,7 @@ export default function AdLightbox({ ad, open, onClose }: Props) {
             exit={{ scale: 0.94, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl bg-light flex flex-col"
+            className="relative w-full max-w-lg rounded-3xl overflow-y-auto shadow-2xl bg-light flex flex-col max-h-[calc(100dvh-4rem)]"
           >
             {/* Close button */}
             <button

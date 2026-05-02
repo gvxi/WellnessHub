@@ -71,10 +71,11 @@ export default function ItemDrawer({ item, onClose }: Props) {
     ? `https://images.unsplash.com/${item.unsplashId}?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800`
     : null;
 
+  const desktopHide = isAr ? { x: "-100%" } : { x: "100%" };
   const panelVariants = {
-    hidden: isDesktop ? { x: "100%" } : { y: "100%" },
+    hidden: isDesktop ? desktopHide : { y: "100%" },
     visible: isDesktop ? { x: 0 } : { y: 0 },
-    exit: isDesktop ? { x: "100%" } : { y: "100%" },
+    exit: isDesktop ? desktopHide : { y: "100%" },
   };
 
   const panelClass = isDesktop

@@ -184,11 +184,6 @@ export default function CheckoutPage() {
         return;
       }
 
-      if (data.payment_url) {
-        router.push(data.payment_url);
-        return;
-      }
-
       if (data.booking_id) {
         fetch("/api/checkout/send-invoice", {
           method: "POST",
@@ -199,6 +194,13 @@ export default function CheckoutPage() {
           body: JSON.stringify({ booking_id: data.booking_id }),
         }).catch(() => {});
         clearCart();
+
+        // External payment gateway (Paymob) — redirect without showing toast
+        if (data.payment_url && !data.payment_url.startsWith("/")) {
+          router.push(data.payment_url);
+          return;
+        }
+
         showToast(t("checkout.bookingConfirmed"), "cart");
         return;
       }
