@@ -22,14 +22,22 @@ async function sendBookingStatusEmail(payload: {
     return;
   }
   const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-booking-status`;
-  fetch(edgeUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify(payload),
-  }).catch((err) => console.error("send-booking-status edge error:", err));
+  try {
+    const res = await fetch(edgeUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("send-booking-status failed:", res.status, err);
+    }
+  } catch (err) {
+    console.error("send-booking-status fetch error:", err);
+  }
 }
 
 export async function PUT(
@@ -84,12 +92,12 @@ export async function PUT(
     p_metadata: { booking_id: id, customer_name: customerName },
   }).then(null, () => {});
 
-  // Booking status email (fire-and-forget via edge function)
+  // Booking status email (awaited so serverless doesn't terminate early)
   if ((status === "approved" || status === "rejected") && booking) {
     const email = customerData?.email;
     const userId = customerData?.user_id;
     if (email) {
-      sendBookingStatusEmail({
+      await sendBookingStatusEmail({
         to_email: email,
         user_id: userId,
         status,

@@ -28,7 +28,9 @@ export function getItemById(id: string): ServiceItem | undefined {
 }
 
 export function isItemVisible(id: string): boolean {
-  return _itemRegistry.has(id);
+  // tier-variant IDs use format "svcId::tierLabel"
+  const baseId = id.includes("::") ? id.split("::")[0] : id;
+  return _itemRegistry.has(baseId);
 }
 
 export function isRegistryReady(): boolean {

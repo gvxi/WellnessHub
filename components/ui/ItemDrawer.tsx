@@ -35,9 +35,10 @@ export default function ItemDrawer({ item, onClose }: Props) {
   const { t, lang } = useLang();
   const isAr = lang === "ar";
   const [qty, setQty] = useState(1);
+  const [selectedTierIdx, setSelectedTierIdx] = useState(0);
   const isDesktop = useIsDesktop();
 
-  useEffect(() => { setQty(1); }, [item]);
+  useEffect(() => { setQty(1); setSelectedTierIdx(0); }, [item]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -52,7 +53,23 @@ export default function ItemDrawer({ item, onClose }: Props) {
 
   function handleAddToCart() {
     if (!item) return;
-    addItem(item, qty);
+    if (item.tiers && item.tiers.length > 0) {
+      const tier = item.tiers[selectedTierIdx];
+      const cartItem = {
+        ...item,
+        id: `${item.id}::${tier.label}`,
+        price: tier.price,
+        numericPrice: tier.numericPrice,
+        tiers: undefined,
+        name: `${item.name} — ${(isAr && tier.labelAr) ? tier.labelAr : tier.label}`,
+        nameAr: item.nameAr
+          ? `${item.nameAr} — ${tier.labelAr ?? tier.label}`
+          : undefined,
+      };
+      addItem(cartItem, qty);
+    } else {
+      addItem(item, qty);
+    }
     showToast(t("item.addToCart"), "cart");
     onClose();
   }
@@ -160,16 +177,24 @@ export default function ItemDrawer({ item, onClose }: Props) {
 
               <div className="flex flex-col gap-1">
                 {item.tiers ? (
-                  item.tiers.map((tier) => (
-                    <div
+                  item.tiers.map((tier, idx) => (
+                    <button
                       key={tier.label}
-                      className="flex justify-between items-center py-2 border-b border-dark/6 last:border-0"
+                      onClick={() => setSelectedTierIdx(idx)}
+                      className={cn(
+                        "flex justify-between items-center py-2.5 px-3 rounded-xl border transition-colors text-start",
+                        selectedTierIdx === idx
+                          ? "border-primary/30 bg-primary/6"
+                          : "border-dark/8 hover:bg-dark/[0.03]"
+                      )}
                     >
-                      <span className="text-sm text-dark/55">
+                      <span className={cn("text-sm", selectedTierIdx === idx ? "font-medium text-dark" : "text-dark/55")}>
                         {(isAr && tier.labelAr) ? tier.labelAr : tier.label}
                       </span>
-                      <span className="text-sm font-semibold text-dark tabular-nums">{tier.price}</span>
-                    </div>
+                      <span className={cn("text-sm font-semibold tabular-nums", selectedTierIdx === idx ? "text-primary" : "text-dark")}>
+                        {tier.price}
+                      </span>
+                    </button>
                   ))
                 ) : (
                   <div className="flex justify-between items-center">
@@ -210,18 +235,26 @@ export default function ItemDrawer({ item, onClose }: Props) {
                 </div>
               </div>
 
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={handleAddToCart}
-                className={cn(
-                  "w-full py-3.5 rounded-2xl text-sm font-semibold transition-colors duration-200",
-                  isInCart(item.id)
-                    ? "bg-primary/12 text-primary hover:bg-primary/18"
-                    : "bg-primary text-light hover:bg-primary/90"
-                )}
-              >
-                {isInCart(item.id) ? t("item.addMore") : t("item.addToCart")}
-              </motion.button>
+              {(() => {
+                const cartId = item.tiers?.length
+                  ? `${item.id}::${item.tiers[selectedTierIdx]?.label}`
+                  : item.id;
+                const inCart = isInCart(cartId);
+                return (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={handleAddToCart}
+                    className={cn(
+                      "w-full py-3.5 rounded-2xl text-sm font-semibold transition-colors duration-200",
+                      inCart
+                        ? "bg-primary/12 text-primary hover:bg-primary/18"
+                        : "bg-primary text-light hover:bg-primary/90"
+                    )}
+                  >
+                    {inCart ? t("item.addMore") : t("item.addToCart")}
+                  </motion.button>
+                );
+              })()}
             </div>
           </motion.div>
         </>
