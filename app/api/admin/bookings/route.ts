@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     .from("bookings")
     .select(`
       id, status, scheduled_at, notes, conflict_flag, created_at,
-      users ( full_name, email ),
+      customer_data,
       services ( name ),
       packages ( name )
     `)
@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
     notes: b.notes,
     conflict_flag: b.conflict_flag,
     created_at: b.created_at,
-    customer_name: b.users?.full_name ?? null,
-    customer_email: b.users?.email ?? null,
+    customer_name: (b.customer_data as any)?.username ?? null,
+    customer_email: (b.customer_data as any)?.email ?? null,
     service_name: b.services?.name ?? null,
     package_name: b.packages?.name ?? null,
   }));

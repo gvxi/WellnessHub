@@ -278,7 +278,13 @@
   },
   "profile": {
     "bookingHistory": "Booking History",
-    "noBookings": "No bookings yet"
+    "noBookings": "No bookings yet",
+    "invoice": "Invoice",
+    "bookingId": "Booking ID",
+    "service": "Service",
+    "qty": "Qty",
+    "price": "Price",
+    "total": "Total"
   },
   "checkout": {
     "title": "Checkout",

@@ -278,7 +278,13 @@
   },
   "profile": {
     "bookingHistory": "سجل الحجوزات",
-    "noBookings": "لا توجد حجوزات بعد"
+    "noBookings": "لا توجد حجوزات بعد",
+    "invoice": "فاتورة",
+    "bookingId": "رقم الحجز",
+    "service": "الخدمة",
+    "qty": "الكمية",
+    "price": "السعر",
+    "total": "المجموع"
   },
   "checkout": {
     "title": "إتمام الطلب",
