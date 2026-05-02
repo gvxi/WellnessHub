@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Menu, Bell, Globe } from "lucide-react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import BottomNav from "./_components/BottomNav";
 import SideDrawer from "./_components/SideDrawer";
 import QuickAddSheet from "./_components/QuickAddSheet";
@@ -18,14 +18,23 @@ import { useLang } from "@/lib/lang-context";
 
 export type AdminTab = "bookings" | "services" | "ads" | "analytics" | "settings";
 
-export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<AdminTab>("bookings");
+const VALID_TABS: AdminTab[] = ["bookings", "services", "ads", "analytics", "settings"];
+
+function DashboardInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const initialTab = (() => {
+    const p = searchParams.get("tab");
+    return VALID_TABS.includes(p as AdminTab) ? (p as AdminTab) : "bookings";
+  })();
+
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [unseenCount, setUnseenCount] = useState(0);
   const { t, lang, setLang, isRTL } = useLang();
-  const router = useRouter();
 
   const TAB_LABELS: Record<AdminTab, string> = {
     bookings:  t("admin.tab_bookings"),
@@ -52,6 +61,10 @@ export default function DashboardPage() {
   function handleTabChange(tab: AdminTab) {
     setActiveTab(tab);
     setDrawerOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    params.delete("filter");
+    router.replace(`?${params.toString()}`, { scroll: false });
   }
 
   return (
@@ -132,11 +145,19 @@ export default function DashboardPage() {
         </AnimatePresence>
       </main>
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} onAddPress={() => setAddSheetOpen(true)} />
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} onAddPress={() => setAddSheetOpen(true)} />
 
       <SideDrawer   open={drawerOpen}  activeTab={activeTab} onClose={() => setDrawerOpen(false)}  onTabChange={handleTabChange} />
       <QuickAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} onNavigate={(tab) => { handleTabChange(tab); setAddSheetOpen(false); }} />
       <AlertsDrawer  open={alertsOpen}  onClose={() => setAlertsOpen(false)} onUnseenChange={setUnseenCount} />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardInner />
+    </Suspense>
   );
 }

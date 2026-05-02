@@ -1,18 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, XCircle, AlertTriangle, Clock, ChevronRight, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { ApiBooking } from "@/lib/supabase/types";
 
 type Filter = "all" | "pending" | "approved" | "rejected";
+const VALID_FILTERS: Filter[] = ["all", "pending", "approved", "rejected"];
 
-export default function BookingsTab() {
+function BookingsTabInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const initialFilter = (() => {
+    const p = searchParams.get("filter");
+    return VALID_FILTERS.includes(p as Filter) ? (p as Filter) : "all";
+  })();
+
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(initialFilter);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<ApiBooking | null>(null);
@@ -60,7 +70,13 @@ export default function BookingsTab() {
         {FILTERS.map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setFilter(key)}
+            onClick={() => {
+              setFilter(key);
+              const params = new URLSearchParams(searchParams.toString());
+              if (key === "all") params.delete("filter");
+              else params.set("filter", key);
+              router.replace(`?${params.toString()}`, { scroll: false });
+            }}
             className={cn(
               "flex-1 py-1.5 rounded-lg text-xs font-medium transition-all",
               filter === key ? "bg-light text-dark shadow-sm" : "text-dark/45"
@@ -283,5 +299,13 @@ export default function BookingsTab() {
         })()}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function BookingsTab() {
+  return (
+    <Suspense>
+      <BookingsTabInner />
+    </Suspense>
   );
 }
