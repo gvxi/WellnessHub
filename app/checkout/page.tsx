@@ -308,21 +308,33 @@ export default function CheckoutPage() {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-center gap-4 px-5 py-4"
+                    className="px-5 py-4"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                      <span className="text-secondary text-lg">{cartItem.snapshot.icon ?? "✦"}</span>
+                    {/* Row 1: icon + name + delete */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                        <span className="text-secondary text-lg">{cartItem.snapshot.icon ?? "✦"}</span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        {group && (
+                          <p className="text-xs font-medium text-secondary mb-0.5">{group}</p>
+                        )}
+                        <p className="text-sm font-semibold text-dark leading-snug">{name}</p>
+                      </div>
+
+                      <motion.button
+                        whileTap={{ scale: 0.82 }}
+                        onClick={() => removeItem(cartItem.id)}
+                        className="w-7 h-7 flex items-center justify-center rounded-xl shrink-0
+                                   text-dark/25 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </motion.button>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      {group && (
-                        <p className="text-xs font-medium text-secondary mb-0.5 truncate">{group}</p>
-                      )}
-                      <p className="text-sm font-medium text-dark truncate">{name}</p>
-                    </div>
-
-                    {/* Qty controls */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    {/* Row 2: qty controls + price (indented to align with name) */}
+                    <div className="flex items-center justify-between mt-3 ms-[52px]">
                       <div className="flex items-center gap-1.5 bg-dark/5 rounded-xl px-2 py-1.5">
                         <motion.button
                           whileTap={{ scale: 0.82 }}
@@ -349,18 +361,9 @@ export default function CheckoutPage() {
                         </motion.button>
                       </div>
 
-                      <span className="text-sm font-semibold text-dark tabular-nums w-16 text-end">
+                      <span className="text-sm font-bold text-dark tabular-nums">
                         {linePrice} OMR
                       </span>
-
-                      <motion.button
-                        whileTap={{ scale: 0.82 }}
-                        onClick={() => removeItem(cartItem.id)}
-                        className="w-7 h-7 flex items-center justify-center rounded-xl
-                                   text-dark/25 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 size={13} />
-                      </motion.button>
                     </div>
                   </motion.li>
                 );
