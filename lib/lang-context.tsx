@@ -46,10 +46,14 @@ export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
+    let initial: Lang = "en";
     try {
       const stored = localStorage.getItem("wh_lang") as Lang | null;
-      if (stored === "en" || stored === "ar") setLangState(stored);
+      if (stored === "en" || stored === "ar") { initial = stored; setLangState(stored); }
     } catch {}
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) supabase.rpc("set_user_language", { p_lang: initial });
+    });
   }, []);
 
   useEffect(() => {

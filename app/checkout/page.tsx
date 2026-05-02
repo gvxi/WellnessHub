@@ -10,7 +10,7 @@ import {
   Mail, CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCart, isItemVisible, isRegistryReady } from "@/lib/shop-context";
+import { useCart } from "@/lib/shop-context";
 import { useUI } from "@/lib/shop-context";
 import { useLang } from "@/lib/lang-context";
 import { useToast } from "@/lib/toast-context";
@@ -39,13 +39,34 @@ export default function CheckoutPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const otpVerifiedThisSession = useRef(false);
 
+  const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
+
   const subtotal = items.reduce(
     (sum, item) => sum + (item.snapshot.numericPrice ?? 0) * item.qty,
     0
   );
 
   const otpRequired = subtotal > 20 && !otpVerifiedThisSession.current;
-  const hasUnavailableItems = isRegistryReady() && items.some((i) => !isItemVisible(i.id));
+  const hasUnavailableItems = items.some((i) => {
+    const base = i.id.includes("::") ? i.id.split("::")[0] : i.id;
+    return unavailableIds.has(base);
+  });
+
+  // ── Availability check ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (items.length === 0) return;
+    const baseIds = [...new Set(items.map((i) => i.id.includes("::") ? i.id.split("::")[0] : i.id))];
+    supabase
+      .from("services")
+      .select("id, is_active")
+      .in("id", baseIds)
+      .then(({ data }) => {
+        if (data) {
+          setUnavailableIds(new Set(data.filter((s) => s.is_active === false).map((s) => s.id)));
+        }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
 
   // ── Auth + profile check ───────────────────────────────────────────────────
   async function checkAuth(u: User | null): Promise<AuthState> {
@@ -192,7 +213,7 @@ export default function CheckoutPage() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify({ booking_id: data.booking_id }),
+          body: JSON.stringify({ booking_id: data.booking_id, lang }),
         }).catch(() => {});
         clearCart();
 
@@ -317,7 +338,8 @@ export default function CheckoutPage() {
                   ? cartItem.snapshot.groupLabelAr
                   : cartItem.snapshot.groupLabel;
                 const linePrice = (cartItem.snapshot.numericPrice ?? 0) * cartItem.qty;
-                const unavailable = isRegistryReady() && !isItemVisible(cartItem.id);
+                const baseId = cartItem.id.includes("::") ? cartItem.id.split("::")[0] : cartItem.id;
+                const unavailable = unavailableIds.has(baseId);
 
                 return (
                   <motion.li
