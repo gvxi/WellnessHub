@@ -475,11 +475,11 @@ export default function CheckoutPage() {
 
           <button
             onClick={() => handlePaymob()}
-            disabled={payLoading || totalCount === 0 || otpState === "sending" || otpState === "verifying"}
+            disabled={payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"}
             className={cn(
               "w-full py-4 rounded-2xl text-sm font-semibold transition-colors duration-200",
               "flex items-center justify-center gap-2",
-              payLoading || totalCount === 0 || otpState === "sending" || otpState === "verifying"
+              payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"
                 ? "bg-primary/50 text-light cursor-not-allowed"
                 : "bg-primary text-light hover:bg-primary/90"
             )}
