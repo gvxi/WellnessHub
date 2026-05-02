@@ -18,9 +18,6 @@ function SuccessContent() {
 
   useEffect(() => {
     clearCart();
-    if (typeof window !== "undefined" && window.self !== window.top) {
-      window.top!.location.href = window.location.href;
-    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

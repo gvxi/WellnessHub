@@ -443,8 +443,9 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* ── Payment card ── */}
-        <div className="border border-dark/8 rounded-2xl p-6 flex flex-col gap-5 md:sticky md:top-24">
+        {/* ── Payment card + iframe column ── */}
+        <div className="flex flex-col gap-4">
+        <div className={cn("border border-dark/8 rounded-2xl p-6 flex flex-col gap-5", !iframeUrl && "md:sticky md:top-24")}>
           <h2 className="text-sm font-semibold text-dark/70">{t("checkout.payment")}</h2>
 
           <div className="flex flex-col gap-2">
@@ -610,47 +611,48 @@ export default function CheckoutPage() {
           )}
         </div>
 
-      </div>
-
-      {/* ── Paymob iframe — inline below pay button ── */}
-      <AnimatePresence>
-        {iframeUrl && (
-          <motion.div
-            key="paymob-iframe"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden mt-8"
-          >
-            <div className="border border-dark/8 rounded-2xl overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-dark/8 flex items-center justify-between bg-dark/[0.015]">
-                <div className="flex items-center gap-2 text-sm font-semibold text-dark/70">
-                  <Lock size={13} className="text-primary" />
-                  {t("checkout.securePayment")}
-                </div>
-                {!iframeLoaded && (
-                  <Loader2 size={15} className="animate-spin text-dark/30" />
-                )}
-              </div>
-              <div className="relative" style={{ height: 600 }}>
-                {!iframeLoaded && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-light">
-                    <Loader2 size={28} className="animate-spin text-dark/20" />
+        {/* ── Paymob iframe — same column as payment card ── */}
+        <AnimatePresence>
+          {iframeUrl && (
+            <motion.div
+              key="paymob-iframe"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="border border-dark/8 rounded-2xl overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-dark/8 flex items-center justify-between bg-dark/[0.015]">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-dark/70">
+                    <Lock size={13} className="text-primary" />
+                    {t("checkout.securePayment")}
                   </div>
-                )}
-                <iframe
-                  src={iframeUrl}
-                  className="w-full h-full border-0"
-                  title="Paymob Payment"
-                  allow="payment"
-                  onLoad={() => setIframeLoaded(true)}
-                />
+                  {!iframeLoaded && (
+                    <Loader2 size={15} className="animate-spin text-dark/30" />
+                  )}
+                </div>
+                <div className="relative" style={{ height: 600 }}>
+                  {!iframeLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-light">
+                      <Loader2 size={28} className="animate-spin text-dark/20" />
+                    </div>
+                  )}
+                  <iframe
+                    src={iframeUrl}
+                    className="w-full h-full border-0"
+                    title="Paymob Payment"
+                    allow="payment"
+                    onLoad={() => setIframeLoaded(true)}
+                  />
+                </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        </div>
+
+      </div>
     </div>
   );
 }
