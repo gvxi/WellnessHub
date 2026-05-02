@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X, User, Phone, Calendar, Pencil, ShoppingBag, UserCircle, CheckCircle2, Clock, XCircle, ChevronRight, ArrowLeft, Receipt } from "lucide-react";
+import { X, User, Phone, Pencil, ShoppingBag, UserCircle, CheckCircle2, Clock, XCircle, ChevronRight, ArrowLeft, Receipt } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -262,7 +262,6 @@ export default function ProfileDrawer() {
                 <div className="flex flex-col gap-2">
                   <InfoRow icon={User} label={t("auth.usernamePlaceholder")} value={profile?.username ?? null} />
                   <InfoRow icon={Phone} label={t("auth.phonePlaceholder")} value={profile?.phone ?? null} />
-                  <InfoRow icon={Calendar} label={t("auth.agePlaceholder")} value={profile?.age != null ? String(profile.age) : null} />
                 </div>
               </div>
 

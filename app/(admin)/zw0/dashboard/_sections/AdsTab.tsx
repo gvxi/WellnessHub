@@ -21,7 +21,7 @@ type AdRow = {
 
 const AD_FIELDS: FieldDef[] = [
   { key: "headline",    label: "Headline",   required: true, placeholder: "e.g. Exclusive Offers",            translatable: true },
-  { key: "subtitle",   label: "Subtitle",                   placeholder: "e.g. Book now and save",            translatable: true },
+  { key: "subtitle",   label: "Subtitle",   type: "textarea", placeholder: "e.g. Book now and save",            translatable: true },
   { key: "link_url",   label: "Link URL",                   placeholder: "https://…",                         translatable: true },
   { key: "image_url",  label: "Ad Image",   type: "image",  uploadFolder: "ads" },
   { key: "unsplash_id",label: "Unsplash Fallback ID",        placeholder: "e.g. photo-1581009146145-b5ef050c2e1e" },

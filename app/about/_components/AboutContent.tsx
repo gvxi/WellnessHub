@@ -4,6 +4,17 @@ import { useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import { Heart, Sparkles, Star, Phone, MapPin, Clock } from "lucide-react";
+
+function InstagramIcon({ size = 17, className = "" }: { size?: number; className?: string; strokeWidth?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+    </svg>
+  );
+}
 import { useLang } from "@/lib/lang-context";
 
 const fadeUp = {
@@ -40,9 +51,10 @@ export default function AboutContent() {
   ];
 
   const info = [
-    { icon: MapPin, labelKey: "about.location", valueKey: "about.locationValue" },
-    { icon: Phone,  labelKey: "about.phone",    valueKey: "about.phoneValue"    },
-    { icon: Clock,  labelKey: "about.hours",    valueKey: "about.hoursValue"    },
+    { icon: MapPin,     labelKey: "about.location",      valueKey: "about.locationValue",  href: "https://maps.app.goo.gl/SJCGLfnW1ffE5Bym7" },
+    { icon: Phone,      labelKey: "about.phone",          valueKey: "about.phoneValue",     href: "tel:+96899829821" },
+    { icon: Clock,      labelKey: "about.hours",          valueKey: "about.hoursValue",     href: null },
+    { icon: InstagramIcon, labelKey: "about.instagram",    valueKey: "about.instagramValue", href: "https://www.instagram.com/ultwellness__" },
   ];
 
   return (
@@ -201,14 +213,21 @@ export default function AboutContent() {
 
           <Section className="grid md:grid-cols-2 gap-10 items-start">
             <div className="flex flex-col gap-5">
-              {info.map(({ icon: Icon, labelKey, valueKey }) => (
+              {info.map(({ icon: Icon, labelKey, valueKey, href }) => (
                 <motion.div key={labelKey} variants={fadeUp} className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-2xl bg-primary/8 flex items-center justify-center shrink-0">
                     <Icon size={17} className="text-primary" strokeWidth={1.7} />
                   </div>
                   <div>
                     <p className="text-xs text-dark/40 font-medium uppercase tracking-wider">{t(labelKey)}</p>
-                    <p className="text-sm font-semibold text-dark mt-0.5">{t(valueKey)}</p>
+                    {href ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer"
+                         className="text-sm font-semibold text-dark mt-0.5 hover:text-primary transition-colors block">
+                        {t(valueKey)}
+                      </a>
+                    ) : (
+                      <p className="text-sm font-semibold text-dark mt-0.5">{t(valueKey)}</p>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -224,15 +243,28 @@ export default function AboutContent() {
               </motion.div>
             </div>
 
-            <motion.div
-              variants={fadeUp}
-              className="relative aspect-video rounded-3xl overflow-hidden bg-dark/5"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=900"
-                alt="WellnessHub contact"
-                className="w-full h-full object-cover"
-              />
+            <motion.div variants={fadeUp}>
+              <a
+                href="https://maps.app.goo.gl/SJCGLfnW1ffE5Bym7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block relative aspect-video rounded-3xl overflow-hidden bg-dark/5 group"
+              >
+                <iframe
+                  src="https://maps.google.com/maps?q=Muscat+Oman&output=embed"
+                  className="w-full h-full border-0 pointer-events-none"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="WellnessHub location"
+                />
+                <div className="absolute inset-0 bg-dark/0 group-hover:bg-dark/10 transition-colors flex items-end justify-end p-4">
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 bg-light/90 backdrop-blur-sm rounded-xl
+                                   text-xs font-semibold text-dark shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MapPin size={12} className="text-primary" />
+                    Open in Maps
+                  </span>
+                </div>
+              </a>
             </motion.div>
           </Section>
         </div>

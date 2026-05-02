@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Mail, Lock, Phone, User, Calendar } from "lucide-react";
+import { X, Mail, Lock, Phone, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { supabase } from "@/lib/supabase/client";
@@ -229,7 +229,6 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
   const [username, setUsername] = useState("");
   const [dialCode, setDialCode] = useState("+968");
   const [phoneNum, setPhoneNum] = useState("");
-  const [age, setAge] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -241,7 +240,6 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
       const { data } = await supabase.from("profiles").select("username, phone, age").eq("id", user.id).single();
       if (data) {
         setUsername(data.username ?? "");
-        setAge(data.age ? String(data.age) : "");
         if (data.phone) {
           const match = COUNTRIES.find((c) => data.phone!.startsWith(c.dial));
           if (match) {
@@ -251,7 +249,7 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
             setPhoneNum(data.phone);
           }
         }
-        const hasData = !!(data.username || data.phone || data.age);
+        const hasData = !!(data.username || data.phone);
         setEditing(!hasData);
       } else {
         setEditing(true);
@@ -270,7 +268,7 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
         id: user.id,
         username: username || null,
         phone: phoneNum ? `${dialCode}${phoneNum}` : null,
-        age: age ? parseInt(age) : null,
+        age: 20,
       });
     }
     setSaving(false);
@@ -286,7 +284,6 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
       <div className="flex flex-col gap-2">
         <ReadonlyRow icon={User} label={t("auth.usernamePlaceholder")} value={username} />
         <ReadonlyRow icon={Phone} label={t("auth.phonePlaceholder")} value={phoneNum ? `${dialCode} ${phoneNum}` : ""} />
-        <ReadonlyRow icon={Calendar} label={t("auth.agePlaceholder")} value={age} />
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => setEditing(true)}
@@ -339,21 +336,6 @@ function ProfileStep({ onDone }: { onDone: () => void }) {
                        focus:border-primary/40 focus:bg-primary/[0.03] transition-all"
           />
         </div>
-      </div>
-
-      <div className="relative">
-        <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
-        <input
-          type="number"
-          placeholder={t("auth.agePlaceholder")}
-          min={13}
-          max={120}
-          value={age}
-          onChange={(e) => setAge(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 rounded-2xl bg-dark/[0.04] border border-dark/8
-                     text-sm text-dark placeholder:text-dark/35 outline-none
-                     focus:border-primary/40 focus:bg-primary/[0.03] transition-all"
-        />
       </div>
 
       <div className="flex gap-2">
