@@ -274,7 +274,22 @@
     "tab_sections": "الأقسام",
     "new_section": "قسم جديد",
     "edit_section": "تعديل القسم",
-    "no_sections": "لا توجد أقسام بعد"
+    "no_sections": "لا توجد أقسام بعد",
+    "alert_booking_approved": "تمت الموافقة على الحجز",
+    "alert_booking_rejected": "تم رفض الحجز",
+    "alert_booking_refunded": "تم استرداد الحجز",
+    "alert_booking_new": "حجز جديد",
+    "alert_signup": "عميل جديد",
+    "alert_body_approved": "تمت الموافقة على حجز {name}.",
+    "alert_body_rejected": "تم رفض حجز {name}.",
+    "alert_body_refunded": "تم استرداد حجز {name}.",
+    "alert_body_new": "حجز جديد من {name}.",
+    "alert_body_signup": "انضم {name} إلى المنصة.",
+    "alert_body_anon_approved": "تمت الموافقة على حجز.",
+    "alert_body_anon_rejected": "تم رفض حجز.",
+    "alert_body_anon_refunded": "تم استرداد حجز.",
+    "alert_body_anon_new": "تم استلام حجز جديد.",
+    "alert_body_anon_signup": "انضم عميل جديد إلى المنصة."
   },
   "profile": {
     "bookingHistory": "سجل الحجوزات",
@@ -322,7 +337,8 @@
     "invoiceSending": "جارٍ الإرسال…",
     "invoiceSent": "تم إرسال الفاتورة!",
     "invoiceLimit": "تم إرسال الفاتورة 3 مرات بالفعل",
-    "invoiceCooldown": "انتظر {s} ثانية قبل الإرسال"
+    "invoiceCooldown": "انتظر {s} ثانية قبل الإرسال",
+    "bookingConfirmed": "تم تأكيد الحجز! تحقق من بريدك الإلكتروني للفاتورة."
   },
   "lang": "ع"
 }

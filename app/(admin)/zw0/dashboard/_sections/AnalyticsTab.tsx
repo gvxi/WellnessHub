@@ -10,7 +10,8 @@ import type { ApiAnalytics } from "@/lib/supabase/types";
 export default function AnalyticsTab() {
   const [data, setData] = useState<ApiAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const isAr = lang === "ar";
 
   const STAT_CARDS = (a: ApiAnalytics) => [
     { label: t("admin.stat_total"),    value: a.total,    icon: TrendingUp,  color: "text-secondary bg-secondary/10" },
@@ -65,13 +66,14 @@ export default function AnalyticsTab() {
             {t("admin.top_services")}
           </p>
           <div className="space-y-2">
-            {data.top_services.map(({ service_name, count }, i) => {
+            {data.top_services.map(({ service_name, service_name_ar, count }, i) => {
+              const displayName = isAr && service_name_ar ? service_name_ar : service_name;
               const max = data.top_services[0].count;
               const pct = Math.round((count / max) * 100);
               return (
                 <div key={service_name} className="space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-dark/70 truncate">{service_name}</span>
+                    <span className="text-dark/70 truncate">{displayName}</span>
                     <span className="text-dark font-semibold tabular-nums ms-2">{count}</span>
                   </div>
                   <div className="h-1.5 bg-dark/8 rounded-full overflow-hidden">

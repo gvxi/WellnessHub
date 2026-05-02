@@ -154,6 +154,14 @@ export type ApiAd = {
   translations: Translations;
 };
 
+export type ApiBookingCartItem = {
+  name: string;
+  name_ar?: string;
+  qty: number;
+  line_total: number;
+  currency: string;
+};
+
 export type ApiBooking = {
   id: string;
   status: DbBooking["status"];
@@ -165,6 +173,8 @@ export type ApiBooking = {
   customer_email: string | null;
   service_name: string | null;
   package_name: string | null;
+  cart_items: ApiBookingCartItem[] | null;
+  total_amount: number | null;
 };
 
 export type ApiAnalytics = {
@@ -173,5 +183,5 @@ export type ApiAnalytics = {
   approved: number;
   rejected: number;
   revenue: number;
-  top_services: { service_name: string; count: number }[];
+  top_services: { service_name: string; service_name_ar: string | null; count: number }[];
 };

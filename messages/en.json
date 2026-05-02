@@ -274,7 +274,22 @@
     "tab_sections": "Sections",
     "new_section": "New Section",
     "edit_section": "Edit Section",
-    "no_sections": "No sections yet"
+    "no_sections": "No sections yet",
+    "alert_booking_approved": "Booking Approved",
+    "alert_booking_rejected": "Booking Rejected",
+    "alert_booking_refunded": "Booking Refunded",
+    "alert_booking_new": "New Booking",
+    "alert_signup": "New Customer",
+    "alert_body_approved": "{name}'s booking approved.",
+    "alert_body_rejected": "{name}'s booking rejected.",
+    "alert_body_refunded": "{name}'s booking refunded.",
+    "alert_body_new": "New booking from {name}.",
+    "alert_body_signup": "{name} signed up.",
+    "alert_body_anon_approved": "A booking was approved.",
+    "alert_body_anon_rejected": "A booking was rejected.",
+    "alert_body_anon_refunded": "A booking was refunded.",
+    "alert_body_anon_new": "A new booking was received.",
+    "alert_body_anon_signup": "A new customer signed up."
   },
   "profile": {
     "bookingHistory": "Booking History",
@@ -322,7 +337,8 @@
     "invoiceSending": "Sending…",
     "invoiceSent": "Invoice sent!",
     "invoiceLimit": "Invoice already sent 3 times",
-    "invoiceCooldown": "Wait {s}s before resending"
+    "invoiceCooldown": "Wait {s}s before resending",
+    "bookingConfirmed": "Booking confirmed! Check your email for the invoice."
   },
   "lang": "EN"
 }

@@ -142,7 +142,7 @@ export async function PUT(
     p_body: customerName
       ? `${customerName}'s booking has been ${status}.`
       : `A booking has been ${status}.`,
-    p_metadata: { booking_id: id },
+    p_metadata: { booking_id: id, customer_name: customerName },
   }).then(null, () => {});
 
   // Send approval invoice email (fire-and-forget)

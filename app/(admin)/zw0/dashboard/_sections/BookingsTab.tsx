@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle, XCircle, AlertTriangle, Clock } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Clock, ChevronRight, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
@@ -15,8 +15,9 @@ export default function BookingsTab() {
   const [filter, setFilter] = useState<Filter>("all");
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const { t } = useLang();
+  const [selectedBooking, setSelectedBooking] = useState<ApiBooking | null>(null);
+  const { t, lang } = useLang();
+  const isRTL = lang === "ar";
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: "all",      label: t("admin.filter_all") },
@@ -48,7 +49,7 @@ export default function BookingsTab() {
       body: JSON.stringify({ status }),
     });
     setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
-    setExpanded(null);
+    setSelectedBooking((prev) => (prev?.id === id ? { ...prev, status } : prev));
     setUpdating(null);
   }
 
@@ -96,7 +97,6 @@ export default function BookingsTab() {
           {bookings.map((booking) => {
             const cfg = STATUS_CONFIG[booking.status];
             const StatusIcon = cfg.icon;
-            const isExpanded = expanded === booking.id;
 
             return (
               <motion.div
@@ -105,7 +105,7 @@ export default function BookingsTab() {
                 className="rounded-2xl bg-dark/[0.03] overflow-hidden"
               >
                 <button
-                  onClick={() => setExpanded(isExpanded ? null : booking.id)}
+                  onClick={() => setSelectedBooking(booking)}
                   className="w-full p-4 text-start"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -114,7 +114,8 @@ export default function BookingsTab() {
                         {booking.customer_name ?? t("admin.customer")}
                       </p>
                       <p className="text-xs text-dark/50 mt-0.5 truncate">
-                        {booking.service_name ?? "—"}{booking.package_name ? ` · ${booking.package_name}` : ""}
+                        {booking.service_name ?? (booking.cart_items?.[0]?.name ?? "—")}
+                        {booking.package_name ? ` · ${booking.package_name}` : ""}
                       </p>
                       <p className="text-xs text-dark/35 mt-0.5">
                         {new Date(booking.scheduled_at).toLocaleDateString("en-OM", {
@@ -122,46 +123,165 @@ export default function BookingsTab() {
                         })}
                       </p>
                     </div>
-                    <span className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium shrink-0", cfg.bg, cfg.color)}>
-                      <StatusIcon size={10} />
-                      {cfg.label}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium", cfg.bg, cfg.color)}>
+                        <StatusIcon size={10} />
+                        {cfg.label}
+                      </span>
+                      <ChevronRight size={14} className={cn("text-dark/25", isRTL && "rotate-180")} />
+                    </div>
                   </div>
                 </button>
-
-                <AnimatePresence>
-                  {isExpanded && booking.status === "pending" && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.22 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="px-4 pb-4 flex gap-2">
-                        <button
-                          disabled={updating === booking.id}
-                          onClick={() => updateStatus(booking.id, "approved")}
-                          className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-semibold disabled:opacity-50"
-                        >
-                          {t("admin.booking_approve")}
-                        </button>
-                        <button
-                          disabled={updating === booking.id}
-                          onClick={() => updateStatus(booking.id, "rejected")}
-                          className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-xs font-semibold disabled:opacity-50"
-                        >
-                          {t("admin.booking_reject")}
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </motion.div>
             );
           })}
         </motion.div>
       )}
+
+      {/* Detail drawer */}
+      <AnimatePresence>
+        {selectedBooking && (() => {
+          const b = selectedBooking;
+          const cfg = STATUS_CONFIG[b.status];
+          const StatusIcon = cfg.icon;
+          const items = b.cart_items ?? [];
+
+          return (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                key="booking-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedBooking(null)}
+                className="fixed inset-0 z-[59] bg-dark/40"
+              />
+
+              {/* Sheet */}
+              <motion.div
+                key="booking-sheet"
+                initial={{ x: isRTL ? "-100%" : "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: isRTL ? "-100%" : "100%" }}
+                transition={{ type: "spring", stiffness: 320, damping: 34 }}
+                className={cn(
+                  "fixed top-0 bottom-0 z-[60] w-full max-w-[360px] bg-light shadow-2xl flex flex-col",
+                  isRTL ? "left-0" : "right-0"
+                )}
+                dir={isRTL ? "rtl" : "ltr"}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-dark/8 shrink-0">
+                  <p className="text-base font-bold text-dark">
+                    {b.customer_name ?? t("admin.customer")}
+                  </p>
+                  <button
+                    onClick={() => setSelectedBooking(null)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-dark/8 transition-colors"
+                  >
+                    <X size={16} className="text-dark/50" />
+                  </button>
+                </div>
+
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                  {/* Status + date */}
+                  <div className="flex items-center justify-between">
+                    <span className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", cfg.bg, cfg.color)}>
+                      <StatusIcon size={11} />
+                      {cfg.label}
+                    </span>
+                    <span className="text-xs text-dark/45">
+                      {new Date(b.scheduled_at).toLocaleDateString("en-OM", {
+                        weekday: "short", month: "short", day: "numeric", year: "numeric",
+                      })}
+                    </span>
+                  </div>
+
+                  {/* Customer info */}
+                  {b.customer_email && (
+                    <p className="text-xs text-dark/50">{b.customer_email}</p>
+                  )}
+
+                  {/* Service · Package */}
+                  {(b.service_name || b.package_name) && (
+                    <p className="text-sm font-medium text-dark">
+                      {b.service_name ?? ""}
+                      {b.service_name && b.package_name ? " · " : ""}
+                      {b.package_name ?? ""}
+                    </p>
+                  )}
+
+                  {/* Cart items table */}
+                  {items.length > 0 && (
+                    <div className="border border-dark/8 rounded-xl overflow-hidden">
+                      <div className="grid grid-cols-[1fr_auto_auto] text-[10px] font-semibold text-dark/40 uppercase px-3 py-2 bg-dark/[0.03] gap-3">
+                        <span>{t("profile.service")}</span>
+                        <span className="text-center">{t("profile.qty")}</span>
+                        <span className="text-end">{t("profile.price")}</span>
+                      </div>
+                      {items.map((item, i) => (
+                        <div
+                          key={i}
+                          className="grid grid-cols-[1fr_auto_auto] items-center px-3 py-2.5 gap-3 border-t border-dark/6"
+                        >
+                          <span className="text-xs text-dark leading-snug">
+                            {isRTL && item.name_ar ? item.name_ar : item.name}
+                          </span>
+                          <span className="text-xs text-dark/50 text-center">{item.qty}</span>
+                          <span className="text-xs font-semibold text-dark text-end tabular-nums">
+                            {item.line_total} OMR
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Total */}
+                  {b.total_amount != null && (
+                    <div className="flex justify-between items-center px-3 py-2.5 bg-primary/6 rounded-xl">
+                      <span className="text-sm font-semibold text-dark">{t("profile.total")}</span>
+                      <span className="text-sm font-bold text-primary tabular-nums">{b.total_amount} OMR</span>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {b.notes && (
+                    <div className="bg-dark/[0.03] rounded-xl px-3 py-2.5">
+                      <p className="text-[10px] font-semibold text-dark/40 uppercase mb-1">Notes</p>
+                      <p className="text-xs text-dark/60">{b.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Booking ID */}
+                  <p className="text-[10px] text-dark/30">{t("profile.bookingId")}: {b.id}</p>
+                </div>
+
+                {/* Approve / Reject (pending only) */}
+                {b.status === "pending" && (
+                  <div className="px-5 py-4 border-t border-dark/8 flex gap-2 shrink-0">
+                    <button
+                      disabled={updating === b.id}
+                      onClick={() => updateStatus(b.id, "approved")}
+                      className="flex-1 py-3 rounded-xl bg-emerald-500 text-white text-sm font-semibold disabled:opacity-50"
+                    >
+                      {t("admin.booking_approve")}
+                    </button>
+                    <button
+                      disabled={updating === b.id}
+                      onClick={() => updateStatus(b.id, "rejected")}
+                      className="flex-1 py-3 rounded-xl bg-red-500 text-white text-sm font-semibold disabled:opacity-50"
+                    >
+                      {t("admin.booking_reject")}
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </>
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 }

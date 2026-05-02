@@ -113,7 +113,7 @@ export default function ProfileDrawer() {
             exit={{ x: isRTL ? "-100%" : "100%" }}
             transition={{ type: "spring", stiffness: 320, damping: 34 }}
             className={cn(
-              "fixed top-0 bottom-0 z-50 w-full max-w-[360px] bg-light shadow-2xl flex flex-col relative overflow-hidden",
+              "fixed top-0 bottom-0 z-50 w-full max-w-[360px] bg-light shadow-2xl flex flex-col overflow-hidden",
               isRTL ? "left-0" : "right-0"
             )}
             dir={isRTL ? "rtl" : "ltr"}

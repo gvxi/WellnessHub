@@ -32,6 +32,26 @@ function alertIconBg(type: AlertType) {
   return "bg-dark/6";
 }
 
+function alertTitle(type: AlertType, t: (k: string) => string): string {
+  if (type === "booking_approved") return t("admin.alert_booking_approved");
+  if (type === "booking_rejected") return t("admin.alert_booking_rejected");
+  if (type === "booking_refunded") return t("admin.alert_booking_refunded");
+  if (type === "booking_new") return t("admin.alert_booking_new");
+  if (type === "signup") return t("admin.alert_signup");
+  return type;
+}
+
+function alertBody(type: AlertType, meta: Record<string, unknown>, t: (k: string) => string): string | null {
+  const name = typeof meta?.customer_name === "string" ? meta.customer_name : null;
+  const sub = (key: string) => t(key).replace("{name}", name ?? "");
+  if (type === "booking_approved") return name ? sub("admin.alert_body_approved") : t("admin.alert_body_anon_approved");
+  if (type === "booking_rejected") return name ? sub("admin.alert_body_rejected") : t("admin.alert_body_anon_rejected");
+  if (type === "booking_refunded") return name ? sub("admin.alert_body_refunded") : t("admin.alert_body_anon_refunded");
+  if (type === "booking_new")      return name ? sub("admin.alert_body_new")      : t("admin.alert_body_anon_new");
+  if (type === "signup")           return name ? sub("admin.alert_body_signup")   : t("admin.alert_body_anon_signup");
+  return null;
+}
+
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
@@ -168,12 +188,17 @@ export default function AlertsDrawer({ open, onClose, onUnseenChange }: Props) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-dark leading-tight">{alert.title}</p>
+                          <p className="text-sm font-semibold text-dark leading-tight">
+                            {alertTitle(alert.type, t)}
+                          </p>
                           {alert.seen && <Check size={11} className="text-dark/20 shrink-0" />}
                         </div>
-                        {alert.body && (
-                          <p className="text-xs text-dark/50 mt-0.5 leading-relaxed">{alert.body}</p>
-                        )}
+                        {(() => {
+                          const body = alertBody(alert.type, alert.metadata, t);
+                          return body ? (
+                            <p className="text-xs text-dark/50 mt-0.5 leading-relaxed">{body}</p>
+                          ) : null;
+                        })()}
                         <p className="text-[10px] text-dark/30 mt-1">{timeAgo(alert.created_at)}</p>
                       </div>
                     </motion.div>

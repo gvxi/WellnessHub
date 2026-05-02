@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   const { data: bookings, error } = await supabase
     .from("bookings")
-    .select("id, status, services(name)")
+    .select("id, status, cart_items, total_amount")
     .eq("business_id", ctx.businessId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -21,23 +21,29 @@ export async function GET(request: NextRequest) {
   const pending = all.filter((b) => b.status === "pending");
   const rejected = all.filter((b) => b.status === "rejected");
 
-  // Top services by booking count
-  const serviceCount: Record<string, number> = {};
+  const revenue = approved.reduce((sum, b) => sum + Number((b as any).total_amount ?? 0), 0);
+
+  // Top services derived from cart_items JSONB
+  const serviceCount: Record<string, { count: number; name_ar?: string }> = {};
   for (const b of all) {
-    const name = (b.services as any)?.name ?? "Unknown";
-    serviceCount[name] = (serviceCount[name] ?? 0) + 1;
+    const items: { name: string; name_ar?: string }[] = (b as any).cart_items ?? [];
+    for (const item of items) {
+      const name = item.name ?? "Unknown";
+      if (!serviceCount[name]) serviceCount[name] = { count: 0, name_ar: item.name_ar };
+      serviceCount[name].count += 1;
+    }
   }
   const top_services = Object.entries(serviceCount)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, a], [, b]) => b.count - a.count)
     .slice(0, 5)
-    .map(([service_name, count]) => ({ service_name, count }));
+    .map(([service_name, { count, name_ar }]) => ({ service_name, service_name_ar: name_ar ?? null, count }));
 
   const analytics: ApiAnalytics = {
     total: all.length,
     pending: pending.length,
     approved: approved.length,
     rejected: rejected.length,
-    revenue: 0,
+    revenue,
     top_services,
   };
 

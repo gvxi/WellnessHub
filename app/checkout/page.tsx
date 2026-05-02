@@ -22,7 +22,7 @@ type AuthState = "loading" | "unauthenticated" | "incomplete-profile" | "ready";
 type OtpState = "idle" | "sending" | "pending" | "verifying" | "verified";
 
 export default function CheckoutPage() {
-  const { items, totalCount, removeItem, updateQty } = useCart();
+  const { items, totalCount, removeItem, updateQty, clearCart } = useCart();
   const { setAuthOpen, setAuthStep } = useUI();
   const { t, lang } = useLang();
   const { showToast } = useToast();
@@ -186,6 +186,20 @@ export default function CheckoutPage() {
 
       if (data.payment_url) {
         router.push(data.payment_url);
+        return;
+      }
+
+      if (data.booking_id) {
+        fetch("/api/checkout/send-invoice", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({ booking_id: data.booking_id }),
+        }).catch(() => {});
+        clearCart();
+        showToast(t("checkout.bookingConfirmed"), "cart");
         return;
       }
 
