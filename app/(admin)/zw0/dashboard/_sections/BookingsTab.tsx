@@ -271,7 +271,7 @@ function BookingsTabInner() {
                   )}
 
                   {/* Booking ID */}
-                  <p className="text-[10px] text-dark/30">{t("profile.bookingId")}: {b.id}</p>
+                  <p className="text-[10px] text-dark/30">{t("profile.bookingId")}: {b.id.slice(0, 6).toUpperCase()}</p>
                 </div>
 
                 {/* Approve / Reject (pending only) */}

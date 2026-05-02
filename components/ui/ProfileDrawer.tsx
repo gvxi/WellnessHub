@@ -208,7 +208,7 @@ export default function ProfileDrawer() {
                       <p className="text-[10px] text-dark/35 uppercase tracking-wider font-medium mb-0.5">
                         {t("profile.bookingId")}
                       </p>
-                      <p className="text-xs text-dark/60 font-mono truncate">{selectedBooking.id}</p>
+                      <p className="text-xs text-dark/60 font-mono truncate">{selectedBooking.id.slice(0, 6).toUpperCase()}</p>
                     </div>
 
                     {/* Items table */}

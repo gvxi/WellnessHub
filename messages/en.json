@@ -207,6 +207,7 @@
     "alertsEmpty": "No alerts yet",
     "alertsEmptyHint": "New signups and bookings will appear here",
     "markAllSeen": "Mark all as seen",
+    "unseen": "unseen",
     "newBooking": "New Booking",
     "newCustomer": "New Customer",
     "sessionExpired": "Session expired. Signing out…",

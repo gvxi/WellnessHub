@@ -68,6 +68,16 @@ interface Props {
   onUnseenChange: (count: number) => void;
 }
 
+function buildSummary(alerts: Alert[], t: (k: string) => string): string | null {
+  if (alerts.length === 0) return null;
+  const bookings = alerts.filter((a) => a.type.startsWith("booking")).length;
+  const signups = alerts.filter((a) => a.type === "signup").length;
+  const parts: string[] = [];
+  if (bookings > 0) parts.push(`${bookings} ${t("admin.alert_booking_new").toLowerCase()}`);
+  if (signups > 0) parts.push(`${signups} ${t("admin.alert_signup").toLowerCase()}`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 export default function AlertsDrawer({ open, onClose, onUnseenChange }: Props) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(false);
@@ -154,6 +164,34 @@ export default function AlertsDrawer({ open, onClose, onUnseenChange }: Props) {
                 <X size={14} className="text-dark/60" />
               </button>
             </div>
+
+            {/* Summary chips */}
+            {(() => {
+              const summary = buildSummary(alerts, t);
+              return summary ? (
+                <div className="px-4 py-2 border-b border-dark/6">
+                  <div className="flex flex-wrap gap-1.5">
+                    {alerts.filter((a) => a.type.startsWith("booking")).length > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/8 text-primary text-[10px] font-semibold">
+                        <CalendarPlus size={10} />
+                        {alerts.filter((a) => a.type.startsWith("booking")).length} {t("admin.alert_booking_new")}
+                      </span>
+                    )}
+                    {alerts.filter((a) => a.type === "signup").length > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/8 text-secondary text-[10px] font-semibold">
+                        <UserPlus size={10} />
+                        {alerts.filter((a) => a.type === "signup").length} {t("admin.alert_signup")}
+                      </span>
+                    )}
+                    {alerts.filter((a) => !a.seen).length > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-dark/6 text-dark/50 text-[10px] font-semibold">
+                        {alerts.filter((a) => !a.seen).length} {t("admin.unseen")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : null;
+            })()}
 
             {/* List */}
             <div className="flex-1 overflow-y-auto py-3">

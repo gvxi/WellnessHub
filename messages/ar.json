@@ -207,6 +207,7 @@
     "alertsEmpty": "لا توجد تنبيهات بعد",
     "alertsEmptyHint": "ستظهر هنا عمليات التسجيل والحجوزات الجديدة",
     "markAllSeen": "تحديد الكل كمقروء",
+    "unseen": "غير مقروء",
     "newBooking": "حجز جديد",
     "newCustomer": "عميل جديد",
     "sessionExpired": "انتهت الجلسة. جاري تسجيل الخروج…",
