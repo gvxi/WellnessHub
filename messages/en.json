@@ -17,7 +17,9 @@
     "emptyHint": "Tap any service to add it",
     "subtotal": "Subtotal",
     "checkout": "Go to Checkout",
-    "clear": "Clear Cart"
+    "clear": "Clear Cart",
+    "unavailable": "Unavailable",
+    "unavailableCheckout": "Some items are no longer available. Please remove them to proceed."
   },
   "favs": {
     "title": "Favorites",
@@ -208,6 +210,8 @@
     "alertsEmptyHint": "New signups and bookings will appear here",
     "markAllSeen": "Mark all as seen",
     "unseen": "unseen",
+    "service_visible": "Visible — click to hide",
+    "service_hidden": "Hidden — click to show",
     "newBooking": "New Booking",
     "newCustomer": "New Customer",
     "sessionExpired": "Session expired. Signing out…",

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useEffect } from "react";
-import { useCart } from "@/lib/shop-context";
+import { useCart, isItemVisible, isRegistryReady } from "@/lib/shop-context";
 import { useLang } from "@/lib/lang-context";
 import { cn, resolveImage } from "@/lib/utils";
 
@@ -117,9 +117,15 @@ export default function CartDrawer({ open, onClose }: Props) {
 
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-dark truncate">{info.name}</p>
-                            <p className="text-xs text-dark/45 tabular-nums">
-                              {info.numericPrice ? `${info.numericPrice} OMR` : info.price}
-                            </p>
+                            {isRegistryReady() && !isItemVisible(cartItem.id) ? (
+                              <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wide mt-0.5">
+                                {t("cart.unavailable")}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-dark/45 tabular-nums">
+                                {info.numericPrice ? `${info.numericPrice} OMR` : info.price}
+                              </p>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-1.5 bg-dark/6 rounded-xl px-1.5 py-1">

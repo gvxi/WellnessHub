@@ -17,7 +17,9 @@
     "emptyHint": "اضغط على أي خدمة لإضافتها",
     "subtotal": "الإجمالي",
     "checkout": "إتمام الطلب",
-    "clear": "مسح السلة"
+    "clear": "مسح السلة",
+    "unavailable": "غير متاح",
+    "unavailableCheckout": "بعض العناصر لم تعد متاحة. يرجى إزالتها للمتابعة."
   },
   "favs": {
     "title": "المفضلة",
@@ -208,6 +210,8 @@
     "alertsEmptyHint": "ستظهر هنا عمليات التسجيل والحجوزات الجديدة",
     "markAllSeen": "تحديد الكل كمقروء",
     "unseen": "غير مقروء",
+    "service_visible": "مرئي — انقر للإخفاء",
+    "service_hidden": "مخفي — انقر للإظهار",
     "newBooking": "حجز جديد",
     "newCustomer": "عميل جديد",
     "sessionExpired": "انتهت الجلسة. جاري تسجيل الخروج…",

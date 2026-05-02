@@ -27,6 +27,14 @@ export function getItemById(id: string): ServiceItem | undefined {
     .find((i) => i.id === id);
 }
 
+export function isItemVisible(id: string): boolean {
+  return _itemRegistry.has(id);
+}
+
+export function isRegistryReady(): boolean {
+  return _itemRegistry.size > 0;
+}
+
 // ─── Cart ────────────────────────────────────────────────────────────────────
 
 export type CartItem = { id: string; qty: number; snapshot: ServiceItem };

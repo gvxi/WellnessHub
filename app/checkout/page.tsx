@@ -10,7 +10,7 @@ import {
   Mail, CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCart } from "@/lib/shop-context";
+import { useCart, isItemVisible, isRegistryReady } from "@/lib/shop-context";
 import { useUI } from "@/lib/shop-context";
 import { useLang } from "@/lib/lang-context";
 import { useToast } from "@/lib/toast-context";
@@ -45,6 +45,7 @@ export default function CheckoutPage() {
   );
 
   const otpRequired = subtotal > 20 && !otpVerifiedThisSession.current;
+  const hasUnavailableItems = isRegistryReady() && items.some((i) => !isItemVisible(i.id));
 
   // ── Auth + profile check ───────────────────────────────────────────────────
   async function checkAuth(u: User | null): Promise<AuthState> {
@@ -532,13 +533,19 @@ export default function CheckoutPage() {
             </span>
           </label>
 
+          {hasUnavailableItems && (
+            <p className="text-xs text-red-500 font-medium text-center -mb-1">
+              {t("cart.unavailableCheckout")}
+            </p>
+          )}
+
           <button
             onClick={() => handlePaymob()}
-            disabled={!termsAccepted || payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"}
+            disabled={!termsAccepted || payLoading || totalCount === 0 || hasUnavailableItems || otpState === "sending" || otpState === "pending" || otpState === "verifying"}
             className={cn(
               "w-full py-4 rounded-2xl text-sm font-semibold transition-colors duration-200",
               "flex items-center justify-center gap-2",
-              !termsAccepted || payLoading || totalCount === 0 || otpState === "sending" || otpState === "pending" || otpState === "verifying"
+              !termsAccepted || payLoading || totalCount === 0 || hasUnavailableItems || otpState === "sending" || otpState === "pending" || otpState === "verifying"
                 ? "bg-primary/50 text-light cursor-not-allowed"
                 : "bg-primary text-light hover:bg-primary/90"
             )}

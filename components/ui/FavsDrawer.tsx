@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Heart, ShoppingBag, X } from "lucide-react";
 import { useEffect } from "react";
-import { useCart, useFavs, useUI } from "@/lib/shop-context";
+import { useCart, useFavs, useUI, isItemVisible, isRegistryReady } from "@/lib/shop-context";
 import { useToast } from "@/lib/toast-context";
 import { useLang } from "@/lib/lang-context";
 import { resolveImage } from "@/lib/utils";
@@ -95,7 +95,9 @@ export default function FavsDrawer({ open, onClose }: Props) {
               ) : (
                 <div className="flex flex-col gap-3">
                   <AnimatePresence initial={false}>
-                    {favItems.map((info) => (
+                    {favItems.map((info) => {
+                      const unavailable = isRegistryReady() && !isItemVisible(info.id);
+                      return (
                       <motion.div
                         key={info.id}
                         layout
@@ -104,21 +106,28 @@ export default function FavsDrawer({ open, onClose }: Props) {
                         exit={{ opacity: 0, x: 40, scale: 0.95 }}
                         transition={{ duration: 0.22 }}
                         className="flex items-center gap-3 p-3 rounded-2xl bg-dark/[0.03] hover:bg-dark/[0.05] transition-colors cursor-pointer"
-                        onClick={() => { setSelectedItem(info); onClose(); }}
+                        onClick={() => { if (!unavailable) { setSelectedItem(info); onClose(); } }}
                       >
                         {resolveImage(info.imageUrl, info.unsplashId, 120) && (
                           <img
                             src={resolveImage(info.imageUrl, info.unsplashId, 120)!}
                             alt={info.name}
-                            className="w-12 h-12 rounded-xl object-cover shrink-0"
+                            className={`w-12 h-12 rounded-xl object-cover shrink-0 ${unavailable ? "opacity-40 grayscale" : ""}`}
                           />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-dark truncate">{info.name}</p>
-                          <p className="text-xs text-dark/45 tabular-nums">
-                            {info.numericPrice ? `${info.numericPrice} OMR` : info.price}
-                          </p>
+                          <p className={`text-sm font-medium truncate ${unavailable ? "text-dark/40 line-through" : "text-dark"}`}>{info.name}</p>
+                          {unavailable ? (
+                            <p className="text-[10px] font-semibold text-red-400 uppercase tracking-wide mt-0.5">
+                              {t("cart.unavailable")}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-dark/45 tabular-nums">
+                              {info.numericPrice ? `${info.numericPrice} OMR` : info.price}
+                            </p>
+                          )}
                         </div>
+                        {!unavailable && (
                         <motion.button
                           whileTap={{ scale: 0.82 }}
                           onClick={(e) => {
@@ -132,6 +141,7 @@ export default function FavsDrawer({ open, onClose }: Props) {
                         >
                           <ShoppingBag size={14} />
                         </motion.button>
+                        )}
                         <motion.button
                           whileTap={{ scale: 0.82 }}
                           onClick={(e) => {
@@ -145,7 +155,8 @@ export default function FavsDrawer({ open, onClose }: Props) {
                           <Heart size={14} className={isInCart(info.id) ? "" : ""} />
                         </motion.button>
                       </motion.div>
-                    ))}
+                      );
+                    })}
                   </AnimatePresence>
                 </div>
               )}

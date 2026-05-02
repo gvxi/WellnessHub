@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, ChevronLeft, ChevronDown, Edit2, Plus, Languages, Loader2, Search, X } from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronDown, Edit2, Plus, Languages, Loader2, Search, X, Eye, EyeOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import EditSheet, { type FieldDef } from "../_components/EditSheet";
@@ -625,12 +625,13 @@ export default function ServicesTab() {
                           <button
                             disabled={toggling.has(svc.id)}
                             onClick={() => toggleSvc(svc)}
-                            className="shrink-0 me-2.5 disabled:opacity-40"
+                            aria-label={svc.is_active ? t("admin.service_visible") : t("admin.service_hidden")}
+                            className="shrink-0 me-2.5 disabled:opacity-40 transition-opacity"
                           >
-                            <div className={cn(
-                              "w-2 h-2 rounded-full transition-colors",
-                              svc.is_active ? "bg-emerald-400" : "bg-dark/20"
-                            )} />
+                            {svc.is_active
+                              ? <Eye size={15} className="text-emerald-500" />
+                              : <EyeOff size={15} className="text-dark/25" />
+                            }
                           </button>
 
                           <button

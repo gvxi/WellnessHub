@@ -28,7 +28,7 @@ async function fetchCategories(): Promise<ApiCategory[]> {
     .select(`
       id, name, subtitle, unsplash_id, image_url, slug, display_order, translations,
       services (
-        id, name, description, group_label, unsplash_id, display_order, translations,
+        id, name, description, group_label, unsplash_id, display_order, is_active, translations,
         packages ( id, name, description, price, currency, note, icon, display_order, translations )
       )
     `)
@@ -37,7 +37,9 @@ async function fetchCategories(): Promise<ApiCategory[]> {
   if (error || !data) return [];
 
   return data.map((cat) => {
-    const services = [...(cat.services ?? [])].sort((a, b) => a.display_order - b.display_order);
+    const services = [...(cat.services ?? [])]
+      .filter((s) => s.is_active !== false)
+      .sort((a, b) => a.display_order - b.display_order);
     const groupMap = new Map<string, ApiService[]>();
 
     for (const svc of services) {

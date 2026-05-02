@@ -13,7 +13,7 @@ export async function GET() {
     .select(`
       id, name, subtitle, unsplash_id, image_url, slug, display_order, translations,
       services (
-        id, name, description, group_label, unsplash_id, image_url, display_order, translations,
+        id, name, description, group_label, unsplash_id, image_url, display_order, is_active, translations,
         packages ( id, name, description, price, currency, note, icon, display_order, translations )
       )
     `)
@@ -25,6 +25,7 @@ export async function GET() {
 
   const categories: ApiCategory[] = (data ?? []).map((cat) => {
     const services = [...(cat.services ?? [])]
+      .filter((s) => s.is_active !== false)
       .sort((a, b) => a.display_order - b.display_order);
 
     // Group services by group_label preserving first-appearance order
