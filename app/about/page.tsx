@@ -11,7 +11,9 @@ export default function AboutPage() {
   return (
     <main className="overflow-x-hidden w-full max-w-full bg-light">
       <Nav />
-      <AboutContent />
+      <div className="pt-16">
+        <AboutContent />
+      </div>
       <Footer />
     </main>
   );

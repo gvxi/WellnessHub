@@ -45,6 +45,7 @@ export default function CheckoutPage() {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const iframeRef = useRef<HTMLDivElement>(null);
   const payAttempts = useRef<number[]>([]);
+  const rayIdRef = useRef<string>("");
 
   const subtotal = items.reduce(
     (sum, item) => sum + (item.snapshot.numericPrice ?? 0) * item.qty,
@@ -57,6 +58,21 @@ export default function CheckoutPage() {
     const base = i.id.includes("::") ? i.id.split("::")[0] : i.id;
     return unavailableIds.has(base);
   });
+
+  // ── Ray ID — persistent rate-limit token (localStorage + URL) ────────────
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlRay = urlParams.get("ray");
+    const storedRay = localStorage.getItem("payment_ray_id");
+    const ray = urlRay || storedRay || crypto.randomUUID();
+    rayIdRef.current = ray;
+    localStorage.setItem("payment_ray_id", ray);
+    if (!urlRay) {
+      urlParams.set("ray", ray);
+      router.replace(`/checkout?${urlParams.toString()}`, { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Availability check ────────────────────────────────────────────────────
   useEffect(() => {
@@ -211,6 +227,7 @@ export default function CheckoutPage() {
             },
           })),
           subtotal,
+          ray_id: rayIdRef.current,
         }),
       });
 
