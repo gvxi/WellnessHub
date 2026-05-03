@@ -3,11 +3,12 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, CreditCard, Lock, Loader2, ShoppingBag,
   Minus, Plus, Trash2, UserCircle, AlertCircle,
-  Mail, CheckCircle2,
+  Mail, CheckCircle2, X, Home,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/lib/shop-context";
@@ -42,6 +43,8 @@ export default function CheckoutPage() {
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const iframeRef = useRef<HTMLDivElement>(null);
+  const payAttempts = useRef<number[]>([]);
 
   const subtotal = items.reduce(
     (sum, item) => sum + (item.snapshot.numericPrice ?? 0) * item.qty,
@@ -49,6 +52,7 @@ export default function CheckoutPage() {
   );
 
   const otpRequired = subtotal > 20 && !otpVerifiedThisSession.current;
+  const belowMinimum = subtotal < 2;
   const hasUnavailableItems = items.some((i) => {
     const base = i.id.includes("::") ? i.id.split("::")[0] : i.id;
     return unavailableIds.has(base);
@@ -170,11 +174,20 @@ export default function CheckoutPage() {
   async function handlePaymob(skipOtpCheck = false) {
     if (authState !== "ready") return;
 
+    const now = Date.now();
+    const window = 10 * 60 * 1000;
+    payAttempts.current = payAttempts.current.filter((t) => now - t < window);
+    if (payAttempts.current.length >= 3) {
+      showToast(t("checkout.rateLimited"), "cart");
+      return;
+    }
+
     if (!skipOtpCheck && otpRequired && otpState !== "verified") {
       await sendOtp();
       return;
     }
 
+    payAttempts.current.push(now);
     setPayLoading(true);
     try {
       const token = await getToken();
@@ -208,11 +221,22 @@ export default function CheckoutPage() {
         return;
       }
 
+      if (data.error === "rate_limited") {
+        showToast(t("checkout.rateLimited"), "cart");
+        return;
+      }
+
+      if (data.error === "below_minimum") {
+        showToast(t("checkout.minOrder"), "cart");
+        return;
+      }
+
       if (data.booking_id) {
         // External payment gateway (Paymob) — embed as iframe; clear cart after payment succeeds
         if (data.payment_url && !data.payment_url.startsWith("/")) {
           setIframeLoaded(false);
           setIframeUrl(data.payment_url);
+          setTimeout(() => iframeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
           return;
         }
 
@@ -327,7 +351,7 @@ export default function CheckoutPage() {
       <div className="grid md:grid-cols-[1fr_360px] gap-8 items-start">
 
         {/* ── Order summary ── */}
-        <div className="border border-dark/8 rounded-2xl overflow-hidden">
+        <div className={cn("border border-dark/8 rounded-2xl overflow-hidden", iframeUrl && "pointer-events-none opacity-50")}>
           <div className="px-5 py-4 border-b border-dark/6">
             <h2 className="text-sm font-semibold text-dark/70">{t("checkout.orderSummary")}</h2>
           </div>
@@ -374,7 +398,7 @@ export default function CheckoutPage() {
                         <img
                           src={resolveImage(cartItem.snapshot.imageUrl, cartItem.snapshot.unsplashId, 120)!}
                           alt={name}
-                          className="w-10 h-10 rounded-xl object-cover shrink-0 grayscale"
+                          className={cn("w-10 h-10 rounded-xl object-cover shrink-0", unavailable && "grayscale")}
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
@@ -541,7 +565,7 @@ export default function CheckoutPage() {
           </AnimatePresence>
 
           {/* Terms checkbox */}
-          <label className="flex items-start gap-2.5 cursor-pointer group">
+          <label className={cn("flex items-start gap-2.5 cursor-pointer group", iframeUrl && "pointer-events-none opacity-50")}>
             <div className="relative mt-0.5 shrink-0">
               <input
                 type="checkbox"
@@ -580,15 +604,21 @@ export default function CheckoutPage() {
             </p>
           )}
 
+          {belowMinimum && !hasUnavailableItems && (
+            <p className="text-xs text-amber-600 font-medium text-center -mb-1">
+              {t("checkout.minOrder")}
+            </p>
+          )}
+
           {!iframeUrl && (
             <>
               <button
                 onClick={() => handlePaymob()}
-                disabled={!termsAccepted || payLoading || totalCount === 0 || hasUnavailableItems || otpState === "sending" || otpState === "pending" || otpState === "verifying"}
+                disabled={!termsAccepted || payLoading || totalCount === 0 || hasUnavailableItems || belowMinimum || otpState === "sending" || otpState === "pending" || otpState === "verifying"}
                 className={cn(
                   "w-full py-4 rounded-2xl text-sm font-semibold transition-colors duration-200",
                   "flex items-center justify-center gap-2",
-                  !termsAccepted || payLoading || totalCount === 0 || hasUnavailableItems || otpState === "sending" || otpState === "pending" || otpState === "verifying"
+                  !termsAccepted || payLoading || totalCount === 0 || hasUnavailableItems || belowMinimum || otpState === "sending" || otpState === "pending" || otpState === "verifying"
                     ? "bg-primary/50 text-light cursor-not-allowed"
                     : "bg-primary text-light hover:bg-primary/90"
                 )}
@@ -607,15 +637,24 @@ export default function CheckoutPage() {
                 <Lock size={11} />
                 <span className="text-xs">{t("checkout.securePayment")}</span>
               </div>
+
+              <Link
+                href="/"
+                className="flex items-center justify-center gap-1.5 text-xs text-dark/40 hover:text-dark/60 transition-colors py-1"
+              >
+                <Home size={12} />
+                {t("checkout.backHome")}
+              </Link>
             </>
           )}
         </div>
 
-        {/* ── Paymob iframe — same column as payment card ── */}
+        {/* ── Payment iframe — same column as payment card ── */}
         <AnimatePresence>
           {iframeUrl && (
             <motion.div
               key="paymob-iframe"
+              ref={iframeRef}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
@@ -628,9 +667,18 @@ export default function CheckoutPage() {
                     <Lock size={13} className="text-primary" />
                     {t("checkout.securePayment")}
                   </div>
-                  {!iframeLoaded && (
-                    <Loader2 size={15} className="animate-spin text-dark/30" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {!iframeLoaded && (
+                      <Loader2 size={15} className="animate-spin text-dark/30" />
+                    )}
+                    <button
+                      onClick={() => { setIframeUrl(null); setIframeLoaded(false); }}
+                      className="flex items-center gap-1 text-xs text-dark/45 hover:text-dark/70 transition-colors px-2 py-1 rounded-lg hover:bg-dark/5"
+                    >
+                      <X size={13} />
+                      {t("checkout.cancelPayment")}
+                    </button>
+                  </div>
                 </div>
                 <div className="relative" style={{ height: 600 }}>
                   {!iframeLoaded && (

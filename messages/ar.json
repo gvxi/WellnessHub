@@ -316,9 +316,9 @@
     "emptyCart": "السلة فارغة",
     "emptyCartHint": "أضف خدمات قبل إتمام الطلب",
     "backToServices": "العودة إلى الخدمات",
-    "payWithPaymob": "الدفع عبر Paymob",
+    "payWithPaymob": "ادفع",
     "processing": "جارٍ المعالجة…",
-    "securePayment": "مدفوعات آمنة عبر Paymob · ريال عُماني",
+    "securePayment": "دفع آمن · ريال عُماني",
     "subtotal": "الإجمالي",
     "total": "المجموع",
     "comingSoon": "الدفع قريباً — جاري تفعيل Paymob",
@@ -346,7 +346,10 @@
     "invoiceSent": "تم إرسال الفاتورة!",
     "invoiceLimit": "تم إرسال الفاتورة 3 مرات بالفعل",
     "invoiceCooldown": "انتظر {s} ثانية قبل الإرسال",
-    "bookingConfirmed": "تم تأكيد الحجز! تحقق من بريدك الإلكتروني للفاتورة."
+    "bookingConfirmed": "تم تأكيد الحجز! تحقق من بريدك الإلكتروني للفاتورة.",
+    "cancelPayment": "إلغاء",
+    "rateLimited": "محاولات كثيرة. حاول بعد 10 دقائق.",
+    "minOrder": "الحد الأدنى للطلب 2 ريال عُماني"
   },
   "lang": "ع"
 }

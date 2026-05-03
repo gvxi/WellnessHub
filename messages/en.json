@@ -316,9 +316,9 @@
     "emptyCart": "Your cart is empty",
     "emptyCartHint": "Add services before checking out",
     "backToServices": "Back to Services",
-    "payWithPaymob": "Pay with Paymob",
+    "payWithPaymob": "Pay",
     "processing": "Processing…",
-    "securePayment": "Secured by Paymob · OMR",
+    "securePayment": "Secure Payment · OMR",
     "subtotal": "Subtotal",
     "total": "Total",
     "comingSoon": "Payment coming soon — Paymob integration in progress",
@@ -346,7 +346,10 @@
     "invoiceSent": "Invoice sent!",
     "invoiceLimit": "Invoice already sent 3 times",
     "invoiceCooldown": "Wait {s}s before resending",
-    "bookingConfirmed": "Booking confirmed! Check your email for the invoice."
+    "bookingConfirmed": "Booking confirmed! Check your email for the invoice.",
+    "cancelPayment": "Cancel",
+    "rateLimited": "Too many attempts. Try again in 10 minutes.",
+    "minOrder": "Minimum order is 2 OMR"
   },
   "lang": "EN"
 }

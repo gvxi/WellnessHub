@@ -135,14 +135,16 @@ export default function ItemDrawer({ item, onClose }: Props) {
               </div>
             )}
 
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="absolute top-4 end-4 z-10 w-9 h-9 rounded-full bg-dark/25 backdrop-blur-sm
-                         flex items-center justify-center text-light hover:bg-dark/40 transition-colors"
-            >
-              <X size={18} />
-            </button>
+            {imageUrl && (
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="absolute top-4 end-4 z-10 w-9 h-9 rounded-full bg-dark/25 backdrop-blur-sm
+                           flex items-center justify-center text-light hover:bg-dark/40 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            )}
 
             <div className="flex flex-col flex-1 overflow-y-auto px-6 pt-5 pb-8 gap-4">
               <div className="flex items-start justify-between gap-3">
@@ -154,21 +156,33 @@ export default function ItemDrawer({ item, onClose }: Props) {
                   )}
                   <h2 className="text-sm font-medium text-dark/70 leading-snug">{displayName}</h2>
                 </div>
-                <motion.button
-                  onClick={handleToggleFav}
-                  whileTap={{ scale: 0.82 }}
-                  className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center
-                             hover:bg-secondary/10 transition-colors"
-                  aria-label={isFav(item.id) ? t("favs.title") : t("item.addToCart")}
-                >
-                  <Heart
-                    size={20}
-                    className={cn(
-                      "transition-colors duration-200",
-                      isFav(item.id) ? "fill-secondary text-secondary" : "text-dark/30"
-                    )}
-                  />
-                </motion.button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <motion.button
+                    onClick={handleToggleFav}
+                    whileTap={{ scale: 0.82 }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center
+                               hover:bg-secondary/10 transition-colors"
+                    aria-label={isFav(item.id) ? t("favs.title") : t("item.addToCart")}
+                  >
+                    <Heart
+                      size={20}
+                      className={cn(
+                        "transition-colors duration-200",
+                        isFav(item.id) ? "fill-secondary text-secondary" : "text-dark/30"
+                      )}
+                    />
+                  </motion.button>
+                  {!imageUrl && (
+                    <button
+                      onClick={onClose}
+                      aria-label="Close"
+                      className="w-10 h-10 rounded-full flex items-center justify-center
+                                 text-dark/30 hover:bg-dark/8 transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {displayDesc && (
