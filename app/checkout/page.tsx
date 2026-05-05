@@ -43,6 +43,7 @@ export default function CheckoutPage() {
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const [pixelData, setPixelData] = useState<{ clientSecret: string; publicKey: string; bookingId: string } | null>(null);
   const pixelContainerRef = useRef<HTMLDivElement>(null);
+  const pixelInitialized = useRef(false);
   const payAttempts = useRef<number[]>([]);
   const rayIdRef = useRef<string>("");
 
@@ -134,7 +135,9 @@ export default function CheckoutPage() {
 
   // ── Pixel SDK loader ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (!pixelData) return;
+    if (!pixelData) { pixelInitialized.current = false; return; }
+    if (pixelInitialized.current) return;
+    pixelInitialized.current = true;
 
     const PIXEL_STYLES = [
       "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/styles.css",
@@ -760,27 +763,26 @@ export default function CheckoutPage() {
             <motion.div
               key="paymob-pixel"
               ref={pixelContainerRef}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.25 }}
             >
-              <div className="border border-dark/8 rounded-2xl overflow-hidden bg-[#F2EDEE]">
-                <div className="px-5 py-3 border-b border-dark/8 flex items-center justify-between">
+              <div className="border border-dark/8 rounded-2xl bg-[#F2EDEE]">
+                <div className="px-5 py-3 border-b border-dark/8 flex items-center justify-between rounded-t-2xl">
                   <div className="flex items-center gap-2 text-xs font-semibold text-dark/50 tracking-wide uppercase">
                     <Lock size={11} className="text-primary" />
                     {t("checkout.securePayment")}
                   </div>
                   <button
-                    onClick={() => setPixelData(null)}
+                    onClick={() => { setPixelData(null); pixelInitialized.current = false; }}
                     className="flex items-center gap-1 text-xs text-dark/40 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
                   >
                     <X size={12} />
                     {t("checkout.cancelPayment")}
                   </button>
                 </div>
-                <div id="paymob-elements" />
+                <div id="paymob-elements" style={{ width: "100%" }} />
               </div>
             </motion.div>
           )}
