@@ -163,14 +163,29 @@ export default function CheckoutPage() {
         showSaveCard: false,
         forceSaveCard: false,
         customStyle: {
-          Color_Primary: "#5A0F1B",
+          Font_Family: "Outfit",
+          Font_Size_Label: "13",
+          Font_Size_Input_Fields: "15",
+          Font_Size_Payment_Button: "15",
+          Font_Weight_Label: 600,
+          Font_Weight_Input_Fields: 400,
+          Font_Weight_Payment_Button: 600,
+          Color_Container: "#F2EDEE",
+          Color_Input_Fields: "#FFFFFF",
+          Color_Border_Input_Fields: "#DDD5D7",
           Color_Border_Payment_Button: "#5A0F1B",
-          Color_Disabled: "#BFA6C9",
           Radius_Border: "12",
+          Color_Disabled: "#C9B8BB",
+          Color_Error: "#CC1142",
+          Color_Primary: "#5A0F1B",
+          Text_Color_For_Label: "#0E0B0D",
+          Text_Color_For_Payment_Button: "#F2EDEE",
+          Text_Color_For_Input_Fields: "#0E0B0D",
+          Color_For_Text_Placeholder: "#9B8A8D",
           Width_of_Container: "100%",
-          Vertical_Padding: "24",
-          Vertical_Spacing_between_components: "16",
-          Container_Padding: "0",
+          Vertical_Padding: "20",
+          Vertical_Spacing_between_components: "14",
+          Container_Padding: "20",
         },
         afterPaymentComplete: async () => {
           const accessToken = await getToken();
@@ -751,23 +766,21 @@ export default function CheckoutPage() {
               transition={{ duration: 0.3 }}
               className="overflow-hidden"
             >
-              <div className="border border-dark/8 rounded-2xl overflow-hidden">
-                <div className="px-5 py-3.5 border-b border-dark/8 flex items-center justify-between bg-dark/[0.015]">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-dark/70">
-                    <Lock size={13} className="text-primary" />
+              <div className="border border-dark/8 rounded-2xl overflow-hidden bg-[#F2EDEE]">
+                <div className="px-5 py-3 border-b border-dark/8 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-dark/50 tracking-wide uppercase">
+                    <Lock size={11} className="text-primary" />
                     {t("checkout.securePayment")}
                   </div>
                   <button
                     onClick={() => setPixelData(null)}
-                    className="flex items-center gap-1 text-xs text-dark/45 hover:text-dark/70 transition-colors px-2 py-1 rounded-lg hover:bg-dark/5"
+                    className="flex items-center gap-1 text-xs text-dark/40 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
                   >
-                    <X size={13} />
+                    <X size={12} />
                     {t("checkout.cancelPayment")}
                   </button>
                 </div>
-                <div className="p-5">
-                  <div id="paymob-elements" />
-                </div>
+                <div id="paymob-elements" />
               </div>
             </motion.div>
           )}
