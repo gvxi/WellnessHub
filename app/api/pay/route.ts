@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
 
     if (!cs || !pk) {
       parent.postMessage({ type: "PIXEL_ERROR", msg: "missing params" }, "*");
-    } else {
+    } else if (!window.__pixelStarted) {
+      window.__pixelStarted = true;
       await import("https://cdn.jsdelivr.net/npm/paymob-pixel@latest/main.js").catch(() => {});
       const Pixel = window.Pixel;
       if (!Pixel) {
