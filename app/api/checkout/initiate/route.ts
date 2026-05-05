@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing ray_id" }, { status: 400 });
   }
 
-  if (typeof body.subtotal === "number" && body.subtotal < MIN_ORDER_OMR) {
+  const devMode = !!process.env.DEV_MODE;
+  if (!devMode && typeof body.subtotal === "number" && body.subtotal < MIN_ORDER_OMR) {
     return NextResponse.json({ error: "below_minimum" }, { status: 422 });
   }
 
