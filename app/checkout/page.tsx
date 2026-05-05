@@ -139,6 +139,31 @@ export default function CheckoutPage() {
     if (pixelInitialized.current) return;
     pixelInitialized.current = true;
 
+    // Paymob's global CSS defines `.hidden { display: none }` which overrides
+    // Tailwind's `hidden sm:flex` / `hidden md:flex` responsive pattern.
+    // We inject the CSS for Pixel to work, then immediately fix the breakpoints.
+    const PIXEL_STYLES = [
+      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/styles.css",
+      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/main.css",
+    ];
+    PIXEL_STYLES.forEach((href) => {
+      if (!document.querySelector(`link[href="${href}"]`)) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        document.head.appendChild(link);
+      }
+    });
+    if (!document.getElementById("paymob-responsive-fix")) {
+      const fix = document.createElement("style");
+      fix.id = "paymob-responsive-fix";
+      fix.textContent =
+        "@media(min-width:640px){.sm\\:flex{display:flex}.sm\\:block{display:block}.sm\\:inline-flex{display:inline-flex}}" +
+        "@media(min-width:768px){.md\\:flex{display:flex}.md\\:block{display:block}.md\\:inline-flex{display:inline-flex}.md\\:grid{display:grid}}" +
+        "@media(min-width:1024px){.lg\\:flex{display:flex}.lg\\:block{display:block}.lg\\:inline-flex{display:inline-flex}.lg\\:grid{display:grid}}";
+      document.head.appendChild(fix);
+    }
+
     const captured = pixelData;
 
     const initPixel = () => {
