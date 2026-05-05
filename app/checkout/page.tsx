@@ -42,8 +42,8 @@ export default function CheckoutPage() {
 
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const [pixelData, setPixelData] = useState<{ clientSecret: string; publicKey: string; bookingId: string } | null>(null);
+  const [iframeHeight, setIframeHeight] = useState(480);
   const pixelContainerRef = useRef<HTMLDivElement>(null);
-  const pixelInitialized = useRef(false);
   const payAttempts = useRef<number[]>([]);
   const rayIdRef = useRef<string>("");
 
@@ -133,107 +133,40 @@ export default function CheckoutPage() {
     }
   }, [totalCount, authState, router, pixelData]);
 
-  // ── Pixel SDK loader ───────────────────────────────────────────────────────
+  // ── Pixel iframe message listener ─────────────────────────────────────────
   useEffect(() => {
-    if (!pixelData) { pixelInitialized.current = false; return; }
-    if (pixelInitialized.current) return;
-    pixelInitialized.current = true;
-
-    // Paymob's global CSS defines `.hidden { display: none }` which overrides
-    // Tailwind's `hidden sm:flex` / `hidden md:flex` responsive pattern.
-    // We inject the CSS for Pixel to work, then immediately fix the breakpoints.
-    const PIXEL_STYLES = [
-      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/styles.css",
-      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/main.css",
-    ];
-    PIXEL_STYLES.forEach((href) => {
-      if (!document.querySelector(`link[href="${href}"]`)) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = href;
-        document.head.appendChild(link);
-      }
-    });
-    if (!document.getElementById("paymob-responsive-fix")) {
-      const fix = document.createElement("style");
-      fix.id = "paymob-responsive-fix";
-      fix.textContent =
-        "@media(min-width:640px){.sm\\:flex{display:flex}.sm\\:block{display:block}.sm\\:inline-flex{display:inline-flex}}" +
-        "@media(min-width:768px){.md\\:flex{display:flex}.md\\:block{display:block}.md\\:inline-flex{display:inline-flex}.md\\:grid{display:grid}}" +
-        "@media(min-width:1024px){.lg\\:flex{display:flex}.lg\\:block{display:block}.lg\\:inline-flex{display:inline-flex}.lg\\:grid{display:grid}}";
-      document.head.appendChild(fix);
-    }
-
+    if (!pixelData) return;
     const captured = pixelData;
 
-    const initPixel = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const PixelClass = (window as any).Pixel;
-      if (!PixelClass) { console.error("Paymob Pixel SDK not on window after load"); return; }
-      new PixelClass({
-        publicKey: captured.publicKey,
-        clientSecret: captured.clientSecret,
-        paymentMethods: ["card", "apple-pay"],
-        elementId: "paymob-elements",
-        showSaveCard: false,
-        forceSaveCard: false,
-        customStyle: {
-          Font_Family: "Outfit",
-          Font_Size_Label: "13",
-          Font_Size_Input_Fields: "15",
-          Font_Size_Payment_Button: "15",
-          Font_Weight_Label: 600,
-          Font_Weight_Input_Fields: 400,
-          Font_Weight_Payment_Button: 600,
-          Color_Container: "#F2EDEE",
-          Color_Input_Fields: "#FFFFFF",
-          Color_Border_Input_Fields: "#DDD5D7",
-          Color_Border_Payment_Button: "#5A0F1B",
-          Radius_Border: "12",
-          Color_Disabled: "#C9B8BB",
-          Color_Error: "#CC1142",
-          Color_Primary: "#5A0F1B",
-          Text_Color_For_Label: "#0E0B0D",
-          Text_Color_For_Payment_Button: "#F2EDEE",
-          Text_Color_For_Input_Fields: "#0E0B0D",
-          Color_For_Text_Placeholder: "#9B8A8D",
-          Width_of_Container: "100%",
-          Vertical_Padding: "20",
-          Vertical_Spacing_between_components: "14",
-          Container_Padding: "20",
-        },
-        afterPaymentComplete: async () => {
-          const accessToken = await getToken();
-          if (accessToken) {
-            fetch("/api/checkout/send-invoice", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
-              body: JSON.stringify({ booking_id: captured.bookingId, lang }),
-            }).catch(() => {});
-          }
-          clearCart();
-          showToast(t("checkout.bookingConfirmed"), "cart");
-          router.push("/checkout/success");
-        },
-        onPaymentCancel: () => {
-          setPixelData(null);
-        },
-      });
+    const handleMessage = async (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      const { type, bookingId: bid, height } = (e.data ?? {}) as Record<string, unknown>;
+
+      if (type === "PAYMENT_SUCCESS") {
+        const accessToken = await getToken();
+        if (accessToken) {
+          fetch("/api/checkout/send-invoice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
+            body: JSON.stringify({ booking_id: bid ?? captured.bookingId, lang }),
+          }).catch(() => {});
+        }
+        clearCart();
+        showToast(t("checkout.bookingConfirmed"), "cart");
+        router.push("/checkout/success");
+      }
+
+      if (type === "PAYMENT_CANCEL") {
+        setPixelData(null);
+      }
+
+      if (type === "RESIZE" && typeof height === "number") {
+        setIframeHeight(Math.max(480, height + 20));
+      }
     };
 
-    const existingScript = document.querySelector('script[src*="paymob-pixel"]') as HTMLScriptElement | null;
-    if (existingScript) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((window as any).Pixel) { initPixel(); }
-      else { existingScript.addEventListener("load", initPixel, { once: true }); }
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/main.js";
-    script.type = "module";
-    script.onload = initPixel;
-    document.head.appendChild(script);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pixelData]);
 
@@ -794,7 +727,12 @@ export default function CheckoutPage() {
                     {t("checkout.cancelPayment")}
                   </button>
                 </div>
-                <div id="paymob-elements" style={{ width: "100%" }} />
+                <iframe
+                  src={`/api/pay?cs=${encodeURIComponent(pixelData.clientSecret)}&pk=${encodeURIComponent(pixelData.publicKey)}&bid=${encodeURIComponent(pixelData.bookingId)}&lang=${lang}`}
+                  style={{ width: "100%", height: `${iframeHeight}px`, border: "none", display: "block" }}
+                  allow="payment"
+                  title="Secure Payment"
+                />
               </div>
             </motion.div>
           )}

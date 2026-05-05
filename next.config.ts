@@ -8,12 +8,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/checkout",
-        headers: [
-          {
-            key: "Permissions-Policy",
-            value: "payment=*",
-          },
-        ],
+        headers: [{ key: "Permissions-Policy", value: "payment=*" }],
+      },
+      {
+        source: "/api/pay",
+        headers: [{ key: "Permissions-Policy", value: "payment=*" }],
       },
     ];
   },
