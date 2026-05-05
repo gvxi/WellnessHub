@@ -41,9 +41,8 @@ export default function CheckoutPage() {
   const otpVerifiedThisSession = useRef(false);
 
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
-  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-  const iframeRef = useRef<HTMLDivElement>(null);
+  const [pixelData, setPixelData] = useState<{ clientSecret: string; publicKey: string; bookingId: string } | null>(null);
+  const pixelContainerRef = useRef<HTMLDivElement>(null);
   const payAttempts = useRef<number[]>([]);
   const rayIdRef = useRef<string>("");
 
@@ -127,11 +126,86 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    if (totalCount === 0 && authState !== "loading" && !iframeUrl) {
+    if (totalCount === 0 && authState !== "loading" && !pixelData) {
       const timer = setTimeout(() => router.push("/"), 2000);
       return () => clearTimeout(timer);
     }
-  }, [totalCount, authState, router, iframeUrl]);
+  }, [totalCount, authState, router, pixelData]);
+
+  // ── Pixel SDK loader ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!pixelData) return;
+
+    const PIXEL_STYLES = [
+      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/styles.css",
+      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/main.css",
+    ];
+    PIXEL_STYLES.forEach((href) => {
+      if (!document.querySelector(`link[href="${href}"]`)) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        document.head.appendChild(link);
+      }
+    });
+
+    const captured = pixelData;
+
+    const initPixel = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const PixelClass = (window as any).Pixel;
+      if (!PixelClass) { console.error("Paymob Pixel SDK not on window after load"); return; }
+      new PixelClass({
+        publicKey: captured.publicKey,
+        clientSecret: captured.clientSecret,
+        paymentMethods: ["card", "apple-pay"],
+        elementId: "paymob-elements",
+        showSaveCard: false,
+        forceSaveCard: false,
+        customStyle: {
+          Color_Primary: "#5A0F1B",
+          Color_Border_Payment_Button: "#5A0F1B",
+          Color_Disabled: "#BFA6C9",
+          Radius_Border: "12",
+          Width_of_Container: "100%",
+          Vertical_Padding: "24",
+          Vertical_Spacing_between_components: "16",
+          Container_Padding: "0",
+        },
+        afterPaymentComplete: async () => {
+          const accessToken = await getToken();
+          if (accessToken) {
+            fetch("/api/checkout/send-invoice", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
+              body: JSON.stringify({ booking_id: captured.bookingId, lang }),
+            }).catch(() => {});
+          }
+          clearCart();
+          showToast(t("checkout.bookingConfirmed"), "cart");
+          router.push("/checkout/success");
+        },
+        onPaymentCancel: () => {
+          setPixelData(null);
+        },
+      });
+    };
+
+    const existingScript = document.querySelector('script[src*="paymob-pixel"]') as HTMLScriptElement | null;
+    if (existingScript) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).Pixel) { initPixel(); }
+      else { existingScript.addEventListener("load", initPixel, { once: true }); }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/main.js";
+    script.type = "module";
+    script.onload = initPixel;
+    document.head.appendChild(script);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pixelData]);
 
   // ── OTP helpers ────────────────────────────────────────────────────────────
   async function getToken(): Promise<string | null> {
@@ -249,15 +323,14 @@ export default function CheckoutPage() {
       }
 
       if (data.booking_id) {
-        // External payment gateway (Paymob) — embed as iframe; clear cart after payment succeeds
-        if (data.payment_url && !data.payment_url.startsWith("/")) {
-          setIframeLoaded(false);
-          setIframeUrl(data.payment_url);
-          setTimeout(() => iframeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+        // Pixel SDK flow — render inline payment form
+        if (data.client_secret) {
+          setPixelData({ clientSecret: data.client_secret, publicKey: data.public_key, bookingId: data.booking_id });
+          setTimeout(() => pixelContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
           return;
         }
 
-        // DEV_MODE / non-payment path — clear cart and confirm immediately
+        // DEV_MODE — clear cart and confirm immediately
         fetch("/api/checkout/send-invoice", {
           method: "POST",
           headers: {
@@ -368,7 +441,7 @@ export default function CheckoutPage() {
       <div className="grid md:grid-cols-[1fr_360px] gap-8 items-start">
 
         {/* ── Order summary ── */}
-        <div className={cn("border border-dark/8 rounded-2xl overflow-hidden", iframeUrl && "pointer-events-none opacity-50")}>
+        <div className={cn("border border-dark/8 rounded-2xl overflow-hidden", pixelData && "pointer-events-none opacity-50")}>
           <div className="px-5 py-4 border-b border-dark/6">
             <h2 className="text-sm font-semibold text-dark/70">{t("checkout.orderSummary")}</h2>
           </div>
@@ -484,9 +557,9 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* ── Payment card + iframe column ── */}
+        {/* ── Payment card + Pixel form column ── */}
         <div className="flex flex-col gap-4">
-        <div className={cn("border border-dark/8 rounded-2xl p-6 flex flex-col gap-5", !iframeUrl && "md:sticky md:top-24")}>
+        <div className={cn("border border-dark/8 rounded-2xl p-6 flex flex-col gap-5", !pixelData && "md:sticky md:top-24")}>
           <h2 className="text-sm font-semibold text-dark/70">{t("checkout.payment")}</h2>
 
           <div className="flex flex-col gap-2">
@@ -582,7 +655,7 @@ export default function CheckoutPage() {
           </AnimatePresence>
 
           {/* Terms checkbox */}
-          <label className={cn("flex items-start gap-2.5 cursor-pointer group", iframeUrl && "pointer-events-none opacity-50")}>
+          <label className={cn("flex items-start gap-2.5 cursor-pointer group", pixelData && "pointer-events-none opacity-50")}>
             <div className="relative mt-0.5 shrink-0">
               <input
                 type="checkbox"
@@ -627,7 +700,7 @@ export default function CheckoutPage() {
             </p>
           )}
 
-          {!iframeUrl && (
+          {!pixelData && (
             <>
               <button
                 onClick={() => handlePaymob()}
@@ -666,12 +739,12 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        {/* ── Payment iframe — same column as payment card ── */}
+        {/* ── Pixel SDK payment form — same column as payment card ── */}
         <AnimatePresence>
-          {iframeUrl && (
+          {pixelData && (
             <motion.div
-              key="paymob-iframe"
-              ref={iframeRef}
+              key="paymob-pixel"
+              ref={pixelContainerRef}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
@@ -684,32 +757,16 @@ export default function CheckoutPage() {
                     <Lock size={13} className="text-primary" />
                     {t("checkout.securePayment")}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {!iframeLoaded && (
-                      <Loader2 size={15} className="animate-spin text-dark/30" />
-                    )}
-                    <button
-                      onClick={() => { setIframeUrl(null); setIframeLoaded(false); }}
-                      className="flex items-center gap-1 text-xs text-dark/45 hover:text-dark/70 transition-colors px-2 py-1 rounded-lg hover:bg-dark/5"
-                    >
-                      <X size={13} />
-                      {t("checkout.cancelPayment")}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setPixelData(null)}
+                    className="flex items-center gap-1 text-xs text-dark/45 hover:text-dark/70 transition-colors px-2 py-1 rounded-lg hover:bg-dark/5"
+                  >
+                    <X size={13} />
+                    {t("checkout.cancelPayment")}
+                  </button>
                 </div>
-                <div className="relative" style={{ height: 600 }}>
-                  {!iframeLoaded && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-light">
-                      <Loader2 size={28} className="animate-spin text-dark/20" />
-                    </div>
-                  )}
-                  <iframe
-                    src={iframeUrl}
-                    className="w-full h-full border-0"
-                    title="Paymob Payment"
-                    allow="payment"
-                    onLoad={() => setIframeLoaded(true)}
-                  />
+                <div className="p-5">
+                  <div id="paymob-elements" />
                 </div>
               </div>
             </motion.div>
