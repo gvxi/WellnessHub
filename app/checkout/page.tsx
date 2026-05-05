@@ -139,19 +139,6 @@ export default function CheckoutPage() {
     if (pixelInitialized.current) return;
     pixelInitialized.current = true;
 
-    const PIXEL_STYLES = [
-      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/styles.css",
-      "https://cdn.jsdelivr.net/npm/paymob-pixel@latest/main.css",
-    ];
-    PIXEL_STYLES.forEach((href) => {
-      if (!document.querySelector(`link[href="${href}"]`)) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = href;
-        document.head.appendChild(link);
-      }
-    });
-
     const captured = pixelData;
 
     const initPixel = () => {
