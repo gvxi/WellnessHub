@@ -37,6 +37,7 @@ Screenshots
 
 # vercel
 .vercel
+.claude
 
 # typescript
 *.tsbuildinfo

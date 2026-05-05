@@ -44,7 +44,10 @@
       "PowerShell(Get-ChildItem *)",
       "Bash(Select-Object -First 20)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\" -Directory | Select-Object -First 20 | ForEach-Object { $_.Name })",
-      "Bash(grep -r \"pt-\\\\|mt-\\\\|padding-top\\\\|margin-top\" --include=\"*.tsx\" --include=\"*.jsx\" . ! -path \"./.next/*\" ! -path \"./node_modules/*\")"
+      "Bash(grep -r \"pt-\\\\|mt-\\\\|padding-top\\\\|margin-top\" --include=\"*.tsx\" --include=\"*.jsx\" . ! -path \"./.next/*\" ! -path \"./node_modules/*\")",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "Bash(npx next *)",
+      "Bash(npx eslint *)"
     ]
   },
   "enabledPlugins": {

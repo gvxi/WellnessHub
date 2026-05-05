@@ -577,7 +577,7 @@ export default function CheckoutPage() {
 
         {/* ── Payment card + Pixel form column ── */}
         <div className="flex flex-col gap-4">
-        <div className={cn("border border-dark/8 rounded-2xl p-6 flex flex-col gap-5", !pixelData && "md:sticky md:top-24")}>
+        {!pixelData && <div className="border border-dark/8 rounded-2xl p-6 flex flex-col gap-5 md:sticky md:top-24">
           <h2 className="text-sm font-semibold text-dark/70">{t("checkout.payment")}</h2>
 
           <div className="flex flex-col gap-2">
@@ -755,7 +755,7 @@ export default function CheckoutPage() {
               </Link>
             </>
           )}
-        </div>
+        </div>}
 
         {/* ── Pixel SDK payment form — same column as payment card ── */}
         <AnimatePresence>
