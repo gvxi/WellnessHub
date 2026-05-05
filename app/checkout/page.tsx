@@ -52,7 +52,7 @@ export default function CheckoutPage() {
   );
 
   const otpRequired = subtotal > 20 && !otpVerifiedThisSession.current;
-  const belowMinimum = subtotal < 2;
+  const belowMinimum = subtotal < 1;
   const hasUnavailableItems = items.some((i) => {
     const base = i.id.includes("::") ? i.id.split("::")[0] : i.id;
     return unavailableIds.has(base);

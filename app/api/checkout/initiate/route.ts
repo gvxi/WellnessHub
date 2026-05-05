@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT = 3;
-const MIN_ORDER_OMR = 2;
+const MIN_ORDER_OMR = 1;
 
 function adminClient() {
   return createClient(
