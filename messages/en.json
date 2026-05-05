@@ -349,7 +349,7 @@
     "bookingConfirmed": "Booking confirmed! Check your email for the invoice.",
     "cancelPayment": "Cancel",
     "rateLimited": "Too many attempts. Try again in 10 minutes.",
-    "minOrder": "Minimum order is 2 OMR"
+    "minOrder": "Minimum order is 1 OMR"
   },
   "lang": "EN"
 }
