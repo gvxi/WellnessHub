@@ -17,7 +17,6 @@
     "lucide-react": "^1.13.0",
     "next": "16.2.4",
     "next-intl": "^4.11.0",
-    "paymob-pixel": "^1.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.5.0"

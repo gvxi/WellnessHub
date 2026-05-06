@@ -42,11 +42,7 @@ export default function CheckoutPage() {
 
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const [pixelData, setPixelData] = useState<{ clientSecret: string; publicKey: string; bookingId: string } | null>(null);
-  const [iframeHeight, setIframeHeight] = useState(480);
-  const [cardValid, setCardValid] = useState(false);
-  const [payTriggered, setPayTriggered] = useState(false);
   const pixelContainerRef = useRef<HTMLDivElement>(null);
-  const pixelIframeRef = useRef<HTMLIFrameElement>(null);
   const payAttempts = useRef<number[]>([]);
   const rayIdRef = useRef<string>("");
 
@@ -136,49 +132,6 @@ export default function CheckoutPage() {
     }
   }, [totalCount, authState, router, pixelData]);
 
-  // ── Pixel iframe message listener ─────────────────────────────────────────
-  useEffect(() => {
-    if (!pixelData) return;
-    const captured = pixelData;
-
-    const handleMessage = async (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return;
-      const { type, bookingId: bid, height } = (e.data ?? {}) as Record<string, unknown>;
-
-      if (type === "PAYMENT_SUCCESS") {
-        const accessToken = await getToken();
-        if (accessToken) {
-          fetch("/api/checkout/send-invoice", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
-            body: JSON.stringify({ booking_id: bid ?? captured.bookingId, lang }),
-          }).catch(() => {});
-        }
-        clearCart();
-        showToast(t("checkout.bookingConfirmed"), "cart");
-        router.push("/checkout/success");
-      }
-
-      if (type === "CARD_VALID") {
-        setCardValid(!!(e.data as Record<string, unknown>).isValid);
-        setPayTriggered(false);
-      }
-
-      if (type === "PAYMENT_CANCEL") {
-        setPixelData(null);
-        setCardValid(false);
-        setPayTriggered(false);
-      }
-
-      if (type === "RESIZE" && typeof height === "number") {
-        setIframeHeight(Math.max(480, height + 20));
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pixelData]);
 
   // ── OTP helpers ────────────────────────────────────────────────────────────
   async function getToken(): Promise<string | null> {
@@ -738,45 +691,23 @@ export default function CheckoutPage() {
                   </button>
                 </div>
                 <iframe
-                  ref={pixelIframeRef}
-                  src={`/api/pay?cs=${encodeURIComponent(pixelData.clientSecret)}&pk=${encodeURIComponent(pixelData.publicKey)}&bid=${encodeURIComponent(pixelData.bookingId)}&lang=${lang}`}
-                  style={{ width: "100%", height: `${iframeHeight}px`, border: "none", display: "block" }}
+                  src={`https://oman.paymob.com/unifiedcheckout/?publicKey=${encodeURIComponent(pixelData.publicKey)}&clientSecret=${encodeURIComponent(pixelData.clientSecret)}`}
+                  style={{ width: "100%", height: "680px", border: "none", display: "block" }}
                   allow="payment"
                   title="Secure Payment"
+                  onLoad={(e) => {
+                    try {
+                      const loc = (e.target as HTMLIFrameElement).contentWindow?.location;
+                      if (loc?.pathname?.startsWith("/checkout/success")) {
+                        router.push(loc.pathname + loc.search);
+                      } else if (loc?.pathname?.startsWith("/checkout/failed")) {
+                        setPixelData(null);
+                      }
+                    } catch {
+                      // cross-origin (paymob.com) — normal, ignore
+                    }
+                  }}
                 />
-                <div className="px-5 pb-5 pt-2">
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    disabled={!cardValid || payTriggered}
-                    onClick={() => {
-                      if (!cardValid || payTriggered) return;
-                      setPayTriggered(true);
-                      pixelIframeRef.current?.contentWindow?.postMessage(
-                        { type: "TRIGGER_PAY" },
-                        window.location.origin
-                      );
-                    }}
-                    className={cn(
-                      "w-full py-4 rounded-2xl text-sm font-semibold transition-all duration-200",
-                      "flex items-center justify-center gap-2",
-                      cardValid && !payTriggered
-                        ? "bg-primary text-light hover:bg-primary/90"
-                        : "bg-dark/8 text-dark/30 cursor-not-allowed"
-                    )}
-                  >
-                    {payTriggered ? (
-                      <>
-                        <Loader2 size={15} className="animate-spin" />
-                        {t("checkout.processing")}
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={14} />
-                        {t("checkout.payNow")} · {subtotal.toFixed(3)} {t("checkout.currency")}
-                      </>
-                    )}
-                  </motion.button>
-                </div>
               </div>
             </motion.div>
           )}
