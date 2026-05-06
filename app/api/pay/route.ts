@@ -15,9 +15,7 @@ export async function GET(request: NextRequest) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/paymob-pixel-styles.css">
-  <link rel="stylesheet" href="/paymob-pixel.css">
-  <style>
+<style>
     html, body { margin: 0; padding: 0; background: #F2EDEE; font-family: 'Outfit', sans-serif }
     /* Prevent global resets from collapsing the SDK's internal iframe */
     #paymob-elements iframe {
