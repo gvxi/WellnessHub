@@ -683,7 +683,7 @@ export default function CheckoutPage() {
                     {t("checkout.securePayment")}
                   </div>
                   <button
-                    onClick={() => { setPixelData(null); setCardValid(false); setPayTriggered(false); }}
+                    onClick={() => setPixelData(null)}
                     className="flex items-center gap-1 text-xs text-dark/40 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
                   >
                     <X size={12} />
