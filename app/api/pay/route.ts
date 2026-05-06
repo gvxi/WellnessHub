@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 <body>
   <div id="paymob-elements" style="width:100%"></div>
 
-  <script src="/paymob-pixel.js"></script>
+  <script src="/paymob-pixel.js" type="module"></script>
 
   <script>
     var cs     = ${JSON.stringify(cs)};
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     "default-src 'none'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://oman.paymob.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://oman.paymob.com",
-    "font-src https://fonts.gstatic.com data:",
+    "font-src 'self' https://fonts.gstatic.com data:",
     "img-src data: https: blob:",
     "frame-src https://oman.paymob.com",
     "connect-src https://oman.paymob.com",
