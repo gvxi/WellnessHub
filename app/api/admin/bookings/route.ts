@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
       id, status, scheduled_at, notes, conflict_flag, created_at,
       customer_data, cart_items, total_amount,
       services ( name ),
-      packages ( name )
+      packages ( name ),
+      payments ( transaction_id )
     `)
     .eq("business_id", ctx.businessId)
     .order("created_at", { ascending: false });
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
     package_name: (b.packages as any)?.name ?? null,
     cart_items: b.cart_items ?? null,
     total_amount: b.total_amount ?? null,
+    payment_reference: (b.payments as any)?.[0]?.transaction_id ?? null,
   }));
 
   return NextResponse.json(bookings);

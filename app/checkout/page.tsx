@@ -219,13 +219,15 @@ export default function CheckoutPage() {
             id: i.id,
             qty: i.qty,
             snapshot: {
-              name: i.snapshot.name,
+              name: isAr && i.snapshot.nameAr ? i.snapshot.nameAr : i.snapshot.name,
               nameAr: i.snapshot.nameAr,
-              groupLabel: i.snapshot.groupLabel,
+              groupLabel: isAr && i.snapshot.groupLabelAr ? i.snapshot.groupLabelAr : i.snapshot.groupLabel,
               numericPrice: i.snapshot.numericPrice,
+              imageUrl: resolveImage(i.snapshot.imageUrl, i.snapshot.unsplashId, 400) ?? undefined,
             },
           })),
           subtotal,
+          lang,
           ray_id: rayIdRef.current,
         }),
       });
@@ -675,24 +677,18 @@ return;
               className="fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-sm"
               style={{ touchAction: "none" }}
             >
-              {/* Header bar */}
-              <div className="flex items-center justify-between px-4 py-3 bg-light border-b border-dark/10 shrink-0">
-                <div className="flex items-center gap-2 text-xs font-semibold text-dark/50 tracking-wide uppercase">
-                  <Lock size={11} className="text-primary" />
-                  {t("checkout.securePayment")}
-                </div>
-                <button
-                  onClick={() => setPixelData(null)}
-                  className="flex items-center gap-1.5 text-xs text-dark/40 hover:text-red-500 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-50"
-                >
-                  <X size={13} />
-                  {t("checkout.cancelPayment")}
-                </button>
-              </div>
+              {/* Floating close button */}
+              <button
+                onClick={() => setPixelData(null)}
+                className="absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-white/90 shadow text-dark/50 hover:text-red-500 hover:bg-white transition-colors"
+                aria-label="Close payment"
+              >
+                <X size={15} />
+              </button>
 
               {/* Full-height iframe */}
               <iframe
-                src={`https://oman.paymob.com/unifiedcheckout/?publicKey=${encodeURIComponent(pixelData.publicKey)}&clientSecret=${encodeURIComponent(pixelData.clientSecret)}`}
+                src={`https://oman.paymob.com/unifiedcheckout/?publicKey=${encodeURIComponent(pixelData.publicKey)}&clientSecret=${encodeURIComponent(pixelData.clientSecret)}&lang=${lang}`}
                 className="flex-1 w-full border-none bg-white"
                 allow="payment"
                 title="Secure Payment"

@@ -23,16 +23,44 @@ export async function POST(request: NextRequest) {
 
   const obj = body?.obj as Record<string, unknown> | undefined;
   const success = obj?.success === true;
-  const orderId = obj?.order as Record<string, unknown> | undefined;
-  const merchantOrderId = orderId?.merchant_order_id as string | undefined;
+  const orderObj = obj?.order as Record<string, unknown> | undefined;
+  const merchantOrderId = orderObj?.merchant_order_id as string | undefined;
+  const transactionId = String(obj?.id ?? "").trim() || null;
 
   if (success && merchantOrderId) {
     const supabase = adminClient();
+
+    // Fetch booking to get business_id and amount
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("business_id, total_amount")
+      .eq("id", merchantOrderId)
+      .single();
+
+    // Approve the booking
     await supabase
       .from("bookings")
       .update({ status: "approved" })
       .eq("id", merchantOrderId)
       .eq("status", "pending");
+
+    // Store payment reference
+    if (transactionId && booking) {
+      const amountCents = typeof obj?.amount_cents === "number" ? obj.amount_cents : null;
+      await supabase
+        .from("payments")
+        .upsert(
+          {
+            booking_id: merchantOrderId,
+            business_id: booking.business_id,
+            amount: amountCents != null ? amountCents / 100 : (booking.total_amount ?? 0),
+            currency: "OMR",
+            payment_status: "success",
+            transaction_id: transactionId,
+          },
+          { onConflict: "booking_id" }
+        );
+    }
   }
 
   return NextResponse.json({ received: true });

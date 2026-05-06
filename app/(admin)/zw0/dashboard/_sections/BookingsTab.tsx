@@ -270,8 +270,17 @@ function BookingsTabInner() {
                     </div>
                   )}
 
-                  {/* Booking ID */}
-                  <p className="text-[10px] text-dark/30">{t("profile.bookingId")}: {b.id.slice(0, 6).toUpperCase()}</p>
+                  {/* Booking ID + Payment Reference */}
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-dark/30">
+                      {t("profile.bookingId")}: <span className="font-mono">{b.id.slice(0, 8).toUpperCase()}</span>
+                    </p>
+                    {b.payment_reference && (
+                      <p className="text-[10px] text-dark/30">
+                        {t("admin.payment_ref")}: <span className="font-mono text-dark/50">{b.payment_reference}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Approve / Reject (pending only) */}

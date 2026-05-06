@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { Menu, Bell, Globe } from "lucide-react";
+import { Menu, Bell, Globe, Zap } from "lucide-react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,6 +9,7 @@ import BottomNav from "./_components/BottomNav";
 import SideDrawer from "./_components/SideDrawer";
 import QuickAddSheet from "./_components/QuickAddSheet";
 import AlertsDrawer from "./_components/AlertsDrawer";
+import ActionsPanel from "./_components/ActionsPanel";
 import BookingsTab from "./_sections/BookingsTab";
 import ServicesTab from "./_sections/ServicesTab";
 import AdsTab from "./_sections/AdsTab";
@@ -33,6 +34,7 @@ function DashboardInner() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [unseenCount, setUnseenCount] = useState(0);
   const { t, lang, setLang, isRTL } = useLang();
 
@@ -100,6 +102,14 @@ function DashboardInner() {
           {/* Col 3 — actions (end side; flips to left in RTL automatically via dir) */}
           <div className="flex items-center gap-1 justify-end">
             <button
+              onClick={() => setActionsOpen(true)}
+              aria-label="Admin actions"
+              className="w-9 h-9 rounded-xl bg-dark/5 flex items-center justify-center"
+            >
+              <Zap size={16} className="text-dark/60" />
+            </button>
+
+            <button
               onClick={() => setLang(lang === "en" ? "ar" : "en")}
               aria-label="Switch language"
               className="w-9 h-9 rounded-xl bg-dark/5 flex items-center justify-center relative"
@@ -150,6 +160,7 @@ function DashboardInner() {
       <SideDrawer   open={drawerOpen}  activeTab={activeTab} onClose={() => setDrawerOpen(false)}  onTabChange={handleTabChange} />
       <QuickAddSheet open={addSheetOpen} onClose={() => setAddSheetOpen(false)} onNavigate={(tab) => { handleTabChange(tab); setAddSheetOpen(false); }} />
       <AlertsDrawer  open={alertsOpen}  onClose={() => setAlertsOpen(false)} onUnseenChange={setUnseenCount} />
+      <ActionsPanel  open={actionsOpen} onClose={() => setActionsOpen(false)} />
     </div>
   );
 }

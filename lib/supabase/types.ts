@@ -175,6 +175,7 @@ export type ApiBooking = {
   package_name: string | null;
   cart_items: ApiBookingCartItem[] | null;
   total_amount: number | null;
+  payment_reference: string | null;
 };
 
 export type ApiAnalytics = {

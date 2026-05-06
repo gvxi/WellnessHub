@@ -47,7 +47,10 @@
       "Bash(grep -r \"pt-\\\\|mt-\\\\|padding-top\\\\|margin-top\" --include=\"*.tsx\" --include=\"*.jsx\" . ! -path \"./.next/*\" ! -path \"./node_modules/*\")",
       "mcp__plugin_playwright_playwright__browser_wait_for",
       "Bash(npx next *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(Select-Object -First 10)",
+      "Bash(git log *)",
+      "mcp__supabase__list_extensions"
     ]
   },
   "enabledPlugins": {
