@@ -186,3 +186,44 @@ export type ApiAnalytics = {
   revenue: number;
   top_services: { service_name: string; service_name_ar: string | null; count: number }[];
 };
+
+export type DbEmployeePermissions = {
+  id: string;
+  business_id: string;
+  user_id: string;
+  current_session_token: string | null;
+  session_invalidated_at: string | null;
+  can_edit_services: boolean;
+  can_edit_ads: boolean;
+  show_rejected_bookings: boolean;
+  booking_delay_minutes: number;
+  booking_filter_email: string | null;
+  booking_filter_phone: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EmployeePermissions = {
+  can_edit_services: boolean;
+  can_edit_ads: boolean;
+  show_rejected_bookings: boolean;
+  booking_delay_minutes: number;
+  booking_filter_email: string | null;
+  booking_filter_phone: string | null;
+  is_active: boolean;
+};
+
+export type ApiEmployee = {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  is_active: boolean;
+  can_edit_services: boolean;
+  can_edit_ads: boolean;
+  show_rejected_bookings: boolean;
+  booking_delay_minutes: number;
+  booking_filter_email: string | null;
+  booking_filter_phone: string | null;
+  created_at: string;
+};

@@ -16,17 +16,18 @@ import ToastStack from "@/components/ui/ToastStack";
 function ShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/zw0");
+  const isPos = pathname.startsWith("/pos");
   const { cartOpen, setCartOpen, favsOpen, setFavsOpen, selectedItem, setSelectedItem } = useUI();
 
   return (
     <>
       {children}
-      {!isAdmin && <BottomNav />}
-      {!isAdmin && <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />}
-      {!isAdmin && <FavsDrawer open={favsOpen} onClose={() => setFavsOpen(false)} />}
-      {!isAdmin && <ItemDrawer item={selectedItem} onClose={() => setSelectedItem(null)} />}
-      {!isAdmin && <AuthModal />}
-      {!isAdmin && <ProfileDrawer />}
+      {!isAdmin && !isPos && <BottomNav />}
+      {!isAdmin && !isPos && <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />}
+      {!isAdmin && !isPos && <FavsDrawer open={favsOpen} onClose={() => setFavsOpen(false)} />}
+      {!isAdmin && !isPos && <ItemDrawer item={selectedItem} onClose={() => setSelectedItem(null)} />}
+      {!isAdmin && !isPos && <AuthModal />}
+      {!isAdmin && !isPos && <ProfileDrawer />}
       <ToastStack />
     </>
   );

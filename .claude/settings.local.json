@@ -50,7 +50,10 @@
       "Bash(npx eslint *)",
       "Bash(Select-Object -First 10)",
       "Bash(git log *)",
-      "mcp__supabase__list_extensions"
+      "mcp__supabase__list_extensions",
+      "Bash(Select-Object -First 50)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")"
     ]
   },
   "enabledPlugins": {

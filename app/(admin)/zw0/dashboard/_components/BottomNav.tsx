@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarDays, Layers, Plus, Megaphone, BarChart2 } from "lucide-react";
+import { CalendarDays, Layers, Plus, Megaphone, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import type { AdminTab } from "../page";
@@ -21,8 +21,8 @@ export default function BottomNav({ activeTab, onTabChange, onAddPress }: Props)
   ];
 
   const NAV_ITEMS_RIGHT = [
-    { tab: "ads"       as AdminTab, icon: Megaphone, label: t("admin.tab_ads") },
-    { tab: "analytics" as AdminTab, icon: BarChart2, label: t("admin.tab_analytics") },
+    { tab: "ads"  as AdminTab, icon: Megaphone, label: t("admin.tab_ads") },
+    { tab: "team" as AdminTab, icon: Users,     label: t("admin.tab_team") },
   ];
 
   return (

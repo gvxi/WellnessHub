@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Mail, Lock, Phone, User } from "lucide-react";
+import { X, Mail, Lock, Phone, User, Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { supabase } from "@/lib/supabase/client";
@@ -71,6 +71,7 @@ function InputField({
   value,
   onChange,
   autoComplete,
+  showToggle,
 }: {
   icon: React.ElementType;
   type: string;
@@ -78,20 +79,33 @@ function InputField({
   value: string;
   onChange: (v: string) => void;
   autoComplete?: string;
+  showToggle?: boolean;
 }) {
+  const [visible, setVisible] = useState(false);
+  const resolvedType = showToggle && type === "password" ? (visible ? "text" : "password") : type;
+
   return (
     <div className="relative">
       <Icon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
       <input
-        type={type}
+        type={resolvedType}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
-        className="w-full pl-10 pr-4 py-3 rounded-2xl bg-dark/[0.04] border border-dark/8
+        className="w-full pl-10 pr-10 py-3 rounded-2xl bg-dark/[0.04] border border-dark/8
                    text-sm text-dark placeholder:text-dark/35 outline-none
                    focus:border-primary/40 focus:bg-primary/[0.03] transition-all"
       />
+      {showToggle && type === "password" && (
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-dark/30 hover:text-dark/60 transition-colors"
+        >
+          {visible ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      )}
     </div>
   );
 }
@@ -169,7 +183,7 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <InputField icon={Lock} type="password" placeholder={t("auth.passwordPlaceholder")} value={password} onChange={setPassword} autoComplete="current-password" />
+            <InputField icon={Lock} type="password" placeholder={t("auth.passwordPlaceholder")} value={password} onChange={setPassword} autoComplete="current-password" showToggle />
           </motion.div>
         )}
       </AnimatePresence>
@@ -232,7 +246,7 @@ function SignUpTab({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <InputField icon={Mail} type="email" placeholder={t("auth.emailPlaceholder")} value={email} onChange={setEmail} autoComplete="email" />
-      <InputField icon={Lock} type="password" placeholder={t("auth.passwordHint")} value={password} onChange={setPassword} autoComplete="new-password" />
+      <InputField icon={Lock} type="password" placeholder={t("auth.passwordHint")} value={password} onChange={setPassword} autoComplete="new-password" showToggle />
       {siteKey && (
         <div className="flex justify-center">
           <Turnstile siteKey={siteKey} onSuccess={setToken} />
