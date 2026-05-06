@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
   const csp = [
     "default-src 'none'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://oman.paymob.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://oman.paymob.com",
-    "font-src 'self' https://fonts.gstatic.com data:",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://oman.paymob.com https://cdn.jsdelivr.net",
+    "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:",
     "img-src data: https: blob:",
     "frame-src https://oman.paymob.com",
     "connect-src https://oman.paymob.com",
@@ -128,6 +128,7 @@ export async function GET(request: NextRequest) {
       "Content-Type": "text/html; charset=utf-8",
       "X-Frame-Options": "SAMEORIGIN",
       "Content-Security-Policy": csp,
+      "Permissions-Policy": "payment=*",
     },
   });
 }
