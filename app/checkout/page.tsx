@@ -42,7 +42,6 @@ export default function CheckoutPage() {
 
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const [pixelData, setPixelData] = useState<{ clientSecret: string; publicKey: string; bookingId: string } | null>(null);
-  const pixelContainerRef = useRef<HTMLDivElement>(null);
   const payAttempts = useRef<number[]>([]);
   const rayIdRef = useRef<string>("");
 
@@ -252,8 +251,7 @@ export default function CheckoutPage() {
         // Pixel SDK flow — render inline payment form
         if (data.client_secret) {
           setPixelData({ clientSecret: data.client_secret, publicKey: data.public_key, bookingId: data.booking_id });
-          setTimeout(() => pixelContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
-          return;
+return;
         }
 
         // DEV_MODE — clear cart and confirm immediately
@@ -669,46 +667,48 @@ export default function CheckoutPage() {
         <AnimatePresence>
           {pixelData && (
             <motion.div
-              key="paymob-pixel"
-              ref={pixelContainerRef}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={{ duration: 0.25 }}
+              key="paymob-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-sm"
+              style={{ touchAction: "none" }}
             >
-              <div className="border border-dark/8 rounded-2xl bg-[#F2EDEE]">
-                <div className="px-5 py-3 border-b border-dark/8 flex items-center justify-between rounded-t-2xl">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-dark/50 tracking-wide uppercase">
-                    <Lock size={11} className="text-primary" />
-                    {t("checkout.securePayment")}
-                  </div>
-                  <button
-                    onClick={() => setPixelData(null)}
-                    className="flex items-center gap-1 text-xs text-dark/40 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
-                  >
-                    <X size={12} />
-                    {t("checkout.cancelPayment")}
-                  </button>
+              {/* Header bar */}
+              <div className="flex items-center justify-between px-4 py-3 bg-light border-b border-dark/10 shrink-0">
+                <div className="flex items-center gap-2 text-xs font-semibold text-dark/50 tracking-wide uppercase">
+                  <Lock size={11} className="text-primary" />
+                  {t("checkout.securePayment")}
                 </div>
-                <iframe
-                  src={`https://oman.paymob.com/unifiedcheckout/?publicKey=${encodeURIComponent(pixelData.publicKey)}&clientSecret=${encodeURIComponent(pixelData.clientSecret)}`}
-                  style={{ width: "100%", height: "680px", border: "none", display: "block" }}
-                  allow="payment"
-                  title="Secure Payment"
-                  onLoad={(e) => {
-                    try {
-                      const loc = (e.target as HTMLIFrameElement).contentWindow?.location;
-                      if (loc?.pathname?.startsWith("/checkout/success")) {
-                        router.push(loc.pathname + loc.search);
-                      } else if (loc?.pathname?.startsWith("/checkout/failed")) {
-                        setPixelData(null);
-                      }
-                    } catch {
-                      // cross-origin (paymob.com) — normal, ignore
-                    }
-                  }}
-                />
+                <button
+                  onClick={() => setPixelData(null)}
+                  className="flex items-center gap-1.5 text-xs text-dark/40 hover:text-red-500 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-50"
+                >
+                  <X size={13} />
+                  {t("checkout.cancelPayment")}
+                </button>
               </div>
+
+              {/* Full-height iframe */}
+              <iframe
+                src={`https://oman.paymob.com/unifiedcheckout/?publicKey=${encodeURIComponent(pixelData.publicKey)}&clientSecret=${encodeURIComponent(pixelData.clientSecret)}`}
+                className="flex-1 w-full border-none bg-white"
+                allow="payment"
+                title="Secure Payment"
+                onLoad={(e) => {
+                  try {
+                    const loc = (e.target as HTMLIFrameElement).contentWindow?.location;
+                    if (loc?.pathname?.startsWith("/checkout/success")) {
+                      router.push(loc.pathname + loc.search);
+                    } else if (loc?.pathname?.startsWith("/checkout/failed")) {
+                      setPixelData(null);
+                    }
+                  } catch {
+                    // cross-origin (paymob.com) — normal, ignore
+                  }
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>
