@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 type LogEntry = { time: string; msg: string; kind: "info" | "warn" | "err" | "sdk" };
+type Mode = "iframe" | "direct";
 
 function stamp() {
   return new Date().toISOString().slice(11, 23);
 }
 
 export default function TestPixelPage() {
+  const [mode, setMode] = useState<Mode>("iframe");
   const [cs, setCs] = useState("");
   const [pk, setPk] = useState("");
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export default function TestPixelPage() {
   const [payTriggered, setPayTriggered] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const directInitRef = useRef(false);
 
   function push(msg: string, kind: LogEntry["kind"] = "info") {
     setLogs((prev) => [...prev, { time: stamp(), msg, kind }]);
@@ -32,6 +35,7 @@ export default function TestPixelPage() {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
+  // iframe postMessage listener
   useEffect(() => {
     if (!iframeSrc) return;
     function handle(e: MessageEvent) {
@@ -66,6 +70,102 @@ export default function TestPixelPage() {
     window.addEventListener("message", handle);
     return () => window.removeEventListener("message", handle);
   }, [iframeSrc]);
+
+  // Force repaint after iframe loads
+  useEffect(() => {
+    if (!iframeSrc || !iframeRef.current) return;
+    const frame = iframeRef.current;
+    function forceRepaint() {
+      frame.style.opacity = "0.99";
+      requestAnimationFrame(() => { frame.style.opacity = ""; });
+    }
+    frame.addEventListener("load", forceRepaint);
+    return () => frame.removeEventListener("load", forceRepaint);
+  }, [iframeSrc]);
+
+  // Direct SDK init via webpack import (sets window.Pixel as side effect)
+  useEffect(() => {
+    if (mode !== "direct" || !cs || !pk) return;
+    if (directInitRef.current) return;
+    directInitRef.current = true;
+
+    push("Direct mode — importing paymob-pixel via webpack...", "info");
+
+    // Inject CSS
+    if (!document.getElementById("paymob-pixel-css")) {
+      const link = document.createElement("link");
+      link.id = "paymob-pixel-css";
+      link.rel = "stylesheet";
+      link.href = "/paymob-pixel.css";
+      document.head.appendChild(link);
+
+      const styles = document.createElement("link");
+      styles.id = "paymob-pixel-styles-css";
+      styles.rel = "stylesheet";
+      styles.href = "/paymob-pixel-styles.css";
+      document.head.appendChild(styles);
+      push("CSS injected from /public", "sdk");
+    }
+
+    import("paymob-pixel").then(() => {
+      const Pixel = (window as unknown as Record<string, unknown>).Pixel;
+      if (typeof Pixel !== "function") {
+        push("window.Pixel not a function after import — SDK failed", "err");
+        return;
+      }
+      push("window.Pixel found — initializing...", "sdk");
+
+      new (Pixel as new (opts: unknown) => unknown)({
+        publicKey: pk,
+        clientSecret: cs,
+        paymentMethods: ["card"],
+        elementId: "paymob-checkout-container",
+        showSaveCard: false,
+        forceSaveCard: false,
+        customStyle: {
+          Font_Family: "Outfit, system-ui, sans-serif",
+          Font_Size_Label: "13px",
+          Font_Size_Input_Fields: "15px",
+          Font_Size_Payment_Button: "15px",
+          Font_Weight_Label: 600,
+          Font_Weight_Input_Fields: 400,
+          Font_Weight_Payment_Button: 600,
+          Color_Container: "#F2EDEE",
+          Color_Input_Fields: "#FFFFFF",
+          Color_Border_Input_Fields: "#DDD5D7",
+          Color_Border_Payment_Button: "#5A0F1B",
+          Radius_Border: "12px",
+          Color_Disabled: "#C9B8BB",
+          Color_Error: "#CC1142",
+          Color_Primary: "#5A0F1B",
+          Text_Color_For_Label: "#0E0B0D",
+          Text_Color_For_Payment_Button: "#F2EDEE",
+          Text_Color_For_Input_Fields: "#0E0B0D",
+          Color_For_Text_Placeholder: "#9B8A8D",
+          Width_of_Container: "100%",
+          Vertical_Padding: "10px",
+          Vertical_Spacing_between_components: "12px",
+          Container_Padding: "0px",
+        },
+        cardValidationChanged: (isValid: boolean) => {
+          setCardValid(isValid);
+          push(`cardValidationChanged → ${isValid}`, isValid ? "sdk" : "warn");
+        },
+        afterPaymentComplete: (response: unknown) => {
+          push(`afterPaymentComplete — ${JSON.stringify(response)}`, "sdk");
+        },
+        onPaymentCancel: () => {
+          push("onPaymentCancel", "sdk");
+        },
+      });
+
+      push("Pixel initialized", "sdk");
+    }).catch((err) => {
+      push(`import error: ${err}`, "err");
+    });
+
+    return () => { directInitRef.current = false; };
+  }, [mode, cs, pk]);
 
   async function autoFetch() {
     setFetching(true);
@@ -104,11 +204,12 @@ export default function TestPixelPage() {
       try {
         data = JSON.parse(rawText);
       } catch {
-        push(`Non-JSON response — see Raw above`, "err");
+        push("Non-JSON response — see Raw above", "err");
         return;
       }
 
       if (data.client_secret) {
+        directInitRef.current = false;
         setCs(data.client_secret as string);
         setPk((data.public_key as string) ?? "");
         push(`CS set (${(data.client_secret as string).slice(0, 20)}...) — click Load`, "sdk");
@@ -170,7 +271,6 @@ export default function TestPixelPage() {
     }
     const styles = shadow.querySelectorAll("style");
     push(`<style> tags in shadow root: ${styles.length}`);
-    // Check if any CSS custom properties are set
     const inner = shadow.firstElementChild as HTMLElement | null;
     if (inner) {
       const computed = doc.defaultView?.getComputedStyle(inner);
@@ -184,6 +284,7 @@ export default function TestPixelPage() {
     setIframeHeight(520);
     setCardValid(false);
     setPayTriggered(false);
+    directInitRef.current = false;
     push("Cleared");
   }
 
@@ -209,6 +310,27 @@ export default function TestPixelPage() {
       <h1 style={{ fontSize: 20, fontWeight: 700, color: "#0E0B0D", marginBottom: 16 }}>
         Pixel SDK — Local Test
       </h1>
+
+      {/* Mode toggle */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {(["iframe", "direct"] as Mode[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => { setMode(m); clear(); }}
+            style={{
+              ...btnStyle(m === mode ? "#5A0F1B" : "#888"),
+              padding: "6px 18px",
+              fontSize: 12,
+              opacity: m === mode ? 1 : 0.6,
+            }}
+          >
+            {m === "iframe" ? "iframe (/api/pay)" : "direct (webpack import)"}
+          </button>
+        ))}
+        <span style={{ fontSize: 11, color: "#888", alignSelf: "center", marginLeft: 8 }}>
+          {mode === "direct" ? "import('paymob-pixel') → window.Pixel via webpack" : "raw HTML API route → plain <script>"}
+        </span>
+      </div>
 
       {/* Step 1 — auto-fetch */}
       <div style={{ background: "#fff", border: "1px solid #DDD5D7", borderRadius: 12, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}>
@@ -241,61 +363,104 @@ export default function TestPixelPage() {
             style={{ width: 300, padding: "8px 12px", border: "1px solid #DDD5D7", borderRadius: 10, fontSize: 13, fontFamily: "inherit", background: "#fff" }}
           />
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={load} style={btnStyle("#5A0F1B")}>Load iframe</button>
-          <button onClick={reload} disabled={!iframeSrc} style={btnStyle("#7a1826", !iframeSrc)}>Reload</button>
-          <button onClick={clear} style={btnStyle("#666")}>Clear</button>
-          <button onClick={inspectShadow} disabled={!iframeSrc} style={btnStyle("#2563eb", !iframeSrc)}>Inspect shadow</button>
-        </div>
+        {mode === "iframe" && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={load} style={btnStyle("#5A0F1B")}>Load iframe</button>
+            <button onClick={reload} disabled={!iframeSrc} style={btnStyle("#7a1826", !iframeSrc)}>Reload</button>
+            <button onClick={clear} style={btnStyle("#666")}>Clear</button>
+            <button onClick={inspectShadow} disabled={!iframeSrc} style={btnStyle("#2563eb", !iframeSrc)}>Inspect shadow</button>
+          </div>
+        )}
+        {mode === "direct" && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => { directInitRef.current = false; setCs((v) => v); }}
+              disabled={!cs || !pk}
+              style={btnStyle("#5A0F1B", !cs || !pk)}
+            >
+              Re-init SDK
+            </button>
+            <button onClick={clear} style={btnStyle("#666")}>Clear</button>
+          </div>
+        )}
       </div>
 
-      <div style={{ fontSize: 12, color: "#888", marginBottom: 16 }}>
-        Total iframe loads:{" "}
-        <strong style={{ color: initCount > 1 ? "#f87171" : "#4ade80" }}>{initCount}</strong>
-        {initCount > 1 && <span style={{ color: "#f87171" }}>  ← double-init detected</span>}
-      </div>
+      {mode === "iframe" && (
+        <div style={{ fontSize: 12, color: "#888", marginBottom: 16 }}>
+          Total iframe loads:{" "}
+          <strong style={{ color: initCount > 1 ? "#f87171" : "#4ade80" }}>{initCount}</strong>
+          {initCount > 1 && <span style={{ color: "#f87171" }}>  ← double-init detected</span>}
+        </div>
+      )}
 
       {/* Two-column layout */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
 
-        {/* Left — iframe */}
+        {/* Left — form */}
         <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #DDD5D7", overflow: "hidden" }}>
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid #DDD5D7", fontSize: 11, color: "#888", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {iframeSrc ? iframeSrc : "No iframe loaded"}
-          </div>
-          {iframeSrc ? (
+          {mode === "iframe" ? (
             <>
-              <iframe
-                ref={iframeRef}
-                key={iframeSrc}
-                src={iframeSrc}
-                style={{ width: "100%", height: `${iframeHeight}px`, border: "none", display: "block" }}
-                allow="payment"
-                title="Pixel SDK Test"
-                onLoad={() => push("iframe onLoad fired")}
-              />
-              {/* Custom pay button — mirrors checkout page behaviour */}
-              <div style={{ padding: "8px 16px 16px" }}>
-                <div style={{ fontSize: 11, color: "#888", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                  Card valid:
-                  <span style={{ fontWeight: 700, color: cardValid ? "#4ade80" : "#f87171" }}>
-                    {cardValid ? "YES ✓" : "NO ✗"}
-                  </span>
-                  {payTriggered && <span style={{ color: "#facc15" }}> · pay triggered</span>}
-                </div>
-                <button
-                  onClick={triggerPay}
-                  disabled={!cardValid || payTriggered}
-                  style={btnStyle(cardValid && !payTriggered ? "#5A0F1B" : "#ccc", !cardValid || payTriggered)}
-                >
-                  {payTriggered ? "Processing…" : "Pay Now (custom button)"}
-                </button>
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid #DDD5D7", fontSize: 11, color: "#888", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {iframeSrc ? iframeSrc : "No iframe loaded"}
               </div>
+              {iframeSrc ? (
+                <>
+                  <iframe
+                    ref={iframeRef}
+                    key={iframeSrc}
+                    src={iframeSrc}
+                    style={{ width: "100%", height: `${iframeHeight}px`, border: "none", display: "block" }}
+                    allow="payment"
+                    title="Pixel SDK Test"
+                    onLoad={() => push("iframe onLoad fired")}
+                  />
+                  <div style={{ padding: "8px 16px 16px" }}>
+                    <div style={{ fontSize: 11, color: "#888", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                      Card valid:
+                      <span style={{ fontWeight: 700, color: cardValid ? "#4ade80" : "#f87171" }}>
+                        {cardValid ? "YES ✓" : "NO ✗"}
+                      </span>
+                      {payTriggered && <span style={{ color: "#facc15" }}> · pay triggered</span>}
+                    </div>
+                    <button
+                      onClick={triggerPay}
+                      disabled={!cardValid || payTriggered}
+                      style={btnStyle(cardValid && !payTriggered ? "#5A0F1B" : "#ccc", !cardValid || payTriggered)}
+                    >
+                      {payTriggered ? "Processing…" : "Pay Now (custom button)"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ height: 520, display: "flex", alignItems: "center", justifyContent: "center", color: "#aaa", fontSize: 14 }}>
+                  Press (Load iframe)
+                </div>
+              )}
             </>
           ) : (
-            <div style={{ height: 520, display: "flex", alignItems: "center", justifyContent: "center", color: "#aaa", fontSize: 14 }}>
-              Press (Load iframe)
-            </div>
+            <>
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid #DDD5D7", fontSize: 11, color: "#888", fontFamily: "monospace" }}>
+                direct — import(&apos;paymob-pixel&apos;) → window.Pixel
+              </div>
+              <div style={{ padding: 16 }}>
+                {cs && pk ? (
+                  <>
+                    <div id="paymob-checkout-container" style={{ minHeight: 400 }} />
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                      Card valid:
+                      <span style={{ fontWeight: 700, color: cardValid ? "#4ade80" : "#f87171" }}>
+                        {cardValid ? "YES ✓" : "NO ✗"}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ height: 400, display: "flex", alignItems: "center", justifyContent: "center", color: "#aaa", fontSize: 14, flexDirection: "column", gap: 8 }}>
+                    <span>Auto-fetch CS first</span>
+                    <span style={{ fontSize: 12 }}>then paste CS + PK above</span>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -351,7 +516,6 @@ function CssLeakCheck() {
         <button onClick={check} style={btnStyle("#5A0F1B")}>Check now</button>
       </div>
       <div style={{ padding: "12px 16px" }}>
-        {/* Sentinel elements — use real Tailwind responsive classes */}
         <span id="__leak_about" className="hidden sm:flex" style={{ fontSize: 11, color: "#5A0F1B" }}>About sentinel</span>
         <span id="__leak_nav"   className="hidden md:flex" style={{ fontSize: 11, color: "#5A0F1B" }}>Nav sentinel</span>
         <span id="__leak_plain" className="hidden"         style={{ fontSize: 11, color: "#5A0F1B" }}>Hidden sentinel</span>

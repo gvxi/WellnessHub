@@ -12,7 +12,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/api/pay",
-        headers: [{ key: "Permissions-Policy", value: "payment=*" }],
+        headers: [
+          { key: "Permissions-Policy", value: "payment=*" },
+          // CSP is set per-response in the route handler; this header
+          // would be overridden by it in modern browsers but listed here
+          // to ensure nothing from the framework adds a restrictive policy.
+        ],
       },
     ];
   },

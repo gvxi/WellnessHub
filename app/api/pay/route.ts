@@ -13,17 +13,26 @@ export async function GET(request: NextRequest) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <base href="https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.4/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.4/styles.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.4/main.css">
-  <style>html, body { background: #F2EDEE; font-family: 'Outfit', sans-serif }</style>
+  <link rel="stylesheet" href="/paymob-pixel-styles.css">
+  <link rel="stylesheet" href="/paymob-pixel.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: #F2EDEE; font-family: 'Outfit', sans-serif }
+    /* Prevent global resets from collapsing the SDK's internal iframe */
+    #paymob-elements iframe {
+      all: revert !important;
+      width: 100% !important;
+      min-height: 500px !important;
+      border: none !important;
+      display: block !important;
+    }
+  </style>
 </head>
 <body>
   <div id="paymob-elements" style="width:100%"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.4/main.js" type="module"></script>
+  <script src="/paymob-pixel.js"></script>
 
   <script>
     var cs     = ${JSON.stringify(cs)};
@@ -103,10 +112,22 @@ export async function GET(request: NextRequest) {
 </body>
 </html>`;
 
+  const csp = [
+    "default-src 'none'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://oman.paymob.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://oman.paymob.com",
+    "font-src https://fonts.gstatic.com data:",
+    "img-src data: https: blob:",
+    "frame-src https://oman.paymob.com",
+    "connect-src https://oman.paymob.com",
+    "frame-ancestors 'self'",
+  ].join("; ");
+
   return new NextResponse(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "X-Frame-Options": "SAMEORIGIN",
+      "Content-Security-Policy": csp,
     },
   });
 }
