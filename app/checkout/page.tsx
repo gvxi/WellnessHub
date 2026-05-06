@@ -43,7 +43,10 @@ export default function CheckoutPage() {
   const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
   const [pixelData, setPixelData] = useState<{ clientSecret: string; publicKey: string; bookingId: string } | null>(null);
   const [iframeHeight, setIframeHeight] = useState(480);
+  const [cardValid, setCardValid] = useState(false);
+  const [payTriggered, setPayTriggered] = useState(false);
   const pixelContainerRef = useRef<HTMLDivElement>(null);
+  const pixelIframeRef = useRef<HTMLIFrameElement>(null);
   const payAttempts = useRef<number[]>([]);
   const rayIdRef = useRef<string>("");
 
@@ -156,8 +159,15 @@ export default function CheckoutPage() {
         router.push("/checkout/success");
       }
 
+      if (type === "CARD_VALID") {
+        setCardValid(!!(e.data as Record<string, unknown>).isValid);
+        setPayTriggered(false);
+      }
+
       if (type === "PAYMENT_CANCEL") {
         setPixelData(null);
+        setCardValid(false);
+        setPayTriggered(false);
       }
 
       if (type === "RESIZE" && typeof height === "number") {
@@ -720,7 +730,7 @@ export default function CheckoutPage() {
                     {t("checkout.securePayment")}
                   </div>
                   <button
-                    onClick={() => { setPixelData(null); }}
+                    onClick={() => { setPixelData(null); setCardValid(false); setPayTriggered(false); }}
                     className="flex items-center gap-1 text-xs text-dark/40 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
                   >
                     <X size={12} />
@@ -728,11 +738,45 @@ export default function CheckoutPage() {
                   </button>
                 </div>
                 <iframe
+                  ref={pixelIframeRef}
                   src={`/api/pay?cs=${encodeURIComponent(pixelData.clientSecret)}&pk=${encodeURIComponent(pixelData.publicKey)}&bid=${encodeURIComponent(pixelData.bookingId)}&lang=${lang}`}
                   style={{ width: "100%", height: `${iframeHeight}px`, border: "none", display: "block" }}
                   allow="payment"
                   title="Secure Payment"
                 />
+                <div className="px-5 pb-5 pt-2">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    disabled={!cardValid || payTriggered}
+                    onClick={() => {
+                      if (!cardValid || payTriggered) return;
+                      setPayTriggered(true);
+                      pixelIframeRef.current?.contentWindow?.postMessage(
+                        { type: "TRIGGER_PAY" },
+                        window.location.origin
+                      );
+                    }}
+                    className={cn(
+                      "w-full py-4 rounded-2xl text-sm font-semibold transition-all duration-200",
+                      "flex items-center justify-center gap-2",
+                      cardValid && !payTriggered
+                        ? "bg-primary text-light hover:bg-primary/90"
+                        : "bg-dark/8 text-dark/30 cursor-not-allowed"
+                    )}
+                  >
+                    {payTriggered ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin" />
+                        {t("checkout.processing")}
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={14} />
+                        {t("checkout.payNow")} · {subtotal.toFixed(3)} {t("checkout.currency")}
+                      </>
+                    )}
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}

@@ -55,7 +55,13 @@
     "phonePlaceholder": "رقم الهاتف",
     "agePlaceholder": "العمر",
     "editProfile": "تعديل الملف الشخصي",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "useMagicLink": "أرسل لي رابط تسجيل الدخول",
+    "usePassword": "استخدام كلمة المرور",
+    "sendLink": "إرسال رابط تسجيل الدخول",
+    "sendingLink": "جاري الإرسال…",
+    "magicLinkSent": "تحقق من بريدك الإلكتروني",
+    "magicLinkHint": "أرسلنا رابط تسجيل الدخول إلى بريدك الإلكتروني. انقر عليه لتسجيل الدخول فوراً."
   },
   "about": {
     "heroSubtitle": "قصتنا",
@@ -348,6 +354,8 @@
     "invoiceCooldown": "انتظر {s} ثانية قبل الإرسال",
     "bookingConfirmed": "تم تأكيد الحجز! تحقق من بريدك الإلكتروني للفاتورة.",
     "cancelPayment": "إلغاء",
+    "payNow": "ادفع الآن",
+    "currency": "ر.ع.",
     "rateLimited": "محاولات كثيرة. حاول بعد 10 دقائق.",
     "minOrder": "الحد الأدنى للطلب 1 ريال عُماني"
   },

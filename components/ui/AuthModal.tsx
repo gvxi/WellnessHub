@@ -102,7 +102,9 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const showPassword = email.trim().length > 0;
+  const [mode, setMode] = useState<"password" | "magic">("password");
+  const [sent, setSent] = useState(false);
+  const showPassword = mode === "password" && email.trim().length > 0;
 
   async function handleGoogle() {
     await supabase.auth.signInWithOAuth({
@@ -115,11 +117,42 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (err) { setError(err.message); return; }
-    onSuccess();
+    if (mode === "magic") {
+      const { error: err } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true },
+      });
+      setLoading(false);
+      if (err) { setError(err.message); return; }
+      setSent(true);
+    } else {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (err) { setError(err.message); return; }
+      onSuccess();
+    }
   }
+
+  if (sent) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-4 text-center">
+        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+          <Mail size={22} className="text-primary" />
+        </div>
+        <p className="text-sm font-semibold text-dark">{t("auth.magicLinkSent")}</p>
+        <p className="text-xs text-dark/50 max-w-[260px]">{t("auth.magicLinkHint")}</p>
+        <button
+          type="button"
+          onClick={() => { setSent(false); setMode("password"); }}
+          className="text-xs text-primary font-semibold hover:underline mt-1"
+        >
+          {t("auth.usePassword")}
+        </button>
+      </div>
+    );
+  }
+
+  const canSubmit = mode === "magic" ? !!email && !loading : !!email && !!password && !loading;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -144,16 +177,27 @@ function SignInTab({ onSwitch, onSuccess }: { onSwitch: () => void; onSuccess: (
       <motion.button
         type="submit"
         whileTap={{ scale: 0.97 }}
-        disabled={!email || !password || loading}
+        disabled={!canSubmit}
         className={cn(
           "w-full py-3 rounded-2xl text-sm font-semibold transition-colors",
-          email && password && !loading
+          canSubmit
             ? "bg-primary text-light hover:bg-primary/90"
             : "bg-dark/8 text-dark/30 cursor-not-allowed"
         )}
       >
-        {loading ? t("auth.signingIn") : t("auth.signIn")}
+        {loading
+          ? (mode === "magic" ? t("auth.sendingLink") : t("auth.signingIn"))
+          : (mode === "magic" ? t("auth.sendLink") : t("auth.signIn"))}
       </motion.button>
+      {email.trim().length > 0 && (
+        <button
+          type="button"
+          onClick={() => { setMode((m) => m === "magic" ? "password" : "magic"); setError(""); }}
+          className="text-center text-xs text-dark/40 hover:text-primary transition-colors"
+        >
+          {mode === "magic" ? t("auth.usePassword") : t("auth.useMagicLink")}
+        </button>
+      )}
       <p className="text-center text-xs text-dark/40 pt-1">
         {t("auth.noAccount")}{" "}
         <button type="button" onClick={onSwitch} className="text-primary font-semibold hover:underline">

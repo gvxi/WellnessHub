@@ -55,7 +55,13 @@
     "phonePlaceholder": "Phone number",
     "agePlaceholder": "Age",
     "editProfile": "Edit Profile",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "useMagicLink": "Email me a sign-in link",
+    "usePassword": "Use password instead",
+    "sendLink": "Send sign-in link",
+    "sendingLink": "Sending link…",
+    "magicLinkSent": "Check your email",
+    "magicLinkHint": "We sent a sign-in link to your email address. Click it to sign in instantly."
   },
   "about": {
     "heroSubtitle": "Our story",
@@ -348,6 +354,8 @@
     "invoiceCooldown": "Wait {s}s before resending",
     "bookingConfirmed": "Booking confirmed! Check your email for the invoice.",
     "cancelPayment": "Cancel",
+    "payNow": "Pay Now",
+    "currency": "OMR",
     "rateLimited": "Too many attempts. Try again in 10 minutes.",
     "minOrder": "Minimum order is 1 OMR"
   },
