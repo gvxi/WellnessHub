@@ -56,7 +56,7 @@ export default function TeamTab() {
       {/* List */}
       <div className="flex-1 overflow-y-auto px-4 pb-24 space-y-2">
         {loading ? (
-          <div className="pt-12 text-center text-sm text-dark/35">Loading…</div>
+          <div className="pt-12 text-center text-sm text-dark/35">{t("admin.team_loading")}</div>
         ) : employees.length === 0 ? (
           <div className="pt-16 flex flex-col items-center gap-2 text-center">
             <UserPlus size={28} className="text-dark/20" />
@@ -101,7 +101,7 @@ export default function TeamTab() {
                   <Chip icon={<Eye size={9} />} label={t("admin.team_show_rejected")} color="bg-amber-50 text-amber-600" />
                 )}
                 {emp.booking_delay_minutes > 0 && (
-                  <Chip icon={<Clock size={9} />} label={`${emp.booking_delay_minutes}m delay`} color="bg-dark/6 text-dark/50" />
+                  <Chip icon={<Clock size={9} />} label={`${emp.booking_delay_minutes} ${t("admin.team_delay_min")}`} color="bg-dark/6 text-dark/50" />
                 )}
               </div>
             </button>

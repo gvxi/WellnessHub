@@ -191,7 +191,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                       placeholder="Jane Smith"
                     />
                   </Field>
-                  <Field label="Email">
+                  <Field label={t("admin.team_email")}>
                     <input
                       type="email"
                       className="w-full bg-dark/5 rounded-xl px-3 py-2.5 text-sm text-dark outline-none"
@@ -224,7 +224,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
               {/* Permissions */}
               <div className="space-y-2 pt-1">
                 <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">
-                  Permissions
+                  {t("admin.team_permissions")}
                 </p>
                 <Toggle
                   label={t("admin.team_can_edit_services")}
@@ -250,7 +250,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
               </div>
 
               {/* Booking delay */}
-              <Field label="Booking Delay (minutes)">
+              <Field label={t("admin.team_booking_delay")}>
                 <input
                   type="number"
                   min={0}
@@ -259,7 +259,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   onChange={(e) => set("booking_delay_minutes", Number(e.target.value))}
                 />
                 <p className="text-[10px] text-dark/35 mt-1 px-0.5">
-                  Employee only sees bookings older than this many minutes. 0 = no delay.
+                  {t("admin.team_booking_delay_hint")}
                 </p>
               </Field>
             </div>
@@ -299,7 +299,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                     onClick={() => setConfirmDelete(false)}
                     className="w-full py-2 text-sm text-dark/40"
                   >
-                    Cancel
+                    {t("admin.team_cancel")}
                   </button>
                 </div>
               )}
