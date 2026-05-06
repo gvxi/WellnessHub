@@ -13,11 +13,12 @@ export async function GET(request: NextRequest) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.4/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.4/styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.4/main.css">
-  <style>* { box-sizing: border-box; margin: 0; padding: 0 } html, body { background: #F2EDEE; font-family: 'Outfit', sans-serif }</style>
+  <style>html, body { background: #F2EDEE; font-family: 'Outfit', sans-serif }</style>
 </head>
 <body>
   <div id="paymob-elements" style="width:100%"></div>
