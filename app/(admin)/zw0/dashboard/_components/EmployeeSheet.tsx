@@ -22,8 +22,6 @@ type FormState = {
   can_edit_ads: boolean;
   show_rejected_bookings: boolean;
   booking_delay_minutes: number;
-  booking_filter_email: string;
-  booking_filter_phone: string;
   is_active: boolean;
 };
 
@@ -37,8 +35,6 @@ function initForm(employee: ApiEmployee | null): FormState {
       can_edit_ads: false,
       show_rejected_bookings: false,
       booking_delay_minutes: 0,
-      booking_filter_email: "",
-      booking_filter_phone: "",
       is_active: true,
     };
   }
@@ -50,8 +46,6 @@ function initForm(employee: ApiEmployee | null): FormState {
     can_edit_ads: employee.can_edit_ads,
     show_rejected_bookings: employee.show_rejected_bookings,
     booking_delay_minutes: employee.booking_delay_minutes,
-    booking_filter_email: employee.booking_filter_email ?? "",
-    booking_filter_phone: employee.booking_filter_phone ?? "",
     is_active: employee.is_active,
   };
 }
@@ -109,8 +103,6 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
             can_edit_ads: form.can_edit_ads,
             show_rejected_bookings: form.show_rejected_bookings,
             booking_delay_minutes: form.booking_delay_minutes,
-            booking_filter_email: form.booking_filter_email,
-            booking_filter_phone: form.booking_filter_phone,
             is_active: form.is_active,
           }),
         });
@@ -123,8 +115,6 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
             can_edit_ads: form.can_edit_ads,
             show_rejected_bookings: form.show_rejected_bookings,
             booking_delay_minutes: form.booking_delay_minutes,
-            booking_filter_email: form.booking_filter_email,
-            booking_filter_phone: form.booking_filter_phone,
             is_active: form.is_active,
           }),
         });
@@ -177,7 +167,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
               <div className="w-10 h-1 rounded-full bg-dark/15 mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold text-dark">
-                  {isCreate ? t("team_add_employee") : (employee?.full_name ?? employee?.email)}
+                  {isCreate ? t("admin.team_add_employee") : (employee?.full_name ?? employee?.email)}
                 </h2>
                 <button onClick={onClose} className="w-8 h-8 rounded-full bg-dark/6 flex items-center justify-center">
                   <X size={14} className="text-dark/60" />
@@ -193,7 +183,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
 
               {isCreate && (
                 <>
-                  <Field label={t("team_full_name")}>
+                  <Field label={t("admin.team_full_name")}>
                     <input
                       className="w-full bg-dark/5 rounded-xl px-3 py-2.5 text-sm text-dark outline-none"
                       value={form.full_name}
@@ -210,7 +200,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                       placeholder="jane@example.com"
                     />
                   </Field>
-                  <Field label={t("team_password")}>
+                  <Field label={t("admin.team_password")}>
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
@@ -237,22 +227,22 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   Permissions
                 </p>
                 <Toggle
-                  label={t("team_can_edit_services")}
+                  label={t("admin.team_can_edit_services")}
                   checked={form.can_edit_services}
                   onChange={(v) => set("can_edit_services", v)}
                 />
                 <Toggle
-                  label={t("team_can_edit_ads")}
+                  label={t("admin.team_can_edit_ads")}
                   checked={form.can_edit_ads}
                   onChange={(v) => set("can_edit_ads", v)}
                 />
                 <Toggle
-                  label={t("team_show_rejected")}
+                  label={t("admin.team_show_rejected")}
                   checked={form.show_rejected_bookings}
                   onChange={(v) => set("show_rejected_bookings", v)}
                 />
                 <Toggle
-                  label={t("team_active")}
+                  label={t("admin.team_active")}
                   checked={form.is_active}
                   onChange={(v) => set("is_active", v)}
                   activeColor="bg-emerald-500"
@@ -260,7 +250,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
               </div>
 
               {/* Booking delay */}
-              <Field label={t("team_booking_delay")}>
+              <Field label="Booking Delay (minutes)">
                 <input
                   type="number"
                   min={0}
@@ -268,30 +258,10 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   value={form.booking_delay_minutes}
                   onChange={(e) => set("booking_delay_minutes", Number(e.target.value))}
                 />
-              </Field>
-
-              {/* Optional filters */}
-              <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">
-                  Booking Filters (optional)
+                <p className="text-[10px] text-dark/35 mt-1 px-0.5">
+                  Employee only sees bookings older than this many minutes. 0 = no delay.
                 </p>
-                <Field label={t("team_filter_email")}>
-                  <input
-                    className="w-full bg-dark/5 rounded-xl px-3 py-2.5 text-sm text-dark outline-none"
-                    value={form.booking_filter_email}
-                    onChange={(e) => set("booking_filter_email", e.target.value)}
-                    placeholder="customer@email.com"
-                  />
-                </Field>
-                <Field label={t("team_filter_phone")}>
-                  <input
-                    className="w-full bg-dark/5 rounded-xl px-3 py-2.5 text-sm text-dark outline-none"
-                    value={form.booking_filter_phone}
-                    onChange={(e) => set("booking_filter_phone", e.target.value)}
-                    placeholder="+968..."
-                  />
-                </Field>
-              </div>
+              </Field>
             </div>
 
             {/* Actions */}
@@ -302,7 +272,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                 className="w-full py-3 rounded-2xl bg-primary text-light text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {loading && <Loader2 size={14} className="animate-spin" />}
-                {isCreate ? t("team_create_employee") : t("team_save_changes")}
+                {isCreate ? t("admin.team_create_employee") : t("admin.team_save_changes")}
               </button>
 
               {!isCreate && !confirmDelete && (
@@ -310,20 +280,20 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   onClick={() => setConfirmDelete(true)}
                   className="w-full py-2.5 text-sm font-medium text-red-500/80"
                 >
-                  {t("team_delete_employee")}
+                  {t("admin.team_delete_employee")}
                 </button>
               )}
 
               {!isCreate && confirmDelete && (
                 <div className="space-y-2">
-                  <p className="text-xs text-center text-dark/50">{t("team_delete_confirm")}</p>
+                  <p className="text-xs text-center text-dark/50">{t("admin.team_delete_confirm")}</p>
                   <button
                     disabled={deleting}
                     onClick={handleDelete}
                     className="w-full py-2.5 rounded-2xl bg-red-500 text-white text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
                   >
                     {deleting && <Loader2 size={14} className="animate-spin" />}
-                    {t("team_delete_employee")}
+                    {t("admin.team_delete_employee")}
                   </button>
                   <button
                     onClick={() => setConfirmDelete(false)}

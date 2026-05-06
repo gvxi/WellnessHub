@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, XCircle, Clock, AlertCircle, Loader2, Info } from "lucide-react";
+import { CheckCircle, XCircle, Clock, AlertCircle, Loader2, Info, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ApiBooking, EmployeePermissions } from "@/lib/supabase/types";
 
@@ -23,6 +23,7 @@ export default function PosBookingsTab({ permissions }: Props) {
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>("all");
+  const [search, setSearch] = useState("");
   const [acting, setActing] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -35,6 +36,17 @@ export default function PosBookingsTab({ permissions }: Props) {
       setLoading(false);
     }
   }, [filter]);
+
+  // Client-side search filter on name/email/phone
+  const visible = search.trim()
+    ? bookings.filter((b) => {
+        const q = search.toLowerCase();
+        return (
+          b.customer_name?.toLowerCase().includes(q) ||
+          b.customer_email?.toLowerCase().includes(q)
+        );
+      })
+    : bookings;
 
   useEffect(() => { load(); }, [load]);
 
@@ -69,8 +81,24 @@ export default function PosBookingsTab({ permissions }: Props) {
         </div>
       )}
 
+      {/* Customer search */}
+      <div className="relative mt-4 mb-1">
+        <Search size={13} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark/35 pointer-events-none" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name or email…"
+          className="w-full bg-dark/5 rounded-xl ps-8 pe-8 py-2.5 text-sm text-dark outline-none placeholder:text-dark/30"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="absolute inset-y-0 end-3 flex items-center text-dark/35">
+            <X size={13} />
+          </button>
+        )}
+      </div>
+
       {/* Filter pills */}
-      <div className="flex gap-2 pt-4 pb-3 overflow-x-auto">
+      <div className="flex gap-2 pt-3 pb-3 overflow-x-auto">
         {FILTERS.map((f) => (
           <button
             key={f.id}
@@ -91,11 +119,11 @@ export default function PosBookingsTab({ permissions }: Props) {
       <div className="flex-1 overflow-y-auto pb-6">
         {loading ? (
           <div className="pt-12 text-center text-sm text-dark/35">Loading…</div>
-        ) : bookings.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="pt-16 text-center text-sm text-dark/30">No bookings found</div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {bookings.map((b) => {
+            {visible.map((b) => {
               const cfg = STATUS_CONFIG[b.status] ?? STATUS_CONFIG.pending;
               const Icon = cfg.icon;
               const isExpanded = expanded === b.id;

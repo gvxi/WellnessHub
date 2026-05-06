@@ -49,7 +49,7 @@ export default function TeamTab() {
           className="flex items-center gap-1.5 px-3 py-2 bg-primary text-light text-xs font-semibold rounded-xl"
         >
           <UserPlus size={13} />
-          {t("team_add_employee")}
+          {t("admin.team_add_employee")}
         </button>
       </div>
 
@@ -60,8 +60,8 @@ export default function TeamTab() {
         ) : employees.length === 0 ? (
           <div className="pt-16 flex flex-col items-center gap-2 text-center">
             <UserPlus size={28} className="text-dark/20" />
-            <p className="text-sm font-medium text-dark/50">{t("team_empty")}</p>
-            <p className="text-xs text-dark/30">{t("team_empty_hint")}</p>
+            <p className="text-sm font-medium text-dark/50">{t("admin.team_empty")}</p>
+            <p className="text-xs text-dark/30">{t("admin.team_empty_hint")}</p>
           </div>
         ) : (
           employees.map((emp) => (
@@ -85,20 +85,20 @@ export default function TeamTab() {
                       : "bg-red-50 text-red-500"
                   )}
                 >
-                  {emp.is_active ? t("team_active") : t("team_inactive")}
+                  {emp.is_active ? t("admin.team_active") : t("admin.team_inactive")}
                 </span>
               </div>
 
               {/* Permission chips */}
               <div className="flex flex-wrap gap-1.5">
                 {emp.can_edit_services && (
-                  <Chip icon={<Shield size={9} />} label={t("team_can_edit_services")} color="bg-secondary/10 text-secondary" />
+                  <Chip icon={<Shield size={9} />} label={t("admin.team_can_edit_services")} color="bg-secondary/10 text-secondary" />
                 )}
                 {emp.can_edit_ads && (
-                  <Chip icon={<Shield size={9} />} label={t("team_can_edit_ads")} color="bg-secondary/10 text-secondary" />
+                  <Chip icon={<Shield size={9} />} label={t("admin.team_can_edit_ads")} color="bg-secondary/10 text-secondary" />
                 )}
                 {emp.show_rejected_bookings && (
-                  <Chip icon={<Eye size={9} />} label={t("team_show_rejected")} color="bg-amber-50 text-amber-600" />
+                  <Chip icon={<Eye size={9} />} label={t("admin.team_show_rejected")} color="bg-amber-50 text-amber-600" />
                 )}
                 {emp.booking_delay_minutes > 0 && (
                   <Chip icon={<Clock size={9} />} label={`${emp.booking_delay_minutes}m delay`} color="bg-dark/6 text-dark/50" />
