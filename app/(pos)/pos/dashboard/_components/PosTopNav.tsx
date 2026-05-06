@@ -3,28 +3,36 @@
 import Image from "next/image";
 import { LogOut, CalendarDays, Layers, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
 import type { PosTab } from "./PosDashboardClient";
-import type { EmployeePermissions } from "@/lib/supabase/types";
 
 interface Props {
   activeTab: PosTab;
   onTabChange: (tab: PosTab) => void;
   onLogout: () => void;
-  permissions: EmployeePermissions;
 }
 
-const TABS: { id: PosTab; label: string; icon: typeof CalendarDays }[] = [
-  { id: "bookings", label: "Bookings", icon: CalendarDays },
-  { id: "services", label: "Services", icon: Layers },
-  { id: "ads",      label: "Ads",      icon: Megaphone },
-];
+export default function PosTopNav({ activeTab, onTabChange, onLogout }: Props) {
+  const { t } = useLang();
 
-export default function PosTopNav({ activeTab, onTabChange, onLogout, permissions }: Props) {
+  const TABS: { id: PosTab; label: string; icon: typeof CalendarDays }[] = [
+    { id: "bookings", label: t("pos.tab_bookings"), icon: CalendarDays },
+    { id: "services", label: t("pos.tab_services"), icon: Layers },
+    { id: "ads",      label: t("pos.tab_ads"),      icon: Megaphone },
+  ];
+
   return (
     <header className="flex-none bg-light border-b border-dark/8 h-14 flex items-stretch px-4 gap-0">
       {/* Brand */}
       <div className="flex items-center gap-2 me-6 flex-none">
-        <Image src="/media/Logo.svg" alt="WellnessHub" width={18} height={18} className="w-[18px] h-[18px] object-contain" />
+        <Image
+          src="/media/Logo.svg"
+          alt="WellnessHub"
+          width={18}
+          height={18}
+          unoptimized
+          className="w-[18px] h-[18px] object-contain"
+        />
         <span className="text-sm font-bold text-dark tracking-tight hidden sm:block">WellnessHub</span>
         <span className="ms-1 text-[9px] uppercase tracking-[0.15em] font-semibold text-secondary/60 hidden md:block">
           POS
@@ -57,7 +65,7 @@ export default function PosTopNav({ activeTab, onTabChange, onLogout, permission
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-dark/40 hover:text-dark/70 hover:bg-dark/5 rounded-xl transition-colors"
         >
           <LogOut size={13} />
-          <span className="hidden sm:block">Sign out</span>
+          <span className="hidden sm:block">{t("pos.sign_out")}</span>
         </button>
       </div>
     </header>

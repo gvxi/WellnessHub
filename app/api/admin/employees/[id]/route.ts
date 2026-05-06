@@ -31,6 +31,7 @@ export async function PUT(
     p_filter_email: body.booking_filter_email ?? "",
     p_filter_phone: body.booking_filter_phone ?? "",
     p_is_active: body.is_active ?? true,
+    p_can_manage_bookings: body.can_manage_bookings ?? false,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

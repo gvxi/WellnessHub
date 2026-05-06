@@ -50,6 +50,7 @@ async function verifyFromParts(
       booking_filter_email: row.booking_filter_email,
       booking_filter_phone: row.booking_filter_phone,
       is_active: row.is_active,
+      can_manage_bookings: row.can_manage_bookings ?? false,
     },
   };
 }

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ToggleLeft, ToggleRight, ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveImage } from "@/lib/utils";
+import { useLang } from "@/lib/lang-context";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { EmployeePermissions } from "@/lib/supabase/types";
 
 interface Props {
@@ -17,6 +19,7 @@ type AdRow = {
 };
 
 export default function PosAdsTab({ permissions }: Props) {
+  const { t } = useLang();
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -50,17 +53,15 @@ export default function PosAdsTab({ permissions }: Props) {
 
   return (
     <div className="h-full flex flex-col max-w-6xl mx-auto px-4 md:px-6 pt-4">
-      {!permissions.can_edit_ads && (
-        <p className="text-xs text-dark/40 mb-3 bg-dark/4 rounded-xl px-3 py-2">
-          Read-only — your account doesn&apos;t have edit permissions for ads.
-        </p>
-      )}
-
       <div className="flex-1 overflow-y-auto pb-6">
         {loading ? (
-          <div className="pt-12 text-center text-sm text-dark/35">Loading…</div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-36 rounded-2xl" />
+            ))}
+          </div>
         ) : ads.length === 0 ? (
-          <div className="pt-16 text-center text-sm text-dark/30">No ads found</div>
+          <div className="pt-16 text-center text-sm text-dark/30">{t("pos.no_ads")}</div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {ads.map((ad) => {
@@ -82,7 +83,7 @@ export default function PosAdsTab({ permissions }: Props) {
                         ad.is_active ? "bg-emerald-500 text-white" : "bg-dark/20 text-dark/60"
                       )}
                     >
-                      {ad.is_active ? "Active" : "Inactive"}
+                      {ad.is_active ? t("pos.active") : t("pos.inactive")}
                     </span>
                   </div>
 
@@ -101,11 +102,8 @@ export default function PosAdsTab({ permissions }: Props) {
                           ad.is_active ? "text-emerald-600" : "text-dark/40"
                         )}
                       >
-                        {ad.is_active
-                          ? <ToggleRight size={15} />
-                          : <ToggleLeft size={15} />
-                        }
-                        {ad.is_active ? "Active" : "Inactive"}
+                        {ad.is_active ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                        {ad.is_active ? t("pos.active") : t("pos.inactive")}
                       </button>
                     )}
                   </div>

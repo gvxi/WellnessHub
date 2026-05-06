@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useLang } from "@/lib/lang-context";
 
 export default function PosLoginForm() {
   const router = useRouter();
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +48,7 @@ export default function PosLoginForm() {
       )}
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-dark/55">Email</label>
+        <label className="text-xs font-medium text-dark/55">{t("pos.email_label")}</label>
         <input
           type="email"
           required
@@ -59,7 +61,7 @@ export default function PosLoginForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-xs font-medium text-dark/55">Password</label>
+        <label className="text-xs font-medium text-dark/55">{t("pos.password_label")}</label>
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -86,7 +88,7 @@ export default function PosLoginForm() {
         className="w-full py-3 mt-2 rounded-2xl bg-primary text-light text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
       >
         {loading && <Loader2 size={15} className="animate-spin" />}
-        Sign in
+        {t("pos.sign_in_btn")}
       </button>
     </form>
   );

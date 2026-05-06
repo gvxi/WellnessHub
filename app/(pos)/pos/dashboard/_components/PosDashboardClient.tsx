@@ -46,7 +46,6 @@ export default function PosDashboardClient({ permissions }: Props) {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onLogout={handleLogout}
-        permissions={permissions}
       />
 
       {/* Tab content */}

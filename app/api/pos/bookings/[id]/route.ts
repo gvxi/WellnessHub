@@ -36,7 +36,7 @@ export async function PUT(
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { status } = await request.json();
+  const { status, reason } = await request.json();
 
   const allowed = ["approved", "rejected", "refunded"];
   if (!allowed.includes(status)) {
@@ -53,9 +53,12 @@ export async function PUT(
     .eq("business_id", ctx.businessId)
     .single();
 
+  const updatePayload: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (reason) updatePayload.staff_notes = reason;
+
   const { error } = await supabase
     .from("bookings")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq("id", id)
     .eq("business_id", ctx.businessId);
 

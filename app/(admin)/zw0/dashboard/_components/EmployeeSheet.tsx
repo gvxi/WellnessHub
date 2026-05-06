@@ -23,6 +23,7 @@ type FormState = {
   show_rejected_bookings: boolean;
   booking_delay_minutes: number;
   is_active: boolean;
+  can_manage_bookings: boolean;
 };
 
 function initForm(employee: ApiEmployee | null): FormState {
@@ -36,6 +37,7 @@ function initForm(employee: ApiEmployee | null): FormState {
       show_rejected_bookings: false,
       booking_delay_minutes: 0,
       is_active: true,
+      can_manage_bookings: false,
     };
   }
   return {
@@ -47,6 +49,7 @@ function initForm(employee: ApiEmployee | null): FormState {
     show_rejected_bookings: employee.show_rejected_bookings,
     booking_delay_minutes: employee.booking_delay_minutes,
     is_active: employee.is_active,
+    can_manage_bookings: employee.can_manage_bookings,
   };
 }
 
@@ -104,6 +107,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
             show_rejected_bookings: form.show_rejected_bookings,
             booking_delay_minutes: form.booking_delay_minutes,
             is_active: form.is_active,
+            can_manage_bookings: form.can_manage_bookings,
           }),
         });
       } else {
@@ -116,6 +120,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
             show_rejected_bookings: form.show_rejected_bookings,
             booking_delay_minutes: form.booking_delay_minutes,
             is_active: form.is_active,
+            can_manage_bookings: form.can_manage_bookings,
           }),
         });
         const data = await res.json();
@@ -246,6 +251,11 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   checked={form.is_active}
                   onChange={(v) => set("is_active", v)}
                   activeColor="bg-emerald-500"
+                />
+                <Toggle
+                  label={t("admin.team_can_manage_bookings")}
+                  checked={form.can_manage_bookings}
+                  onChange={(v) => set("can_manage_bookings", v)}
                 />
               </div>
 

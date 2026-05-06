@@ -212,6 +212,7 @@ export type EmployeePermissions = {
   booking_filter_email: string | null;
   booking_filter_phone: string | null;
   is_active: boolean;
+  can_manage_bookings: boolean;
 };
 
 export type ApiEmployee = {
@@ -225,5 +226,6 @@ export type ApiEmployee = {
   booking_delay_minutes: number;
   booking_filter_email: string | null;
   booking_filter_phone: string | null;
+  can_manage_bookings: boolean;
   created_at: string;
 };
