@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
     created_at: b.created_at,
     customer_name: (b.customer_data as any)?.username ?? null,
     customer_email: (b.customer_data as any)?.email ?? null,
+    customer_phone: (b.customer_data as any)?.phone ?? null,
     service_name: (b.services as any)?.name ?? null,
     package_name: (b.packages as any)?.name ?? null,
     cart_items: b.cart_items ?? null,

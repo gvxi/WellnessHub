@@ -16,7 +16,8 @@ import ToastStack from "@/components/ui/ToastStack";
 function ShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/zw0");
-  const isPos = pathname.startsWith("/pos");
+  const isPos = pathname.startsWith("/pos") ||
+    (typeof window !== "undefined" && window.location.hostname.startsWith("pos."));
   const { cartOpen, setCartOpen, favsOpen, setFavsOpen, selectedItem, setSelectedItem } = useUI();
 
   return (

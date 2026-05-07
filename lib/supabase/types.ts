@@ -171,6 +171,7 @@ export type ApiBooking = {
   created_at: string;
   customer_name: string | null;
   customer_email: string | null;
+  customer_phone: string | null;
   service_name: string | null;
   package_name: string | null;
   cart_items: ApiBookingCartItem[] | null;

@@ -5,6 +5,7 @@ import { LogOut, CalendarDays, Layers, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import type { PosTab } from "./PosDashboardClient";
+import type { Lang } from "@/lib/lang-context";
 
 interface Props {
   activeTab: PosTab;
@@ -13,7 +14,11 @@ interface Props {
 }
 
 export default function PosTopNav({ activeTab, onTabChange, onLogout }: Props) {
-  const { t } = useLang();
+  const { t, lang, setLang } = useLang();
+
+  function toggleLang() {
+    setLang(lang === "en" ? "ar" : "en");
+  }
 
   const TABS: { id: PosTab; label: string; icon: typeof CalendarDays }[] = [
     { id: "bookings", label: t("pos.tab_bookings"), icon: CalendarDays },
@@ -58,8 +63,18 @@ export default function PosTopNav({ activeTab, onTabChange, onLogout }: Props) {
         ))}
       </nav>
 
+      {/* Lang toggle */}
+      <div className="flex items-center flex-none">
+        <button
+          onClick={toggleLang}
+          className="px-2.5 py-1 text-xs font-semibold text-dark/50 hover:text-dark/80 hover:bg-dark/5 rounded-lg transition-colors"
+        >
+          {lang === "en" ? "ع" : "EN"}
+        </button>
+      </div>
+
       {/* Logout */}
-      <div className="flex items-center flex-none ms-2">
+      <div className="flex items-center flex-none ms-1">
         <button
           onClick={onLogout}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-dark/40 hover:text-dark/70 hover:bg-dark/5 rounded-xl transition-colors"

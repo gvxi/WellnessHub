@@ -7,7 +7,7 @@ import { useLang } from "@/lib/lang-context";
 
 export default function PosLoginForm() {
   const router = useRouter();
-  const { t } = useLang();
+  const { t, lang, setLang } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -41,6 +41,15 @@ export default function PosLoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="flex justify-end mb-1">
+        <button
+          type="button"
+          onClick={() => setLang(lang === "en" ? "ar" : "en")}
+          className="text-xs font-semibold text-dark/40 hover:text-dark/70 transition-colors"
+        >
+          {lang === "en" ? "ع" : "EN"}
+        </button>
+      </div>
       {error && (
         <p className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2.5 text-center">
           {error}

@@ -61,7 +61,8 @@ export default function PosBookingsTab({ permissions }: Props) {
         const q = search.toLowerCase();
         return (
           b.customer_name?.toLowerCase().includes(q) ||
-          b.customer_email?.toLowerCase().includes(q)
+          b.customer_email?.toLowerCase().includes(q) ||
+          b.customer_phone?.includes(search.trim())
         );
       })
     : bookings;
