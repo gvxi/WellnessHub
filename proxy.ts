@@ -6,9 +6,10 @@ export function proxy(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   const { pathname } = request.nextUrl;
 
-  // Rewrite subdomain → /pos/*
+  // Rewrite subdomain → /pos/* (skip static assets — files with extensions)
   if (host === POS_HOST || host.startsWith("pos.wellnesshubom.")) {
-    if (!pathname.startsWith("/pos")) {
+    const isStaticFile = /\.\w{2,6}$/.test(pathname);
+    if (!pathname.startsWith("/pos") && !isStaticFile) {
       const url = request.nextUrl.clone();
       url.pathname = `/pos${pathname === "/" ? "" : pathname}`;
       return NextResponse.rewrite(url);
