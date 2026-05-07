@@ -22,13 +22,6 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Redirect /pos login if already authenticated
-  if (pathname === "/pos" || pathname === "/pos/") {
-    if (request.cookies.get("pos-token")) {
-      return NextResponse.redirect(new URL("/pos/dashboard", request.url));
-    }
-  }
-
   // Guard /zw0/dashboard
   if (pathname.startsWith("/zw0/dashboard")) {
     const token = request.cookies.get("admin-token")?.value;

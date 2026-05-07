@@ -1,27 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { verifyEmployeeFromCookies } from "@/lib/auth/verify-employee";
 import PosLoginForm from "./_components/PosLoginForm";
 
 export default async function PosLoginPage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("pos-token")?.value;
-
-  if (token) {
-    // Quick JWT presence check — middleware handles full validation on protected pages
-    try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          global: { headers: { Authorization: `Bearer ${token}` } },
-          auth: { persistSession: false },
-        }
-      );
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) redirect("/pos/dashboard");
-    } catch {}
-  }
+  const ctx = await verifyEmployeeFromCookies(cookieStore);
+  if (ctx) redirect("/pos/dashboard");
 
   return (
     <div className="min-h-screen bg-light flex items-center justify-center px-4">
