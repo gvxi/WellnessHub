@@ -509,7 +509,15 @@
     "inactive": "Inactive",
     "email_label": "Email",
     "password_label": "Password",
-    "sign_in_btn": "Sign in"
+    "sign_in_btn": "Sign in",
+    "booking_details": "Booking Details",
+    "customer": "Customer",
+    "scheduled": "Scheduled",
+    "payment_ref": "Payment Ref",
+    "close": "Close",
+    "service": "Service",
+    "package": "Package",
+    "description": "Description"
   },
   "lang": "EN"
 }

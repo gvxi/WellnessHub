@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { resolveImage } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { EmployeePermissions } from "@/lib/supabase/types";
+import type { EmployeePermissions, Translations } from "@/lib/supabase/types";
 
 interface Props {
   permissions: EmployeePermissions;
@@ -16,10 +16,11 @@ type AdRow = {
   id: string; headline: string; subtitle: string | null;
   image_url: string | null; unsplash_id: string | null;
   is_active: boolean; fullscreen_enabled: boolean; display_order: number;
+  translations: Translations | null;
 };
 
 export default function PosAdsTab({ permissions }: Props) {
-  const { t } = useLang();
+  const { t, isRTL } = useLang();
   const [ads, setAds] = useState<AdRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -88,9 +89,13 @@ export default function PosAdsTab({ permissions }: Props) {
                   </div>
 
                   <div className="px-3 py-3">
-                    <p className="text-sm font-semibold text-dark truncate">{ad.headline}</p>
+                    <p className="text-sm font-semibold text-dark truncate">
+                      {isRTL && ad.translations?.ar?.headline ? ad.translations.ar.headline : ad.headline}
+                    </p>
                     {ad.subtitle && (
-                      <p className="text-xs text-dark/40 truncate mt-0.5">{ad.subtitle}</p>
+                      <p className="text-xs text-dark/40 truncate mt-0.5">
+                        {isRTL && ad.translations?.ar?.subtitle ? ad.translations.ar.subtitle : ad.subtitle}
+                      </p>
                     )}
 
                     {permissions.can_edit_ads && (

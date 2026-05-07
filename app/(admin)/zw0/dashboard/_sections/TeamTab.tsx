@@ -113,6 +113,7 @@ export default function TeamTab() {
       </div>
 
       <EmployeeSheet
+        key={selected?.user_id ?? "create"}
         open={sheetOpen}
         employee={selected}
         onClose={() => setSheetOpen(false)}

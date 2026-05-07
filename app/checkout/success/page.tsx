@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -13,17 +13,18 @@ function SuccessContent() {
   const params = useSearchParams();
   const orderId = params.get("order_id") ?? params.get("id");
   const bookingId = params.get("booking_id");
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { clearCart } = useCart();
+
+  const [invoiceState, setInvoiceState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [sendCount, setSendCount] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  const autoSentRef = useRef(false);
 
   useEffect(() => {
     clearCart();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const [invoiceState, setInvoiceState] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [sendCount, setSendCount] = useState(0);
-  const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -31,40 +32,69 @@ function SuccessContent() {
     return () => clearInterval(id);
   }, [cooldown]);
 
-  async function sendInvoice() {
-    if (!bookingId || sendCount >= 3 || cooldown > 0) return;
-    setInvoiceState("sending");
+  // Auto-send invoice once on mount
+  useEffect(() => {
+    if (!bookingId || autoSentRef.current) return;
+    autoSentRef.current = true;
+    sendInvoice(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingId]);
+
+  async function getToken(): Promise<string | null> {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  }
+
+  async function sendInvoice(silent = false) {
+    if (!bookingId) return;
+    if (!silent && (sendCount >= 3 || cooldown > 0)) return;
+    if (!silent) setInvoiceState("sending");
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) { setInvoiceState("error"); return; }
+      const token = await getToken();
+      if (!token) {
+        if (!silent) setInvoiceState("error");
+        return;
+      }
 
       const res = await fetch("/api/checkout/send-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ booking_id: bookingId }),
+        body: JSON.stringify({ booking_id: bookingId, lang }),
       });
       const data = await res.json();
 
       if (res.status === 429 && data.error === "cooldown") {
         setCooldown(data.retry_in ?? 30);
-        setInvoiceState("idle");
+        if (!silent) setInvoiceState("idle");
+        return;
+      }
+
+      if (res.status === 429 && data.error === "limit_reached") {
+        setSendCount(3);
+        if (!silent) setInvoiceState("idle");
         return;
       }
 
       if (res.ok) {
         const newCount = data.sent_count ?? sendCount + 1;
         setSendCount(newCount);
-        setInvoiceState("sent");
         setCooldown(30);
-        setTimeout(() => setInvoiceState("idle"), 3000);
+        if (!silent) {
+          setInvoiceState("sent");
+          setTimeout(() => setInvoiceState("idle"), 3000);
+        }
       } else {
+        if (!silent) {
+          setInvoiceState("error");
+          setTimeout(() => setInvoiceState("idle"), 3000);
+        }
+      }
+    } catch {
+      if (!silent) {
         setInvoiceState("error");
         setTimeout(() => setInvoiceState("idle"), 3000);
       }
-    } catch {
-      setInvoiceState("error");
-      setTimeout(() => setInvoiceState("idle"), 3000);
     }
   }
 
@@ -87,14 +117,14 @@ function SuccessContent() {
           </p>
         )}
 
-        {/* Invoice button */}
+        {/* Invoice resend button */}
         {bookingId && (
           <div className="mb-6">
             {sendCount >= 3 ? (
               <p className="text-xs text-dark/35">{t("checkout.invoiceLimit")}</p>
             ) : (
               <button
-                onClick={sendInvoice}
+                onClick={() => sendInvoice(false)}
                 disabled={!canSend}
                 className={cn(
                   "inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold transition-colors",

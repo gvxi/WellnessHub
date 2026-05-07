@@ -173,7 +173,9 @@ export type ApiBooking = {
   customer_email: string | null;
   customer_phone: string | null;
   service_name: string | null;
+  service_translations: Translations | null;
   package_name: string | null;
+  package_translations: Translations | null;
   cart_items: ApiBookingCartItem[] | null;
   total_amount: number | null;
   payment_reference: string | null;

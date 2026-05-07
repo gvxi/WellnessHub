@@ -509,7 +509,15 @@
     "inactive": "غير نشط",
     "email_label": "البريد الإلكتروني",
     "password_label": "كلمة المرور",
-    "sign_in_btn": "تسجيل الدخول"
+    "sign_in_btn": "تسجيل الدخول",
+    "booking_details": "تفاصيل الحجز",
+    "customer": "العميل",
+    "scheduled": "الموعد",
+    "payment_ref": "رقم الدفع",
+    "close": "إغلاق",
+    "service": "الخدمة",
+    "package": "الباقة",
+    "description": "الوصف"
   },
   "lang": "ع"
 }

@@ -302,6 +302,11 @@ export default function PosServicesTab({ permissions }: Props) {
                       {catName && (
                         <p className="text-xs text-secondary/70 font-medium truncate">{catName}</p>
                       )}
+                      {svc.description && (
+                        <p className="text-[10px] text-dark/35 truncate mt-0.5">
+                          {isRTL && svc.translations?.ar?.description ? svc.translations.ar.description : svc.description}
+                        </p>
+                      )}
                     </div>
 
                     {permissions.can_edit_services && (
