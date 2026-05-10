@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Languages, Loader2, Save, Upload, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Languages, Loader2, LogIn, Save, Upload, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import AboutContent from "@/app/about/_components/AboutContent";
@@ -284,12 +285,17 @@ export default function AboutEditTab() {
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
   const [previewLang, setPreviewLang] = useState<"en" | "ar">("en");
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
+  const [sessionExpired, setSessionExpired] = useState(false);
   const { t } = useLang();
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/admin/about")
-      .then((r) => r.json())
-      .then((d) => { if (d && !d.error) setData(d); })
+      .then(async (r) => {
+        if (r.status === 401) { setSessionExpired(true); return; }
+        const d = await r.json();
+        if (d && !d.error) setData(d);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -367,6 +373,7 @@ export default function AboutEditTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      if (res.status === 401) { setSessionExpired(true); return; }
       setStatus(res.ok ? "saved" : "error");
     } catch {
       setStatus("error");
@@ -376,10 +383,35 @@ export default function AboutEditTab() {
     }
   }
 
+  async function handleRelogin() {
+    await fetch("/api/admin/auth", { method: "DELETE" });
+    router.push("/zw0");
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={24} className="animate-spin text-dark/30" />
+      </div>
+    );
+  }
+
+  if (sessionExpired) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-5 p-8 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center">
+          <LogIn size={20} className="text-red-400" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-dark">{t("admin.sessionExpired")}</p>
+          <p className="text-xs text-dark/40 mt-1">{t("admin.sessionExpiredHint")}</p>
+        </div>
+        <button
+          onClick={handleRelogin}
+          className="px-5 py-2.5 rounded-2xl bg-primary text-light text-sm font-semibold hover:bg-primary/90 transition-colors"
+        >
+          {t("admin.login_sign_in")}
+        </button>
       </div>
     );
   }
