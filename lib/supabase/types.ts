@@ -190,6 +190,8 @@ export type ApiAnalytics = {
   top_services: { service_name: string; service_name_ar: string | null; count: number }[];
 };
 
+export type TabPermission = 'hidden' | 'read-only' | 'enabled';
+
 export type DbEmployeePermissions = {
   id: string;
   business_id: string;
@@ -203,6 +205,12 @@ export type DbEmployeePermissions = {
   booking_filter_email: string | null;
   booking_filter_phone: string | null;
   is_active: boolean;
+  tab_bookings: TabPermission;
+  tab_services: TabPermission;
+  tab_ads: TabPermission;
+  tab_analytics: TabPermission;
+  tab_settings: TabPermission;
+  tab_about: TabPermission;
   created_at: string;
   updated_at: string;
 };
@@ -216,6 +224,12 @@ export type EmployeePermissions = {
   booking_filter_phone: string | null;
   is_active: boolean;
   can_manage_bookings: boolean;
+  tab_bookings: TabPermission;
+  tab_services: TabPermission;
+  tab_ads: TabPermission;
+  tab_analytics: TabPermission;
+  tab_settings: TabPermission;
+  tab_about: TabPermission;
 };
 
 export type AboutField = { en: string; ar: string };
@@ -273,5 +287,11 @@ export type ApiEmployee = {
   booking_filter_email: string | null;
   booking_filter_phone: string | null;
   can_manage_bookings: boolean;
+  tab_bookings: TabPermission;
+  tab_services: TabPermission;
+  tab_ads: TabPermission;
+  tab_analytics: TabPermission;
+  tab_settings: TabPermission;
+  tab_about: TabPermission;
   created_at: string;
 };

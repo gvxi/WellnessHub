@@ -8,7 +8,7 @@ export async function PUT(
 ) {
   const ctx = await verifyEmployee(request);
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!ctx.permissions.can_edit_services) {
+  if (ctx.permissions.tab_services === "hidden") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -36,7 +36,7 @@ export async function DELETE(
 ) {
   const ctx = await verifyEmployee(request);
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!ctx.permissions.can_edit_services) {
+  if (ctx.permissions.tab_services !== "enabled") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

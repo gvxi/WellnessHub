@@ -9,6 +9,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export type EmployeeContext = {
   userId: string;
   businessId: string;
+  email: string;
   permissions: EmployeePermissions;
 };
 
@@ -42,6 +43,7 @@ async function verifyFromParts(
   return {
     userId: user.id,
     businessId,
+    email: user.email ?? "",
     permissions: {
       can_edit_services: row.can_edit_services,
       can_edit_ads: row.can_edit_ads,
@@ -51,6 +53,12 @@ async function verifyFromParts(
       booking_filter_phone: row.booking_filter_phone,
       is_active: row.is_active,
       can_manage_bookings: row.can_manage_bookings ?? false,
+      tab_bookings: row.tab_bookings ?? 'enabled',
+      tab_services: row.tab_services ?? 'read-only',
+      tab_ads: row.tab_ads ?? 'read-only',
+      tab_analytics: row.tab_analytics ?? 'hidden',
+      tab_settings: row.tab_settings ?? 'hidden',
+      tab_about: row.tab_about ?? 'hidden',
     },
   };
 }

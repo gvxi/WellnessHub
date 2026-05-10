@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, XCircle, AlertTriangle, Clock, ChevronRight, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useBookingsRealtime } from "@/lib/hooks/useBookingsRealtime";
 import type { ApiBooking } from "@/lib/supabase/types";
 
 type Filter = "all" | "pending" | "approved" | "rejected";
@@ -43,13 +44,32 @@ function BookingsTabInner() {
     refunded: { icon: XCircle,      color: "text-secondary",   bg: "bg-accent/20",   label: t("admin.status_refunded") },
   };
 
-  useEffect(() => {
+  const filterRef = useRef(filter);
+  useEffect(() => { filterRef.current = filter; }, [filter]);
+
+  const load = useCallback(() => {
     setLoading(true);
-    fetch(`/api/admin/bookings${filter !== "all" ? `?status=${filter}` : ""}`)
+    const f = filterRef.current;
+    fetch(`/api/admin/bookings${f !== "all" ? `?status=${f}` : ""}`)
       .then((r) => r.json())
       .then((data) => { setBookings(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [filter]);
+  }, []);
+
+  useEffect(() => { load(); }, [filter, load]);
+
+  useBookingsRealtime({
+    channelName: "admin-bookings",
+    onInsert: load,
+    onUpdate: (id, status) => {
+      setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: status as ApiBooking["status"] } : b));
+      setSelectedBooking((prev) => prev?.id === id ? { ...prev, status: status as ApiBooking["status"] } : prev);
+    },
+    onDelete: (id) => {
+      setBookings((prev) => prev.filter((b) => b.id !== id));
+      setSelectedBooking((prev) => prev?.id === id ? null : prev);
+    },
+  });
 
   async function updateStatus(id: string, status: "approved" | "rejected") {
     setUpdating(id);
@@ -66,7 +86,11 @@ function BookingsTabInner() {
   return (
     <div className="px-4 py-5 pb-6">
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-5 bg-dark/[0.04] p-1 rounded-xl">
+      <div className="flex gap-1 mb-5 bg-dark/[0.04] p-1 rounded-xl relative">
+        <span className="absolute -top-1 -end-1 flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
         {FILTERS.map(({ key, label }) => (
           <button
             key={key}

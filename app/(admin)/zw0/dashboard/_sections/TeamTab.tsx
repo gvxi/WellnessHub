@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { UserPlus, Shield, Eye, Clock, CheckCircle } from "lucide-react";
+import { UserPlus, Clock, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import EmployeeSheet from "../_components/EmployeeSheet";
-import type { ApiEmployee } from "@/lib/supabase/types";
+import type { ApiEmployee, TabPermission } from "@/lib/supabase/types";
 
 export default function TeamTab() {
   const { t } = useLang();
@@ -91,17 +91,15 @@ export default function TeamTab() {
 
               {/* Permission chips */}
               <div className="flex flex-wrap gap-1.5">
-                {emp.can_edit_services && (
-                  <Chip icon={<Shield size={9} />} label={t("admin.team_can_edit_services")} color="bg-secondary/10 text-secondary" />
-                )}
-                {emp.can_edit_ads && (
-                  <Chip icon={<Shield size={9} />} label={t("admin.team_can_edit_ads")} color="bg-secondary/10 text-secondary" />
-                )}
+                {(["tab_bookings", "tab_services", "tab_ads", "tab_analytics", "tab_settings", "tab_about"] as const).map((key) => {
+                  const val: TabPermission = emp[key] ?? "hidden";
+                  if (val === "hidden") return null;
+                  const tabLabel = t(`admin.${key.replace("tab_", "tab_")}`);
+                  const color = val === "enabled" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600";
+                  return <Chip key={key} label={`${tabLabel} · ${val}`} color={color} />;
+                })}
                 {emp.show_rejected_bookings && (
-                  <Chip icon={<Eye size={9} />} label={t("admin.team_show_rejected")} color="bg-amber-50 text-amber-600" />
-                )}
-                {emp.can_manage_bookings && (
-                  <Chip icon={<CheckCircle size={9} />} label={t("admin.team_can_manage_bookings")} color="bg-emerald-50 text-emerald-600" />
+                  <Chip icon={<Eye size={9} />} label={t("admin.team_show_rejected")} color="bg-dark/6 text-dark/50" />
                 )}
                 {emp.booking_delay_minutes > 0 && (
                   <Chip icon={<Clock size={9} />} label={`${emp.booking_delay_minutes} ${t("admin.team_delay_min")}`} color="bg-dark/6 text-dark/50" />
@@ -128,7 +126,7 @@ function Chip({
   label,
   color,
 }: {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   label: string;
   color: string;
 }) {

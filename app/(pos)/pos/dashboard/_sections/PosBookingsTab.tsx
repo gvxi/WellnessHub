@@ -6,6 +6,7 @@ import { CheckCircle, XCircle, Clock, AlertCircle, Loader2, Search, X } from "lu
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBookingsRealtime } from "@/lib/hooks/useBookingsRealtime";
 import type { ApiBooking, EmployeePermissions, Translations } from "@/lib/supabase/types";
 
 type FilterStatus = "all" | "pending" | "approved" | "rejected";
@@ -60,6 +61,20 @@ export default function PosBookingsTab({ permissions }: Props) {
   }, [filter]);
 
   useEffect(() => { load(); }, [load]);
+
+  useBookingsRealtime({
+    channelName: "pos-bookings",
+    delayMs: 30_000,
+    onInsert: load,
+    onUpdate: (id, status) => {
+      setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: status as ApiBooking["status"] } : b));
+      setSelectedBooking((prev) => prev?.id === id ? { ...prev, status: status as ApiBooking["status"] } : prev);
+    },
+    onDelete: (id) => {
+      setBookings((prev) => prev.filter((b) => b.id !== id));
+      setSelectedBooking((prev) => prev?.id === id ? null : prev);
+    },
+  });
 
   const visible = search.trim()
     ? bookings.filter((b) => {
@@ -131,21 +146,27 @@ export default function PosBookingsTab({ permissions }: Props) {
       </div>
 
       {/* Filter pills */}
-      <div className="flex gap-2 pt-3 pb-3 overflow-x-auto">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={cn(
-              "flex-none px-4 py-1.5 rounded-full text-xs font-semibold transition-colors",
-              filter === f.id
-                ? "bg-primary text-light"
-                : "bg-dark/6 text-dark/55 hover:bg-dark/10"
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-2 pt-3 pb-3">
+        <div className="flex gap-2 overflow-x-auto flex-1 min-w-0">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={cn(
+                "flex-none px-4 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                filter === f.id
+                  ? "bg-primary text-light"
+                  : "bg-dark/6 text-dark/55 hover:bg-dark/10"
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <span className="flex-none flex h-2 w-2 me-1 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
       </div>
 
       {/* List */}

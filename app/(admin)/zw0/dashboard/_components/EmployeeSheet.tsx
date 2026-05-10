@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, X, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
-import type { ApiEmployee } from "@/lib/supabase/types";
+import type { ApiEmployee, TabPermission } from "@/lib/supabase/types";
 
 interface Props {
   open: boolean;
@@ -18,12 +18,15 @@ type FormState = {
   email: string;
   full_name: string;
   password: string;
-  can_edit_services: boolean;
-  can_edit_ads: boolean;
   show_rejected_bookings: boolean;
   booking_delay_minutes: number;
   is_active: boolean;
-  can_manage_bookings: boolean;
+  tab_bookings: TabPermission;
+  tab_services: TabPermission;
+  tab_ads: TabPermission;
+  tab_analytics: TabPermission;
+  tab_settings: TabPermission;
+  tab_about: TabPermission;
 };
 
 function initForm(employee: ApiEmployee | null): FormState {
@@ -32,24 +35,30 @@ function initForm(employee: ApiEmployee | null): FormState {
       email: "",
       full_name: "",
       password: "",
-      can_edit_services: false,
-      can_edit_ads: false,
       show_rejected_bookings: false,
       booking_delay_minutes: 0,
       is_active: true,
-      can_manage_bookings: false,
+      tab_bookings: "enabled",
+      tab_services: "read-only",
+      tab_ads: "read-only",
+      tab_analytics: "hidden",
+      tab_settings: "hidden",
+      tab_about: "hidden",
     };
   }
   return {
     email: employee.email,
     full_name: employee.full_name ?? "",
     password: "",
-    can_edit_services: employee.can_edit_services,
-    can_edit_ads: employee.can_edit_ads,
     show_rejected_bookings: employee.show_rejected_bookings,
     booking_delay_minutes: employee.booking_delay_minutes,
     is_active: employee.is_active,
-    can_manage_bookings: employee.can_manage_bookings,
+    tab_bookings: employee.tab_bookings ?? "enabled",
+    tab_services: employee.tab_services ?? "read-only",
+    tab_ads: employee.tab_ads ?? "read-only",
+    tab_analytics: employee.tab_analytics ?? "hidden",
+    tab_settings: employee.tab_settings ?? "hidden",
+    tab_about: employee.tab_about ?? "hidden",
   };
 }
 
@@ -102,12 +111,15 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            can_edit_services: form.can_edit_services,
-            can_edit_ads: form.can_edit_ads,
             show_rejected_bookings: form.show_rejected_bookings,
             booking_delay_minutes: form.booking_delay_minutes,
             is_active: form.is_active,
-            can_manage_bookings: form.can_manage_bookings,
+            tab_bookings: form.tab_bookings,
+            tab_services: form.tab_services,
+            tab_ads: form.tab_ads,
+            tab_analytics: form.tab_analytics,
+            tab_settings: form.tab_settings,
+            tab_about: form.tab_about,
           }),
         });
       } else {
@@ -115,12 +127,15 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            can_edit_services: form.can_edit_services,
-            can_edit_ads: form.can_edit_ads,
             show_rejected_bookings: form.show_rejected_bookings,
             booking_delay_minutes: form.booking_delay_minutes,
             is_active: form.is_active,
-            can_manage_bookings: form.can_manage_bookings,
+            tab_bookings: form.tab_bookings,
+            tab_services: form.tab_services,
+            tab_ads: form.tab_ads,
+            tab_analytics: form.tab_analytics,
+            tab_settings: form.tab_settings,
+            tab_about: form.tab_about,
           }),
         });
         const data = await res.json();
@@ -226,21 +241,24 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                 </>
               )}
 
-              {/* Permissions */}
+              {/* Tab Permissions */}
               <div className="space-y-2 pt-1">
                 <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">
                   {t("admin.team_permissions")}
                 </p>
-                <Toggle
-                  label={t("admin.team_can_edit_services")}
-                  checked={form.can_edit_services}
-                  onChange={(v) => set("can_edit_services", v)}
-                />
-                <Toggle
-                  label={t("admin.team_can_edit_ads")}
-                  checked={form.can_edit_ads}
-                  onChange={(v) => set("can_edit_ads", v)}
-                />
+                <TabPermissionRow label={t("admin.tab_bookings")} value={form.tab_bookings} onChange={(v) => set("tab_bookings", v)} />
+                <TabPermissionRow label={t("admin.tab_services")} value={form.tab_services} onChange={(v) => set("tab_services", v)} />
+                <TabPermissionRow label={t("admin.tab_ads")}      value={form.tab_ads}      onChange={(v) => set("tab_ads", v)} />
+                <TabPermissionRow label={t("admin.tab_analytics")} value={form.tab_analytics} onChange={(v) => set("tab_analytics", v)} />
+                <TabPermissionRow label={t("admin.tab_settings")} value={form.tab_settings} onChange={(v) => set("tab_settings", v)} />
+                <TabPermissionRow label={t("admin.tab_about")}    value={form.tab_about}    onChange={(v) => set("tab_about", v)} />
+              </div>
+
+              {/* Booking sub-settings */}
+              <div className="space-y-2 pt-1">
+                <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">
+                  {t("admin.tab_bookings")} options
+                </p>
                 <Toggle
                   label={t("admin.team_show_rejected")}
                   checked={form.show_rejected_bookings}
@@ -251,11 +269,6 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   checked={form.is_active}
                   onChange={(v) => set("is_active", v)}
                   activeColor="bg-emerald-500"
-                />
-                <Toggle
-                  label={t("admin.team_can_manage_bookings")}
-                  checked={form.can_manage_bookings}
-                  onChange={(v) => set("can_manage_bookings", v)}
                 />
               </div>
 
@@ -362,5 +375,49 @@ function Toggle({
         />
       </span>
     </button>
+  );
+}
+
+const TAB_LEVELS: TabPermission[] = ["hidden", "read-only", "enabled"];
+const LEVEL_COLORS: Record<TabPermission, string> = {
+  hidden: "bg-dark/10 text-dark/40",
+  "read-only": "bg-amber-50 text-amber-600",
+  enabled: "bg-emerald-50 text-emerald-600",
+};
+
+function TabPermissionRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: TabPermission;
+  onChange: (v: TabPermission) => void;
+}) {
+  const { t } = useLang();
+  const LEVEL_LABELS: Record<TabPermission, string> = {
+    hidden: t("admin.team_perm_hidden"),
+    "read-only": t("admin.team_perm_read_only"),
+    enabled: t("admin.team_perm_enabled"),
+  };
+  return (
+    <div className="flex items-center justify-between px-3 py-2.5 bg-dark/4 rounded-xl gap-3">
+      <span className="text-sm text-dark/70 flex-1 truncate">{label}</span>
+      <div className="flex gap-1">
+        {TAB_LEVELS.map((level) => (
+          <button
+            key={level}
+            type="button"
+            onClick={() => onChange(level)}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors",
+              value === level ? LEVEL_COLORS[level] : "text-dark/30 hover:text-dark/50"
+            )}
+          >
+            {LEVEL_LABELS[level]}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
