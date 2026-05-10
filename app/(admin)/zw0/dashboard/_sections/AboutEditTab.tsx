@@ -33,64 +33,66 @@ const DEFAULT_DATA: AboutData = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-type TextareaField = { key: keyof AboutData; label: string; textarea?: boolean };
-type SectionDef = { title: string; emoji: string; fields: TextareaField[] };
+type TextareaField = { key: keyof AboutData; labelKey: string; textarea?: boolean };
+type SectionDef = { titleKey: string; imageKey?: "hero" | "mission"; fields: TextareaField[] };
 
 const SECTIONS: SectionDef[] = [
   {
-    title: "Hero", emoji: "🖼️",
+    titleKey: "admin.about_section_hero",
+    imageKey: "hero",
     fields: [
-      { key: "heroSubtitle",    label: "Subtitle (label above headline)" },
-      { key: "heroHeadline",    label: "Headline" },
-      { key: "heroBody",        label: "Body text", textarea: true },
-      { key: "exploreServices", label: "Button: Explore Services" },
-      { key: "contactUs",       label: "Button: Contact Us" },
+      { key: "heroSubtitle",    labelKey: "admin.about_f_subtitle" },
+      { key: "heroHeadline",    labelKey: "admin.about_f_headline" },
+      { key: "heroBody",        labelKey: "admin.about_f_body", textarea: true },
+      { key: "exploreServices", labelKey: "admin.about_f_btn_explore" },
+      { key: "contactUs",       labelKey: "admin.about_f_btn_contact" },
     ],
   },
   {
-    title: "Mission", emoji: "🌿",
+    titleKey: "admin.about_section_mission",
+    imageKey: "mission",
     fields: [
-      { key: "whoWeAre",       label: "Section label" },
-      { key: "missionHeadline",label: "Headline" },
-      { key: "missionP1",      label: "Paragraph 1", textarea: true },
-      { key: "missionP2",      label: "Paragraph 2", textarea: true },
+      { key: "whoWeAre",       labelKey: "admin.about_f_section_label" },
+      { key: "missionHeadline",labelKey: "admin.about_f_headline" },
+      { key: "missionP1",      labelKey: "admin.about_f_para1", textarea: true },
+      { key: "missionP2",      labelKey: "admin.about_f_para2", textarea: true },
     ],
   },
   {
-    title: "Values", emoji: "💎",
+    titleKey: "admin.about_section_values",
     fields: [
-      { key: "ourValues",      label: "Section label" },
-      { key: "valuesHeadline", label: "Headline" },
-      { key: "val1Title",      label: "Card 1 — Title" },
-      { key: "val1Body",       label: "Card 1 — Body", textarea: true },
-      { key: "val2Title",      label: "Card 2 — Title" },
-      { key: "val2Body",       label: "Card 2 — Body", textarea: true },
-      { key: "val3Title",      label: "Card 3 — Title" },
-      { key: "val3Body",       label: "Card 3 — Body", textarea: true },
+      { key: "ourValues",      labelKey: "admin.about_f_section_label" },
+      { key: "valuesHeadline", labelKey: "admin.about_f_headline" },
+      { key: "val1Title",      labelKey: "admin.about_f_val1_title" },
+      { key: "val1Body",       labelKey: "admin.about_f_val1_body", textarea: true },
+      { key: "val2Title",      labelKey: "admin.about_f_val2_title" },
+      { key: "val2Body",       labelKey: "admin.about_f_val2_body", textarea: true },
+      { key: "val3Title",      labelKey: "admin.about_f_val3_title" },
+      { key: "val3Body",       labelKey: "admin.about_f_val3_body", textarea: true },
     ],
   },
   {
-    title: "Stats", emoji: "📊",
+    titleKey: "admin.about_section_stats",
     fields: [
-      { key: "stat1",  label: "Stat 1 label" },
-      { key: "stat2",  label: "Stat 2 label" },
-      { key: "stat3",  label: "Stat 3 label" },
+      { key: "stat1",  labelKey: "admin.about_f_stat1_lbl" },
+      { key: "stat2",  labelKey: "admin.about_f_stat2_lbl" },
+      { key: "stat3",  labelKey: "admin.about_f_stat3_lbl" },
     ],
   },
   {
-    title: "Contact", emoji: "📍",
+    titleKey: "admin.about_section_contact",
     fields: [
-      { key: "getInTouch",     label: "Section label" },
-      { key: "contactHeadline",label: "Headline" },
-      { key: "location",       label: "Location label" },
-      { key: "locationValue",  label: "Location value" },
-      { key: "phone",          label: "Phone label" },
-      { key: "phoneValue",     label: "Phone value" },
-      { key: "hours",          label: "Hours label" },
-      { key: "hoursValue",     label: "Hours value" },
-      { key: "instagram",      label: "Instagram label" },
-      { key: "instagramValue", label: "Instagram handle" },
-      { key: "bookNow",        label: "Button: Book Now" },
+      { key: "getInTouch",     labelKey: "admin.about_f_section_label" },
+      { key: "contactHeadline",labelKey: "admin.about_f_headline" },
+      { key: "location",       labelKey: "admin.about_f_location" },
+      { key: "locationValue",  labelKey: "admin.about_f_location_val" },
+      { key: "phone",          labelKey: "admin.about_f_phone" },
+      { key: "phoneValue",     labelKey: "admin.about_f_phone_val" },
+      { key: "hours",          labelKey: "admin.about_f_hours" },
+      { key: "hoursValue",     labelKey: "admin.about_f_hours_val" },
+      { key: "instagram",      labelKey: "admin.about_f_instagram" },
+      { key: "instagramValue", labelKey: "admin.about_f_instagram_val" },
+      { key: "bookNow",        labelKey: "admin.about_f_btn_book" },
     ],
   },
 ];
@@ -182,6 +184,7 @@ function BilingualField({
 
 function ImageField({
   label,
+  uploadLabel,
   unsplashId,
   imageUrl,
   uploadFolder,
@@ -189,6 +192,7 @@ function ImageField({
   onUpload,
 }: {
   label: string;
+  uploadLabel: string;
   unsplashId: string;
   imageUrl: string;
   uploadFolder: string;
@@ -247,7 +251,7 @@ function ImageField({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dark/12 text-xs font-medium text-dark/60 hover:bg-dark/4 transition-colors disabled:opacity-50"
           >
             {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-            Upload image
+            {uploadLabel}
           </button>
         </div>
       </div>
@@ -255,7 +259,7 @@ function ImageField({
   );
 }
 
-function Accordion({ title, emoji, children, defaultOpen = false }: { title: string; emoji: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border border-dark/8 rounded-2xl overflow-hidden">
@@ -263,10 +267,7 @@ function Accordion({ title, emoji, children, defaultOpen = false }: { title: str
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3.5 bg-dark/[0.02] hover:bg-dark/[0.04] transition-colors text-start"
       >
-        <span className="flex items-center gap-2 text-sm font-semibold text-dark">
-          <span>{emoji}</span>
-          {title}
-        </span>
+        <span className="text-sm font-semibold text-dark">{title}</span>
         {open ? <ChevronDown size={15} className="text-dark/40" /> : <ChevronRight size={15} className="text-dark/40" />}
       </button>
       {open && <div className="px-4 py-4 space-y-5 bg-white">{children}</div>}
@@ -283,7 +284,7 @@ export default function AboutEditTab() {
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
   const [previewLang, setPreviewLang] = useState<"en" | "ar">("en");
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
-  useLang();
+  const { t } = useLang();
 
   useEffect(() => {
     fetch("/api/admin/about")
@@ -390,8 +391,8 @@ export default function AboutEditTab() {
         {/* Sticky header */}
         <div className="sticky top-0 z-10 bg-light/95 backdrop-blur-sm border-b border-dark/8 px-4 py-3 flex items-center gap-3">
           <div className="flex-1">
-            <h2 className="text-sm font-bold text-dark">About Page</h2>
-            <p className="text-xs text-dark/40">Edit content and translations</p>
+            <h2 className="text-sm font-bold text-dark">{t("admin.about_editor_title")}</h2>
+            <p className="text-xs text-dark/40">{t("admin.about_editor_subtitle")}</p>
           </div>
 
           <button
@@ -399,7 +400,7 @@ export default function AboutEditTab() {
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dark/12 text-xs font-medium text-dark/60 hover:bg-dark/4 transition-colors"
           >
             <Languages size={13} />
-            Translate all
+            {t("admin.translate_all")}
           </button>
 
           <button
@@ -413,118 +414,66 @@ export default function AboutEditTab() {
             )}
           >
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-            {status === "saved" ? "Saved!" : status === "error" ? "Error" : "Save"}
+            {status === "saved" ? t("admin.about_saved") : status === "error" ? t("admin.about_error") : t("admin.about_save")}
           </button>
         </div>
 
         <div className="p-4 space-y-3 pb-20">
-          {/* Hero image */}
-          <Accordion title="Hero" emoji="🖼️" defaultOpen>
-            <ImageField
-              label="Hero background image"
-              unsplashId={data.heroImageUnsplashId}
-              imageUrl={data.heroImageUrl}
-              uploadFolder="about"
-              onUnsplashChange={(v) => setField("heroImageUnsplashId", v)}
-              onUpload={(url) => setField("heroImageUrl", url)}
-            />
-            {SECTIONS[0].fields.map(({ key, label, textarea }) => (
-              <BilingualField
-                key={key}
-                label={label}
-                enValue={(data[key] as AboutField).en}
-                arValue={(data[key] as AboutField).ar}
-                textarea={textarea}
-                onChange={(lang, val) => setBilingual(key, lang, val)}
-                onTranslate={() => translateField(key)}
-                translating={!!translating[key]}
-              />
-            ))}
-          </Accordion>
-
-          {/* Mission */}
-          <Accordion title="Mission" emoji="🌿">
-            <ImageField
-              label="Mission section image"
-              unsplashId={data.missionImageUnsplashId}
-              imageUrl={data.missionImageUrl}
-              uploadFolder="about"
-              onUnsplashChange={(v) => setField("missionImageUnsplashId", v)}
-              onUpload={(url) => setField("missionImageUrl", url)}
-            />
-            {SECTIONS[1].fields.map(({ key, label, textarea }) => (
-              <BilingualField
-                key={key}
-                label={label}
-                enValue={(data[key] as AboutField).en}
-                arValue={(data[key] as AboutField).ar}
-                textarea={textarea}
-                onChange={(lang, val) => setBilingual(key, lang, val)}
-                onTranslate={() => translateField(key)}
-                translating={!!translating[key]}
-              />
-            ))}
-          </Accordion>
-
-          {/* Values */}
-          <Accordion title="Values" emoji="💎">
-            {SECTIONS[2].fields.map(({ key, label, textarea }) => (
-              <BilingualField
-                key={key}
-                label={label}
-                enValue={(data[key] as AboutField).en}
-                arValue={(data[key] as AboutField).ar}
-                textarea={textarea}
-                onChange={(lang, val) => setBilingual(key, lang, val)}
-                onTranslate={() => translateField(key)}
-                translating={!!translating[key]}
-              />
-            ))}
-          </Accordion>
-
-          {/* Stats */}
-          <Accordion title="Stats" emoji="📊">
-            <div className="grid grid-cols-3 gap-3">
-              {(["stat1Value", "stat2Value", "stat3Value"] as const).map((k, i) => (
-                <div key={k}>
-                  <p className="text-xs font-semibold text-dark/50 uppercase tracking-wider mb-1.5">Stat {i + 1} value</p>
-                  <input
-                    value={data[k]}
-                    onChange={(e) => setField(k, e.target.value)}
-                    className="w-full rounded-xl border border-dark/12 bg-white px-3 py-2 text-sm text-dark placeholder:text-dark/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    placeholder={`e.g. ${["5+", "2,000+", "30+"][i]}`}
-                  />
+          {SECTIONS.map((section, si) => (
+            <Accordion key={section.titleKey} title={t(section.titleKey)} defaultOpen={si === 0}>
+              {section.imageKey === "hero" && (
+                <ImageField
+                  label={t("admin.about_hero_image")}
+                  uploadLabel={t("admin.about_upload")}
+                  unsplashId={data.heroImageUnsplashId}
+                  imageUrl={data.heroImageUrl}
+                  uploadFolder="about"
+                  onUnsplashChange={(v) => setField("heroImageUnsplashId", v)}
+                  onUpload={(url) => setField("heroImageUrl", url)}
+                />
+              )}
+              {section.imageKey === "mission" && (
+                <ImageField
+                  label={t("admin.about_mission_image")}
+                  uploadLabel={t("admin.about_upload")}
+                  unsplashId={data.missionImageUnsplashId}
+                  imageUrl={data.missionImageUrl}
+                  uploadFolder="about"
+                  onUnsplashChange={(v) => setField("missionImageUnsplashId", v)}
+                  onUpload={(url) => setField("missionImageUrl", url)}
+                />
+              )}
+              {section.titleKey === "admin.about_section_stats" && (
+                <div className="grid grid-cols-3 gap-3">
+                  {(["stat1Value", "stat2Value", "stat3Value"] as const).map((k, i) => (
+                    <div key={k}>
+                      <p className="text-xs font-semibold text-dark/50 uppercase tracking-wider mb-1.5">
+                        {t(`admin.about_f_stat${i + 1}_val`)}
+                      </p>
+                      <input
+                        value={data[k]}
+                        onChange={(e) => setField(k, e.target.value)}
+                        className="w-full rounded-xl border border-dark/12 bg-white px-3 py-2 text-sm text-dark placeholder:text-dark/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        placeholder={`e.g. ${["5+", "2,000+", "30+"][i]}`}
+                      />
+                    </div>
+                  ))}
                 </div>
+              )}
+              {section.fields.map(({ key, labelKey, textarea }) => (
+                <BilingualField
+                  key={key}
+                  label={t(labelKey)}
+                  enValue={(data[key] as AboutField).en}
+                  arValue={(data[key] as AboutField).ar}
+                  textarea={textarea}
+                  onChange={(lang, val) => setBilingual(key, lang, val)}
+                  onTranslate={() => translateField(key)}
+                  translating={!!translating[key]}
+                />
               ))}
-            </div>
-            {SECTIONS[3].fields.map(({ key, label }) => (
-              <BilingualField
-                key={key}
-                label={label}
-                enValue={(data[key] as AboutField).en}
-                arValue={(data[key] as AboutField).ar}
-                onChange={(lang, val) => setBilingual(key, lang, val)}
-                onTranslate={() => translateField(key)}
-                translating={!!translating[key]}
-              />
-            ))}
-          </Accordion>
-
-          {/* Contact */}
-          <Accordion title="Contact" emoji="📍">
-            {SECTIONS[4].fields.map(({ key, label, textarea }) => (
-              <BilingualField
-                key={key}
-                label={label}
-                enValue={(data[key] as AboutField).en}
-                arValue={(data[key] as AboutField).ar}
-                textarea={textarea}
-                onChange={(lang, val) => setBilingual(key, lang, val)}
-                onTranslate={() => translateField(key)}
-                translating={!!translating[key]}
-              />
-            ))}
-          </Accordion>
+            </Accordion>
+          ))}
         </div>
       </div>
 
@@ -532,7 +481,7 @@ export default function AboutEditTab() {
       <div className="hidden md:flex flex-col w-[420px] shrink-0 border-s border-dark/8 bg-dark/[0.015]">
         {/* Preview header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-dark/8 bg-light/80">
-          <span className="text-xs font-semibold text-dark/50 uppercase tracking-wider">Preview</span>
+          <span className="text-xs font-semibold text-dark/50 uppercase tracking-wider">{t("admin.about_preview")}</span>
           <button
             onClick={() => setPreviewLang((l) => (l === "en" ? "ar" : "en"))}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-dark/6 text-xs font-semibold text-dark/60 hover:bg-dark/10 transition-colors"
