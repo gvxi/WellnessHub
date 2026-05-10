@@ -16,11 +16,12 @@ import AdsTab from "./_sections/AdsTab";
 import AnalyticsTab from "./_sections/AnalyticsTab";
 import SettingsTab from "./_sections/SettingsTab";
 import TeamTab from "./_sections/TeamTab";
+import AboutEditTab from "./_sections/AboutEditTab";
 import { useLang } from "@/lib/lang-context";
 
-export type AdminTab = "bookings" | "services" | "ads" | "analytics" | "settings" | "team";
+export type AdminTab = "bookings" | "services" | "ads" | "analytics" | "settings" | "team" | "about";
 
-const VALID_TABS: AdminTab[] = ["bookings", "services", "ads", "analytics", "settings", "team"];
+const VALID_TABS: AdminTab[] = ["bookings", "services", "ads", "analytics", "settings", "team", "about"];
 
 function DashboardInner() {
   const searchParams = useSearchParams();
@@ -46,6 +47,7 @@ function DashboardInner() {
     analytics: t("admin.tab_analytics"),
     settings:  t("admin.tab_settings"),
     team:      t("admin.tab_team"),
+    about:     t("admin.tab_about"),
   };
 
   // Extend session every 25 min; redirect to login on 401
@@ -154,6 +156,7 @@ function DashboardInner() {
             {activeTab === "analytics" && <AnalyticsTab />}
             {activeTab === "settings"  && <SettingsTab />}
             {activeTab === "team"      && <TeamTab />}
+            {activeTab === "about"     && <AboutEditTab />}
           </motion.div>
         </AnimatePresence>
       </main>

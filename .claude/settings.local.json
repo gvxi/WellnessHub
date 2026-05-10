@@ -54,7 +54,9 @@
       "Bash(Select-Object -First 50)",
       "Bash(grep -E \"\\\\.\\(ts|tsx|js|jsx\\)$\")",
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
-      "Bash(Select-String -Path 'C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\messages\\\\en.json' -Pattern '\"pos\"')"
+      "Bash(Select-String -Path 'C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\messages\\\\en.json' -Pattern '\"pos\"')",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(grep *)"
     ]
   },
   "enabledPlugins": {

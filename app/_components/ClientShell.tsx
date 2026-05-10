@@ -13,11 +13,10 @@ import AuthModal from "@/components/ui/AuthModal";
 import ProfileDrawer from "@/components/ui/ProfileDrawer";
 import ToastStack from "@/components/ui/ToastStack";
 
-function ShellInner({ children }: { children: ReactNode }) {
+function ShellInner({ children, serverIsPos }: { children: ReactNode; serverIsPos: boolean }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/zw0");
-  const isPos = pathname.startsWith("/pos") ||
-    (typeof window !== "undefined" && window.location.hostname.startsWith("pos."));
+  const isPos = serverIsPos || pathname.startsWith("/pos");
   const { cartOpen, setCartOpen, favsOpen, setFavsOpen, selectedItem, setSelectedItem } = useUI();
 
   return (
@@ -34,12 +33,12 @@ function ShellInner({ children }: { children: ReactNode }) {
   );
 }
 
-export default function ClientShell({ children }: { children: ReactNode }) {
+export default function ClientShell({ children, isPos = false }: { children: ReactNode; isPos?: boolean }) {
   return (
     <LangProvider>
       <ToastProvider>
         <ShopProvider>
-          <ShellInner>{children}</ShellInner>
+          <ShellInner serverIsPos={isPos}>{children}</ShellInner>
         </ShopProvider>
       </ToastProvider>
     </LangProvider>

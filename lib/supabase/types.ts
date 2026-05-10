@@ -218,6 +218,49 @@ export type EmployeePermissions = {
   can_manage_bookings: boolean;
 };
 
+export type AboutField = { en: string; ar: string };
+
+export type AboutData = {
+  heroSubtitle: AboutField;
+  heroHeadline: AboutField;
+  heroBody: AboutField;
+  exploreServices: AboutField;
+  contactUs: AboutField;
+  heroImageUnsplashId: string;
+  heroImageUrl: string;
+  whoWeAre: AboutField;
+  missionHeadline: AboutField;
+  missionP1: AboutField;
+  missionP2: AboutField;
+  missionImageUnsplashId: string;
+  missionImageUrl: string;
+  ourValues: AboutField;
+  valuesHeadline: AboutField;
+  val1Title: AboutField;
+  val1Body: AboutField;
+  val2Title: AboutField;
+  val2Body: AboutField;
+  val3Title: AboutField;
+  val3Body: AboutField;
+  stat1Value: string;
+  stat2Value: string;
+  stat3Value: string;
+  stat1: AboutField;
+  stat2: AboutField;
+  stat3: AboutField;
+  getInTouch: AboutField;
+  contactHeadline: AboutField;
+  location: AboutField;
+  locationValue: AboutField;
+  phone: AboutField;
+  phoneValue: AboutField;
+  instagram: AboutField;
+  instagramValue: AboutField;
+  hours: AboutField;
+  hoursValue: AboutField;
+  bookNow: AboutField;
+};
+
 export type ApiEmployee = {
   user_id: string;
   email: string;

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  CalendarDays, Layers, Megaphone, BarChart2, Settings, LogOut, X, Users,
+  CalendarDays, Layers, Megaphone, BarChart2, Settings, LogOut, X, Users, FileEdit,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ export default function SideDrawer({ open, activeTab, onClose, onTabChange }: Pr
     { tab: "ads",       icon: Megaphone,    labelKey: "admin.tab_ads" },
     { tab: "analytics", icon: BarChart2,    labelKey: "admin.tab_analytics" },
     { tab: "team",      icon: Users,        labelKey: "admin.tab_team" },
+    { tab: "about",     icon: FileEdit,     labelKey: "admin.tab_about" },
     { tab: "settings",  icon: Settings,     labelKey: "admin.tab_settings" },
   ];
 

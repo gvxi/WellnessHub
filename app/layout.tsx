@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, Cairo } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import ClientShell from "@/app/_components/ClientShell";
 
@@ -25,11 +26,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "";
+  const isPos = host.startsWith("pos.");
+
   return (
     <html
       lang="en"
@@ -37,7 +42,7 @@ export default function RootLayout({
       className={`${outfit.variable} ${cairo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-light text-dark pb-[68px] md:pb-0">
-        <ClientShell>{children}</ClientShell>
+        <ClientShell isPos={isPos}>{children}</ClientShell>
       </body>
     </html>
   );
