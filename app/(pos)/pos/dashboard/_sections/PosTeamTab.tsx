@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { UserPlus, Clock, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
-import EmployeeSheet from "../_components/EmployeeSheet";
+import PosSubUserSheet from "../_components/PosSubUserSheet";
 import type { ApiEmployee, TabPermission } from "@/lib/supabase/types";
 
-export default function TeamTab() {
+export default function PosTeamTab() {
   const { t } = useLang();
   const [employees, setEmployees] = useState<ApiEmployee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ export default function TeamTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/employees");
+      const res = await fetch("/api/pos/team");
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.employees ?? []);
@@ -43,13 +43,13 @@ export default function TeamTab() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <h2 className="text-sm font-semibold text-dark">{t("admin.tab_team")}</h2>
+        <h2 className="text-sm font-semibold text-dark">{t("admin.team_my_team")}</h2>
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 px-3 py-2 bg-primary text-light text-xs font-semibold rounded-xl"
         >
           <UserPlus size={13} />
-          {t("admin.team_add_employee")}
+          {t("admin.team_add_sub_user")}
         </button>
       </div>
 
@@ -77,28 +77,16 @@ export default function TeamTab() {
                   </p>
                   <p className="text-xs text-dark/40 truncate">{emp.email}</p>
                 </div>
-                <div className="ms-2 flex items-center gap-1 flex-none">
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-semibold",
-                      (emp.pos_user_type ?? "sub") === "main"
-                        ? "bg-primary/10 text-primary"
-                        : "bg-dark/8 text-dark/50"
-                    )}
-                  >
-                    {(emp.pos_user_type ?? "sub") === "main" ? t("admin.team_main_user") : t("admin.team_sub_user")}
-                  </span>
-                  <span
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-semibold",
-                      emp.is_active
-                        ? "bg-emerald-50 text-emerald-600"
-                        : "bg-red-50 text-red-500"
-                    )}
-                  >
-                    {emp.is_active ? t("admin.team_active") : t("admin.team_inactive")}
-                  </span>
-                </div>
+                <span
+                  className={cn(
+                    "ms-2 flex-none px-2 py-0.5 rounded-full text-[10px] font-semibold",
+                    emp.is_active
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-red-50 text-red-500"
+                  )}
+                >
+                  {emp.is_active ? t("admin.team_active") : t("admin.team_inactive")}
+                </span>
               </div>
 
               {/* Permission chips */}
@@ -106,7 +94,7 @@ export default function TeamTab() {
                 {(["tab_bookings", "tab_services", "tab_ads", "tab_analytics", "tab_settings", "tab_about"] as const).map((key) => {
                   const val: TabPermission = emp[key] ?? "hidden";
                   if (val === "hidden") return null;
-                  const tabLabel = t(`admin.${key.replace("tab_", "tab_")}`);
+                  const tabLabel = t(`admin.${key}`);
                   const color = val === "enabled" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600";
                   return <Chip key={key} label={`${tabLabel} · ${val}`} color={color} />;
                 })}
@@ -122,7 +110,7 @@ export default function TeamTab() {
         )}
       </div>
 
-      <EmployeeSheet
+      <PosSubUserSheet
         key={selected?.user_id ?? "create"}
         open={sheetOpen}
         employee={selected}

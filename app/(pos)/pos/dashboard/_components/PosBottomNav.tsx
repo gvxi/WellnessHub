@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarDays, Layers, Megaphone, BarChart2, Settings, FileEdit, Plus } from "lucide-react";
+import { CalendarDays, Layers, Megaphone, BarChart2, Settings, FileEdit, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import type { PosTab } from "./PosDashboardClient";
@@ -20,6 +20,7 @@ const TAB_META: Record<PosTab, { icon: typeof CalendarDays; labelKey: string }> 
   analytics: { icon: BarChart2,    labelKey: "admin.tab_analytics" },
   settings:  { icon: Settings,     labelKey: "admin.tab_settings" },
   about:     { icon: FileEdit,     labelKey: "admin.tab_about" },
+  team:      { icon: Users,        labelKey: "admin.tab_team" },
 };
 
 const PRIMARY_TABS: PosTab[] = ["bookings", "services", "ads", "analytics"];

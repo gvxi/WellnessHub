@@ -57,9 +57,19 @@
       "Bash(Select-String -Path 'C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\messages\\\\en.json' -Pattern '\"pos\"')",
       "Bash(Select-Object Name, FullName)",
       "Bash(grep *)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\app\\\\\\(admin\\)\\\\zw0\\\\dashboard\" -Recurse -Force | Select-Object FullName | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\"\\), \".\" } | Sort-Object)"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\app\\\\\\(admin\\)\\\\zw0\\\\dashboard\" -Recurse -Force | Select-Object FullName | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\"\\), \".\" } | Sort-Object)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\app\\\\api\\\\admin\\\\employee-docs\\\\[userId]\")",
+      "Bash(Out-Null)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\app\\\\api\\\\pos\\\\team\\\\[id]\\\\docs\")",
+      "Bash(Write-Output \"done\")",
+      "Bash(mkdir -p \"/c/Users/SAI/Documents/GitHub/WellnessHub/app/api/admin/employee-docs/[userId]\")",
+      "Bash(mkdir -p \"/c/Users/SAI/Documents/GitHub/WellnessHub/app/api/pos/team/[id]/docs\")"
     ]
   },
+  "enabledMcpjsonServers": [
+    "supabase",
+    "supabase smartbite"
+  ],
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "playwright@claude-plugins-official": true

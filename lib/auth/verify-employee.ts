@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import type { EmployeePermissions } from "@/lib/supabase/types";
+import type { EmployeePermissions, PosUserType } from "@/lib/supabase/types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -11,6 +11,10 @@ export type EmployeeContext = {
   businessId: string;
   email: string;
   permissions: EmployeePermissions;
+  posUserType: PosUserType;
+  canCreateSubUsers: boolean;
+  parentUserId: string | null;
+  parentFullName: string | null;
 };
 
 function anonClient() {
@@ -40,10 +44,15 @@ async function verifyFromParts(
   if (!row.is_active) return null;
   if (row.current_session_token !== sessionToken) return null;
 
+  const posUserType: PosUserType = row.pos_user_type === 'main' ? 'main' : 'sub';
   return {
     userId: user.id,
     businessId,
     email: user.email ?? "",
+    posUserType,
+    canCreateSubUsers: row.can_create_sub_users ?? false,
+    parentUserId: row.parent_user_id ?? null,
+    parentFullName: row.parent_full_name ?? null,
     permissions: {
       can_edit_services: row.can_edit_services,
       can_edit_ads: row.can_edit_ads,
@@ -59,6 +68,8 @@ async function verifyFromParts(
       tab_analytics: row.tab_analytics ?? 'hidden',
       tab_settings: row.tab_settings ?? 'hidden',
       tab_about: row.tab_about ?? 'hidden',
+      pos_user_type: posUserType,
+      can_create_sub_users: row.can_create_sub_users ?? false,
     },
   };
 }

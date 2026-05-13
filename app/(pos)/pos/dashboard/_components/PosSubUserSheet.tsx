@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, X, Eye, EyeOff, Upload, FileText, Trash2, ExternalLink, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
-import type { ApiEmployee, TabPermission, PosUserType } from "@/lib/supabase/types";
+import type { ApiEmployee, TabPermission } from "@/lib/supabase/types";
 
 interface Props {
   open: boolean;
@@ -30,8 +30,6 @@ type FormState = {
   tab_analytics: TabPermission;
   tab_settings: TabPermission;
   tab_about: TabPermission;
-  pos_user_type: PosUserType;
-  can_create_sub_users: boolean;
 };
 
 type FileEntry = { path: string; url: string };
@@ -55,8 +53,6 @@ function initForm(employee: ApiEmployee | null): FormState {
       tab_analytics: "hidden",
       tab_settings: "hidden",
       tab_about: "hidden",
-      pos_user_type: "sub",
-      can_create_sub_users: false,
     };
   }
   return {
@@ -75,12 +71,10 @@ function initForm(employee: ApiEmployee | null): FormState {
     tab_analytics: employee.tab_analytics ?? "hidden",
     tab_settings: employee.tab_settings ?? "hidden",
     tab_about: employee.tab_about ?? "hidden",
-    pos_user_type: employee.pos_user_type ?? "sub",
-    can_create_sub_users: employee.can_create_sub_users ?? false,
   };
 }
 
-export default function EmployeeSheet({ open, employee, onClose, onSaved }: Props) {
+export default function PosSubUserSheet({ open, employee, onClose, onSaved }: Props) {
   const { t, isRTL } = useLang();
   const isCreate = !employee;
 
@@ -100,17 +94,20 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
   const contractInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
+  function resetState() {
     setForm(initForm(employee));
     setError(null);
     setConfirmDelete(false);
     setShowPassword(false);
     setFiles({ contract: null, documents: [] });
+  }
 
+  useEffect(() => {
+    if (!open) return;
+    resetState();
     if (!isCreate && employee) {
       setFilesLoading(true);
-      fetch(`/api/admin/employee-docs/${employee.user_id}`)
+      fetch(`/api/pos/team/${employee.user_id}/docs`)
         .then((r) => r.json())
         .then((d) => setFiles({ contract: d.contract ?? null, documents: d.documents ?? [] }))
         .catch(() => {})
@@ -132,22 +129,13 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
           setError("Email, name and password are required");
           return;
         }
-        const res = await fetch("/api/admin/employees", {
+        const res = await fetch("/api/pos/team", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: form.email,
             full_name: form.full_name,
             password: form.password,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) { setError(data.error ?? "Failed to create"); return; }
-
-        await fetch(`/api/admin/employees/${data.user_id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
             show_rejected_bookings: form.show_rejected_bookings,
             booking_delay_minutes: form.booking_delay_minutes,
             is_active: form.is_active,
@@ -157,12 +145,12 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
             tab_analytics: form.tab_analytics,
             tab_settings: form.tab_settings,
             tab_about: form.tab_about,
-            pos_user_type: form.pos_user_type,
-            can_create_sub_users: form.pos_user_type === "main" ? form.can_create_sub_users : false,
           }),
         });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { setError((data as { error?: string }).error ?? "Failed to create"); return; }
       } else {
-        const res = await fetch(`/api/admin/employees/${employee.user_id}`, {
+        const res = await fetch(`/api/pos/team/${employee.user_id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -179,8 +167,6 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
             tab_analytics: form.tab_analytics,
             tab_settings: form.tab_settings,
             tab_about: form.tab_about,
-            pos_user_type: form.pos_user_type,
-            can_create_sub_users: form.pos_user_type === "main" ? form.can_create_sub_users : false,
           }),
         });
         const data = await res.json();
@@ -197,7 +183,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
     if (!employee) return;
     setDeleting(true);
     try {
-      await fetch(`/api/admin/employees/${employee.user_id}`, { method: "DELETE" });
+      await fetch(`/api/pos/team/${employee.user_id}`, { method: "DELETE" });
       onSaved();
       onClose();
     } finally {
@@ -213,9 +199,9 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
       const fd = new FormData();
       fd.append("file", file);
       fd.append("type", type);
-      const res = await fetch(`/api/admin/employee-docs/${employee.user_id}`, { method: "POST", body: fd });
+      const res = await fetch(`/api/pos/team/${employee.user_id}/docs`, { method: "POST", body: fd });
       if (!res.ok) return;
-      const refreshed = await fetch(`/api/admin/employee-docs/${employee.user_id}`).then((r) => r.json());
+      const refreshed = await fetch(`/api/pos/team/${employee.user_id}/docs`).then((r) => r.json());
       setFiles({ contract: refreshed.contract ?? null, documents: refreshed.documents ?? [] });
     } finally {
       setter(false);
@@ -226,7 +212,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
     if (!employee) return;
     setDeletingPath(path);
     try {
-      await fetch(`/api/admin/employee-docs/${employee.user_id}`, {
+      await fetch(`/api/pos/team/${employee.user_id}/docs`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, type }),
@@ -250,7 +236,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
       {open && (
         <>
           <motion.div
-            key="es-backdrop"
+            key="pss-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -259,7 +245,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
             className="fixed inset-0 z-[70] bg-dark/50 backdrop-blur-sm"
           />
           <motion.div
-            key="es-sheet"
+            key="pss-sheet"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -272,7 +258,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
               <div className="w-10 h-1 rounded-full bg-dark/15 mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold text-dark">
-                  {isCreate ? t("admin.team_add_employee") : (employee?.full_name ?? employee?.email)}
+                  {isCreate ? t("admin.team_add_sub_user") : (employee?.full_name ?? employee?.email)}
                 </h2>
                 <button onClick={onClose} className="w-8 h-8 rounded-full bg-dark/6 flex items-center justify-center">
                   <X size={14} className="text-dark/60" />
@@ -337,43 +323,6 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   </Field>
                 )}
 
-                {/* POS User Type */}
-                <div className="space-y-2 pt-1">
-                  <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">
-                    {t("admin.team_pos_user_type")}
-                  </p>
-                  {!isCreate && employee?.parent_user_id && (
-                    <p className="text-xs text-dark/50 px-0.5">
-                      {t("admin.team_managed_by")}: <span className="font-medium text-dark/70">{employee.parent_full_name ?? "—"}</span>
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    {(["sub", "main"] as PosUserType[]).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => set("pos_user_type", type)}
-                        className={cn(
-                          "flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors",
-                          form.pos_user_type === type
-                            ? type === "main" ? "bg-primary text-light" : "bg-dark/10 text-dark"
-                            : "bg-dark/4 text-dark/40"
-                        )}
-                      >
-                        {t(type === "main" ? "admin.team_main_user" : "admin.team_sub_user")}
-                      </button>
-                    ))}
-                  </div>
-                  {form.pos_user_type === "main" && (
-                    <Toggle
-                      label={t("admin.team_can_create_sub")}
-                      checked={form.can_create_sub_users}
-                      onChange={(v) => set("can_create_sub_users", v)}
-                      activeColor="bg-primary"
-                    />
-                  )}
-                </div>
-
                 {/* Tab Permissions */}
                 <div className="space-y-2 pt-1">
                   <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">
@@ -387,7 +336,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                   <TabPermissionRow label={t("admin.tab_about")}    value={form.tab_about}    onChange={(v) => set("tab_about", v)} />
                 </div>
 
-                {/* Booking sub-settings */}
+                {/* Options */}
                 <div className="space-y-2 pt-1">
                   <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">
                     {t("admin.tab_bookings")} options
@@ -419,7 +368,7 @@ export default function EmployeeSheet({ open, employee, onClose, onSaved }: Prop
                 </Field>
               </div>
 
-              {/* Right column — profile info + files */}
+              {/* Right column — profile info + files (edit mode only on files) */}
               <div className="md:w-[360px] md:shrink-0 overflow-y-auto px-5 py-4 space-y-4 border-t border-dark/8 md:border-t-0">
                 <div className="space-y-3">
                   <p className="text-[10px] uppercase tracking-[0.15em] text-dark/40 font-semibold px-0.5">

@@ -13,26 +13,29 @@ import PosAdsTab from "../_sections/PosAdsTab";
 import PosAnalyticsTab from "../_sections/PosAnalyticsTab";
 import PosSettingsTab from "../_sections/PosSettingsTab";
 import PosAboutEditTab from "../_sections/PosAboutEditTab";
+import PosTeamTab from "../_sections/PosTeamTab";
 import { useLang } from "@/lib/lang-context";
 import type { EmployeePermissions, TabPermission } from "@/lib/supabase/types";
 
-export type PosTab = "bookings" | "services" | "ads" | "analytics" | "settings" | "about";
+export type PosTab = "bookings" | "services" | "ads" | "analytics" | "settings" | "about" | "team";
 
-const ALL_TABS: PosTab[] = ["bookings", "services", "ads", "analytics", "settings", "about"];
+const ALL_TABS: PosTab[] = ["bookings", "services", "ads", "analytics", "settings", "about", "team"];
 
 interface Props {
   permissions: EmployeePermissions;
   employeeEmail?: string;
+  parentFullName?: string | null;
 }
 
-function PosDashboardInner({ permissions, employeeEmail }: Props) {
+function PosDashboardInner({ permissions, employeeEmail, parentFullName }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, lang, setLang, isRTL } = useLang();
 
-  const visibleTabs = ALL_TABS.filter(
-    (tab) => (permissions[`tab_${tab}` as keyof EmployeePermissions] as TabPermission) !== "hidden"
-  );
+  const visibleTabs = ALL_TABS.filter((tab) => {
+    if (tab === "team") return permissions.pos_user_type === "main" && permissions.can_create_sub_users;
+    return (permissions[`tab_${tab}` as keyof EmployeePermissions] as TabPermission) !== "hidden";
+  });
 
   const defaultTab = visibleTabs[0] ?? "bookings";
 
@@ -90,6 +93,7 @@ function PosDashboardInner({ permissions, employeeEmail }: Props) {
     analytics: t("admin.tab_analytics"),
     settings:  t("admin.tab_settings"),
     about:     t("admin.tab_about"),
+    team:      t("admin.tab_team"),
   };
 
   return (
@@ -149,8 +153,15 @@ function PosDashboardInner({ permissions, employeeEmail }: Props) {
             {activeTab === "services"  && <PosServicesTab permissions={permissions} />}
             {activeTab === "ads"       && <PosAdsTab permissions={permissions} />}
             {activeTab === "analytics" && <PosAnalyticsTab />}
-            {activeTab === "settings"  && <PosSettingsTab employeeEmail={employeeEmail} />}
+            {activeTab === "settings"  && (
+              <PosSettingsTab
+                employeeEmail={employeeEmail}
+                posUserType={permissions.pos_user_type}
+                parentFullName={parentFullName}
+              />
+            )}
             {activeTab === "about"     && <PosAboutEditTab permissionLevel={tabPermission("about")} />}
+            {activeTab === "team"      && <PosTeamTab />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -169,10 +180,10 @@ function PosDashboardInner({ permissions, employeeEmail }: Props) {
   );
 }
 
-export default function PosDashboardClient({ permissions, employeeEmail }: Props) {
+export default function PosDashboardClient({ permissions, employeeEmail, parentFullName }: Props) {
   return (
     <Suspense>
-      <PosDashboardInner permissions={permissions} employeeEmail={employeeEmail} />
+      <PosDashboardInner permissions={permissions} employeeEmail={employeeEmail} parentFullName={parentFullName} />
     </Suspense>
   );
 }

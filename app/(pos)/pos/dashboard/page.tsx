@@ -9,5 +9,11 @@ export default async function PosDashboardPage() {
 
   if (!ctx) redirect("/pos");
 
-  return <PosDashboardClient permissions={ctx.permissions} employeeEmail={ctx.email} />;
+  return (
+    <PosDashboardClient
+      permissions={ctx.permissions}
+      employeeEmail={ctx.email}
+      parentFullName={ctx.parentFullName}
+    />
+  );
 }

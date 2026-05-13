@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Layers, Megaphone, BarChart2, Settings, FileEdit, LogOut, X } from "lucide-react";
+import { CalendarDays, Layers, Megaphone, BarChart2, Settings, FileEdit, LogOut, X, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import type { PosTab } from "./PosDashboardClient";
@@ -21,6 +21,7 @@ const DRAWER_LINKS: { tab: PosTab; icon: typeof CalendarDays; labelKey: string }
   { tab: "ads",       icon: Megaphone,    labelKey: "admin.tab_ads" },
   { tab: "analytics", icon: BarChart2,    labelKey: "admin.tab_analytics" },
   { tab: "about",     icon: FileEdit,     labelKey: "admin.tab_about" },
+  { tab: "team",      icon: Users,        labelKey: "admin.tab_team" },
   { tab: "settings",  icon: Settings,     labelKey: "admin.tab_settings" },
 ];
 

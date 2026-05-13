@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import { LogOut, Building2, Clock, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
+import type { PosUserType } from "@/lib/supabase/types";
+
 interface Props {
   employeeEmail?: string;
+  posUserType?: PosUserType;
+  parentFullName?: string | null;
 }
 
-export default function PosSettingsTab({ employeeEmail }: Props) {
+export default function PosSettingsTab({ employeeEmail, posUserType, parentFullName }: Props) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [bizName, setBizName] = useState("WellnessHub");
@@ -41,8 +45,14 @@ export default function PosSettingsTab({ employeeEmail }: Props) {
       </SettingsSection>
 
       <SettingsSection icon={Shield} title={t("admin.settings_account")}>
-        <SettingsRow label={t("admin.settings_role")} value="Employee" />
+        <SettingsRow
+          label={t("admin.settings_role")}
+          value={posUserType === "main" ? t("admin.team_main_user") : t("admin.team_sub_user")}
+        />
         {employeeEmail && <SettingsRow label={t("admin.settings_email")} value={employeeEmail} />}
+        {posUserType === "sub" && parentFullName && (
+          <SettingsRow label={t("admin.team_managed_by")} value={parentFullName} />
+        )}
       </SettingsSection>
 
       <SettingsSection icon={Clock} title={t("admin.settings_hours")}>

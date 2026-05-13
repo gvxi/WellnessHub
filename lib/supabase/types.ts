@@ -191,6 +191,7 @@ export type ApiAnalytics = {
 };
 
 export type TabPermission = 'hidden' | 'read-only' | 'enabled';
+export type PosUserType = 'main' | 'sub';
 
 export type DbEmployeePermissions = {
   id: string;
@@ -211,6 +212,9 @@ export type DbEmployeePermissions = {
   tab_analytics: TabPermission;
   tab_settings: TabPermission;
   tab_about: TabPermission;
+  pos_user_type: PosUserType;
+  parent_user_id: string | null;
+  can_create_sub_users: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -230,6 +234,8 @@ export type EmployeePermissions = {
   tab_analytics: TabPermission;
   tab_settings: TabPermission;
   tab_about: TabPermission;
+  pos_user_type: PosUserType;
+  can_create_sub_users: boolean;
 };
 
 export type AboutField = { en: string; ar: string };
@@ -293,5 +299,14 @@ export type ApiEmployee = {
   tab_analytics: TabPermission;
   tab_settings: TabPermission;
   tab_about: TabPermission;
+  pos_user_type: PosUserType;
+  parent_user_id: string | null;
+  can_create_sub_users: boolean;
+  parent_full_name: string | null;
+  licence: string | null;
+  real_email: string | null;
+  phone: string | null;
+  contract_path: string | null;
+  document_paths: string[];
   created_at: string;
 };
