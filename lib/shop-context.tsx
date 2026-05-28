@@ -10,6 +10,8 @@ import {
 } from "react";
 import type { ServiceItem } from "@/lib/services-data";
 import { categories } from "@/lib/services-data";
+import { saveCartSigned, loadCartVerified } from "@/lib/cart-hmac";
+import { useToast } from "@/lib/toast-context";
 
 // ─── Module-level item registry (populated at render time from DB items) ─────
 
@@ -139,6 +141,7 @@ export function useUI() {
 // ─── Provider ────────────────────────────────────────────────────────────────
 
 export function ShopProvider({ children }: { children: ReactNode }) {
+  const { showToast } = useToast();
   const [cartItems, dispatch] = useReducer(cartReducer, []);
   const [hydrated, setHydrated] = useState(false);
   const [favMap, setFavMap] = useState<Map<string, ServiceItem>>(new Map());
@@ -150,29 +153,31 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("wh_cart");
-      if (raw) {
-        const parsed = JSON.parse(raw) as CartItem[];
-        const valid = parsed.filter((i) => i.snapshot);
-        if (valid.length > 0) dispatch({ type: "INIT", items: valid });
+    (async () => {
+      const items = await loadCartVerified();
+      if (items === null) {
+        dispatch({ type: "CLEAR" });
+        showToast("Cart was cleared — data integrity check failed.", "cart");
+      } else if (items.length > 0) {
+        dispatch({ type: "INIT", items });
       }
-      const rawFavs = localStorage.getItem("wh_favs");
-      if (rawFavs) {
-        const parsed = JSON.parse(rawFavs);
-        if (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
-          setFavMap(new Map(parsed as [string, ServiceItem][]));
+      try {
+        const rawFavs = localStorage.getItem("wh_favs");
+        if (rawFavs) {
+          const parsed = JSON.parse(rawFavs);
+          if (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
+            setFavMap(new Map(parsed as [string, ServiceItem][]));
+          }
         }
-      }
-    } catch {
-      // ignore malformed storage
-    }
-    setHydrated(true);
+      } catch { /* ignore malformed favs */ }
+      setHydrated(true);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem("wh_cart", JSON.stringify(cartItems));
+    saveCartSigned(cartItems);
   }, [cartItems, hydrated]);
 
   useEffect(() => {

@@ -13,6 +13,60 @@ function adminClient() {
   );
 }
 
+function anonClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+type CartItemPayload = {
+  id: string;
+  qty: number;
+  snapshot: Record<string, unknown>;
+};
+
+async function revalidatePrices(
+  items: CartItemPayload[]
+): Promise<{ error: string } | { items: CartItemPayload[]; subtotal: number }> {
+  const baseIds = [...new Set(items.map((i) => i.id.split("::")[0]))];
+
+  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY ? adminClient() : anonClient();
+  const { data: pkgs, error } = await supabase
+    .from("packages")
+    .select("id, name, price, service_id")
+    .in("service_id", baseIds);
+
+  if (error || !pkgs) {
+    console.error("Price re-validation DB error:", error);
+    return { error: "price_lookup_failed" };
+  }
+
+  const validated: CartItemPayload[] = [];
+  for (const item of items) {
+    const [svcId, tierLabel] = item.id.split("::");
+    const match = tierLabel
+      ? pkgs.find((p) => p.service_id === svcId && p.name === tierLabel)
+      : pkgs.find((p) => p.service_id === svcId);
+
+    if (!match) return { error: "invalid_items" };
+
+    const sanitizedQty = Math.max(1, Math.min(20, Math.floor(Number(item.qty) || 1)));
+    validated.push({
+      ...item,
+      qty: sanitizedQty,
+      snapshot: { ...item.snapshot, numericPrice: match.price },
+    });
+  }
+
+  const subtotal = validated.reduce(
+    (sum, i) => sum + (i.snapshot.numericPrice as number) * i.qty,
+    0
+  );
+
+  return { items: validated, subtotal };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("Authorization")?.replace("Bearer ", "");
@@ -30,6 +84,16 @@ export async function POST(request: NextRequest) {
     const rayId = body.ray_id as string | undefined;
     if (!rayId) {
       return NextResponse.json({ error: "Missing ray_id" }, { status: 400 });
+    }
+
+    // Re-validate all prices server-side — never trust client-submitted prices
+    if (Array.isArray(body.items) && body.items.length > 0) {
+      const result = await revalidatePrices(body.items as CartItemPayload[]);
+      if ("error" in result) {
+        return NextResponse.json({ error: result.error }, { status: 422 });
+      }
+      body.items = result.items;
+      body.subtotal = result.subtotal;
     }
 
     const devMode = !!process.env.DEV_MODE;
