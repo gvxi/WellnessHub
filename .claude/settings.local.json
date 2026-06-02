@@ -63,7 +63,9 @@
       "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\SAI\\\\Documents\\\\GitHub\\\\WellnessHub\\\\app\\\\api\\\\pos\\\\team\\\\[id]\\\\docs\")",
       "Bash(Write-Output \"done\")",
       "Bash(mkdir -p \"/c/Users/SAI/Documents/GitHub/WellnessHub/app/api/admin/employee-docs/[userId]\")",
-      "Bash(mkdir -p \"/c/Users/SAI/Documents/GitHub/WellnessHub/app/api/pos/team/[id]/docs\")"
+      "Bash(mkdir -p \"/c/Users/SAI/Documents/GitHub/WellnessHub/app/api/pos/team/[id]/docs\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   },
   "enabledMcpjsonServers": [

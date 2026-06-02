@@ -8,6 +8,7 @@ import { useLang } from "@/lib/lang-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBookingsRealtime } from "@/lib/hooks/useBookingsRealtime";
 import type { ApiBooking, EmployeePermissions, Translations } from "@/lib/supabase/types";
+import { BookingSourceBadge, PaymentMethodBadge } from "@/app/(admin)/zw0/dashboard/_sections/BookingsTab";
 
 type FilterStatus = "all" | "pending" | "approved" | "rejected";
 
@@ -200,7 +201,10 @@ export default function PosBookingsTab({ permissions }: Props) {
                     {new Date(b.scheduled_at).toLocaleString()}
                   </p>
                 </div>
-                <StatusBadge status={b.status} t={t} />
+                <div className="flex flex-col items-end gap-1">
+                  <StatusBadge status={b.status} t={t} />
+                  <BookingSourceBadge source={b.booking_by} />
+                </div>
               </button>
             );
           })
@@ -311,6 +315,18 @@ export default function PosBookingsTab({ permissions }: Props) {
                     <p className="text-xs text-dark/60">{selectedBooking.notes}</p>
                   </div>
                 )}
+
+                {/* Source */}
+                <div className="bg-dark/4 rounded-2xl px-4 py-3 space-y-2">
+                  <p className="text-[10px] uppercase tracking-widest text-dark/40 font-semibold">{t("pos.source")}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <BookingSourceBadge source={selectedBooking.booking_by} />
+                    <PaymentMethodBadge method={selectedBooking.payment_method} />
+                  </div>
+                  {selectedBooking.booking_by !== "Customer" && selectedBooking.created_by_name && (
+                    <p className="text-[11px] text-dark/50">By <span className="font-medium text-dark/70">{selectedBooking.created_by_name}</span></p>
+                  )}
+                </div>
 
                 {/* Payment ref */}
                 {selectedBooking.payment_reference && (

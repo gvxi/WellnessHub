@@ -35,7 +35,8 @@ export default function LoginForm() {
         return;
       }
 
-      router.push("/zw0/dashboard");
+      const returnPos = localStorage.getItem("admin_pos_mode") === "true";
+      router.push(returnPos ? "/zw0/pos" : "/zw0/dashboard");
     } catch {
       setError("Network error. Please try again.");
     } finally {

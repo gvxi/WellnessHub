@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle, XCircle, AlertTriangle, Clock, ChevronRight, X } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Clock, ChevronRight, X, Monitor, User, ShieldCheck, Banknote, CreditCard, QrCode } from "lucide-react";
+import type { BookingSource, PaymentMethodType } from "@/lib/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
@@ -163,11 +164,12 @@ function BookingsTabInner() {
                         })}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <span className={cn("flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium", cfg.bg, cfg.color)}>
                         <StatusIcon size={10} />
                         {cfg.label}
                       </span>
+                      <BookingSourceBadge source={booking.booking_by} />
                       <ChevronRight size={14} className={cn("text-dark/25", isRTL && "rotate-180")} />
                     </div>
                   </div>
@@ -294,6 +296,18 @@ function BookingsTabInner() {
                     </div>
                   )}
 
+                  {/* Source info */}
+                  <div className="bg-dark/[0.03] rounded-xl px-3 py-2.5 space-y-2">
+                    <p className="text-[10px] font-semibold text-dark/40 uppercase">{t("pos.source")}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <BookingSourceBadge source={b.booking_by} />
+                      <PaymentMethodBadge method={b.payment_method} />
+                    </div>
+                    {b.booking_by !== "Customer" && b.created_by_name && (
+                      <p className="text-[11px] text-dark/50">{t("pos.created_by")} <span className="font-medium text-dark/70">{b.created_by_name}</span></p>
+                    )}
+                  </div>
+
                   {/* Booking ID + Payment Reference */}
                   <div className="space-y-1">
                     <p className="text-[10px] text-dark/30">
@@ -340,5 +354,45 @@ export default function BookingsTab() {
     <Suspense>
       <BookingsTabInner />
     </Suspense>
+  );
+}
+
+// ── Source badges (translated) ─────────────────────────────────────────────
+type SourceCfg = { icon: typeof User; tKey: string; cls: string };
+const SOURCE_CONFIG: Record<BookingSource, SourceCfg> = {
+  Customer: { icon: User,        tKey: "pos.source_customer", cls: "bg-dark/6 text-dark/50" },
+  POS:      { icon: Monitor,     tKey: "pos.source_pos",      cls: "bg-secondary/10 text-secondary" },
+  Admin:    { icon: ShieldCheck, tKey: "pos.source_admin",    cls: "bg-primary/10 text-primary" },
+};
+
+export function BookingSourceBadge({ source }: { source: BookingSource }) {
+  const { t } = useLang();
+  const cfg = SOURCE_CONFIG[source] ?? SOURCE_CONFIG.Customer;
+  const Icon = cfg.icon;
+  return (
+    <span className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium", cfg.cls)}>
+      <Icon size={10} />
+      {t(cfg.tKey)}
+    </span>
+  );
+}
+
+type MethodCfg = { icon: typeof CreditCard; tKey: string };
+const METHOD_CONFIG: Record<PaymentMethodType, MethodCfg> = {
+  "Payment Gateway": { icon: CreditCard, tKey: "pos.payment_online" },
+  "Cash":            { icon: Banknote,   tKey: "pos.payment_cash" },
+  "POS Machine":     { icon: CreditCard, tKey: "pos.payment_card" },
+  "QR/Transfer":     { icon: QrCode,     tKey: "pos.payment_qr" },
+};
+
+export function PaymentMethodBadge({ method }: { method: PaymentMethodType }) {
+  const { t } = useLang();
+  const cfg = METHOD_CONFIG[method] ?? METHOD_CONFIG["Payment Gateway"];
+  const Icon = cfg.icon;
+  return (
+    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-dark/6 text-dark/50">
+      <Icon size={10} />
+      {t(cfg.tKey)}
+    </span>
   );
 }

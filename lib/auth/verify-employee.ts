@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import type { EmployeePermissions, PosUserType } from "@/lib/supabase/types";
+import { adminClient } from "@/lib/supabase/admin";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -10,11 +11,13 @@ export type EmployeeContext = {
   userId: string;
   businessId: string;
   email: string;
+  fullName: string | null;
   permissions: EmployeePermissions;
   posUserType: PosUserType;
   canCreateSubUsers: boolean;
   parentUserId: string | null;
   parentFullName: string | null;
+  parentEmail: string | null;
 };
 
 function anonClient() {
@@ -45,14 +48,28 @@ async function verifyFromParts(
   if (row.current_session_token !== sessionToken) return null;
 
   const posUserType: PosUserType = row.pos_user_type === 'main' ? 'main' : 'sub';
+
+  // Fetch parent email for sub-POS users (used for notifications)
+  let parentEmail: string | null = null;
+  if (row.parent_user_id) {
+    const { data: parentProfile } = await adminClient()
+      .from("profiles")
+      .select("email")
+      .eq("id", row.parent_user_id)
+      .single();
+    parentEmail = (parentProfile as any)?.email ?? null;
+  }
+
   return {
     userId: user.id,
     businessId,
     email: user.email ?? "",
+    fullName: (row.full_name as string | null) ?? null,
     posUserType,
     canCreateSubUsers: row.can_create_sub_users ?? false,
     parentUserId: row.parent_user_id ?? null,
     parentFullName: row.parent_full_name ?? null,
+    parentEmail,
     permissions: {
       can_edit_services: row.can_edit_services,
       can_edit_ads: row.can_edit_ads,

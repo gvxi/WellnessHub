@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Menu, Globe } from "lucide-react";
@@ -20,6 +20,8 @@ import type { EmployeePermissions, TabPermission } from "@/lib/supabase/types";
 export type PosTab = "bookings" | "services" | "ads" | "analytics" | "settings" | "about" | "team";
 
 const ALL_TABS: PosTab[] = ["bookings", "services", "ads", "analytics", "settings", "about", "team"];
+const SLIDE = { duration: 0.28, ease: [0.4, 0, 0.2, 1] as const };
+const POS_STORAGE_KEY = "pos_pos_mode";
 
 interface Props {
   permissions: EmployeePermissions;
@@ -46,6 +48,23 @@ function PosDashboardInner({ permissions, employeeEmail, parentFullName }: Props
 
   const [activeTab, setActiveTab] = useState<PosTab>(initialTab);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [ripple, setRipple] = useState<{ x: number; y: number } | null>(null);
+  const [returnCover, setReturnCover] = useState<string | null>(null);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Return-from-POS: collapse cover from fullscreen back to button origin
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("pos_return_origin");
+      if (!raw) return;
+      const origin = JSON.parse(raw) as { x: number; y: number };
+      sessionStorage.removeItem("pos_return_origin");
+      setReturnCover(`circle(200vmax at ${origin.x}px ${origin.y}px)`);
+      requestAnimationFrame(() =>
+        setReturnCover(`circle(0px at ${origin.x}px ${origin.y}px)`)
+      );
+    } catch {}
+  }, []);
 
   function handleTabChange(tab: PosTab) {
     setActiveTab(tab);
@@ -69,9 +88,21 @@ function PosDashboardInner({ permissions, employeeEmail, parentFullName }: Props
     return () => clearInterval(id);
   }, [router]);
 
+  useEffect(() => () => { if (navTimerRef.current) clearTimeout(navTimerRef.current); }, []);
+
   async function handleLogout() {
     await fetch("/api/pos/auth", { method: "DELETE" });
     router.push("/pos");
+  }
+
+  function handleEnterPos(origin: { x: number; y: number }) {
+    setRipple(origin);
+    try { sessionStorage.setItem("pos_enter_origin", JSON.stringify(origin)); } catch {}
+    if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    navTimerRef.current = setTimeout(() => {
+      localStorage.setItem(POS_STORAGE_KEY, "true");
+      router.push("/pos/posmode");
+    }, 420);
   }
 
   function handleAddPress() {
@@ -98,6 +129,18 @@ function PosDashboardInner({ permissions, employeeEmail, parentFullName }: Props
 
   return (
     <div className="fixed inset-0 flex flex-col bg-light z-50" dir={isRTL ? "rtl" : "ltr"}>
+      {/* ── Return-from-POS: circle collapses to button origin ── */}
+      {returnCover && (
+        <motion.div
+          className="fixed inset-0 z-[200] pointer-events-none"
+          style={{ background: "var(--color-primary, #5A0F1B)" }}
+          initial={false}
+          animate={{ clipPath: returnCover }}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          onAnimationComplete={() => setReturnCover(null)}
+        />
+      )}
+
       {/* Header */}
       <header className="flex-none bg-light border-b border-dark/6">
         <div
@@ -105,14 +148,11 @@ function PosDashboardInner({ permissions, employeeEmail, parentFullName }: Props
           style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
         >
           <div className="flex">
-            <button
-              onClick={() => setDrawerOpen(true)}
-              className="w-9 h-9 rounded-xl bg-dark/5 flex items-center justify-center"
-            >
+            <button onClick={() => setDrawerOpen(true)}
+              className="w-9 h-9 rounded-xl bg-dark/5 flex items-center justify-center">
               <Menu size={18} className="text-dark/70" />
             </button>
           </div>
-
           <div className="flex flex-col items-center gap-0.5">
             <div className="flex items-center gap-1.5">
               <Image src="/media/Logo.svg" alt="WellnessHub" width={20} height={20} className="w-5 h-5 object-contain" />
@@ -122,13 +162,9 @@ function PosDashboardInner({ permissions, employeeEmail, parentFullName }: Props
               POS · {TAB_LABELS[activeTab]}
             </span>
           </div>
-
           <div className="flex items-center gap-1 justify-end">
-            <button
-              onClick={() => setLang(lang === "en" ? "ar" : "en")}
-              aria-label="Switch language"
-              className="w-9 h-9 rounded-xl bg-dark/5 flex items-center justify-center relative"
-            >
+            <button onClick={() => setLang(lang === "en" ? "ar" : "en")} aria-label="Switch language"
+              className="w-9 h-9 rounded-xl bg-dark/5 flex items-center justify-center relative">
               <Globe size={16} className="text-dark/60" />
               <span className="absolute bottom-0.5 end-0.5 text-[7px] font-bold text-primary leading-none bg-light px-0.5 rounded">
                 {lang.toUpperCase()}
@@ -166,7 +202,32 @@ function PosDashboardInner({ permissions, employeeEmail, parentFullName }: Props
         </AnimatePresence>
       </main>
 
-      <PosBottomNav activeTab={activeTab} visibleTabs={visibleTabs} onTabChange={handleTabChange} onAddPress={canAdd ? handleAddPress : undefined} />
+      {/* Bottom nav */}
+      <motion.div key="pos-bottomnav">
+        <PosBottomNav
+          activeTab={activeTab}
+          visibleTabs={visibleTabs}
+          onTabChange={handleTabChange}
+          onAddPress={canAdd ? handleAddPress : undefined}
+          onEnterPos={handleEnterPos}
+        />
+      </motion.div>
+
+      {/* Ripple */}
+      <AnimatePresence>
+        {ripple && (
+          <motion.div
+            key="pos-ripple"
+            className="fixed inset-0 z-[200] pointer-events-none"
+            style={{
+              background: "var(--color-primary, #5A0F1B)",
+              clipPath: `circle(0px at ${ripple.x}px ${ripple.y}px)`,
+            }}
+            animate={{ clipPath: `circle(200vmax at ${ripple.x}px ${ripple.y}px)` }}
+            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          />
+        )}
+      </AnimatePresence>
 
       <PosSideDrawer
         open={drawerOpen}

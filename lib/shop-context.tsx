@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react";
 import type { ServiceItem } from "@/lib/services-data";
-import { categories } from "@/lib/services-data";
 import { saveCartSigned, loadCartVerified } from "@/lib/cart-hmac";
 import { useToast } from "@/lib/toast-context";
 
@@ -22,11 +21,7 @@ export function registerItem(item: ServiceItem) {
 }
 
 export function getItemById(id: string): ServiceItem | undefined {
-  if (_itemRegistry.has(id)) return _itemRegistry.get(id);
-  return categories
-    .flatMap((c) => c.subs)
-    .flatMap((s) => s.items)
-    .find((i) => i.id === id);
+  return _itemRegistry.get(id);
 }
 
 export function isItemVisible(id: string): boolean {

@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     .select(`
       id, status, scheduled_at, notes, conflict_flag, created_at,
       customer_data, cart_items, total_amount,
+      booking_by, created_by_user_id, payment_method,
       services ( name ),
       packages ( name ),
       payments ( transaction_id )
@@ -45,6 +46,10 @@ export async function GET(request: NextRequest) {
     cart_items: b.cart_items ?? null,
     total_amount: b.total_amount ?? null,
     payment_reference: (b.payments as any)?.[0]?.transaction_id ?? null,
+    booking_by: b.booking_by ?? "Customer",
+    created_by_user_id: b.created_by_user_id ?? null,
+    created_by_name: null,
+    payment_method: b.payment_method ?? "Payment Gateway",
   }));
 
   return NextResponse.json(bookings);

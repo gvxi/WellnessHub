@@ -33,7 +33,8 @@ export default function PosLoginForm() {
         return;
       }
 
-      router.push("/pos/dashboard");
+      const returnPos = localStorage.getItem("pos_pos_mode") === "true";
+      router.push(returnPos ? "/pos/posmode" : "/pos/dashboard");
     } finally {
       setLoading(false);
     }

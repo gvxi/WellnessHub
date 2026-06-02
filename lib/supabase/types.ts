@@ -85,6 +85,9 @@ export type DbAd = {
   created_at: string;
 };
 
+export type BookingSource = "Customer" | "POS" | "Admin";
+export type PaymentMethodType = "Payment Gateway" | "Cash" | "POS Machine" | "QR/Transfer";
+
 export type DbBooking = {
   id: string;
   business_id: string;
@@ -95,6 +98,9 @@ export type DbBooking = {
   status: "pending" | "approved" | "rejected" | "refunded";
   conflict_flag: boolean;
   notes: string | null;
+  booking_by: BookingSource;
+  created_by_user_id: string | null;
+  payment_method: PaymentMethodType;
   created_at: string;
   updated_at: string;
 };
@@ -179,6 +185,10 @@ export type ApiBooking = {
   cart_items: ApiBookingCartItem[] | null;
   total_amount: number | null;
   payment_reference: string | null;
+  booking_by: BookingSource;
+  created_by_user_id: string | null;
+  created_by_name: string | null;
+  payment_method: PaymentMethodType;
 };
 
 export type ApiAnalytics = {
