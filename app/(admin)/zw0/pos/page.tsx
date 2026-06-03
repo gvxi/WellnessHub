@@ -137,7 +137,7 @@ export default function AdminPosPage() {
             className="h-full"
           >
             {activeTab === "bookings" && <BookingsTab />}
-            {activeTab === "services" && <PosStorefront />}
+            {activeTab === "services" && <PosStorefront isAdmin />}
           </motion.div>
         </AnimatePresence>
       </main>

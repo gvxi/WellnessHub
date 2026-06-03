@@ -1,19 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyEmployee } from "@/lib/auth/verify-employee";
 import { verifyActor } from "@/lib/auth/verify-actor";
-import { createAuthedClient } from "@/lib/auth/verify-admin";
+import { verifyAdmin } from "@/lib/auth/verify-admin";
 import { adminClient } from "@/lib/supabase/admin";
 import { sendEmail, posBookingReceiptHtml, posSubNotificationHtml } from "@/lib/email/send";
 
 export async function GET(request: NextRequest) {
-  const ctx = await verifyEmployee(request);
-  if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const url = new URL(request.url);
+  const asAdmin = url.searchParams.get("as_admin") === "1";
 
-  const { searchParams } = new URL(request.url);
+  // as_admin=1 → admin auth only (admin POS page, same browser may also have pos-token)
+  // default    → employee auth first, admin fallback
+  const adm = asAdmin ? await verifyAdmin(request) : null;
+  const emp = adm ? null : await verifyEmployee(request);
+  const fallbackAdm = (!adm && !emp) ? await verifyAdmin(request) : null;
+  const activeAdm = adm ?? fallbackAdm;
+
+  if (!emp && !activeAdm) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const businessId = emp ? emp.businessId : activeAdm!.businessId;
+  const userId     = emp ? emp.userId     : activeAdm!.userId;
+
+  const supabase = adminClient();
+
+  const { searchParams } = url;
   const status = searchParams.get("status");
 
-  const token = request.cookies.get("pos-token")!.value;
-  const supabase = createAuthedClient(token);
+  // Admin gets full access; employee is filtered by their permissions
+  const delayMinutes   = emp ? emp.permissions.booking_delay_minutes  : 0;
+  const showRejected   = emp ? emp.permissions.show_rejected_bookings  : true;
+  const emailFilter    = emp ? emp.permissions.booking_filter_email    : null;
+  const phoneFilter    = emp ? emp.permissions.booking_filter_phone    : null;
 
   let query = supabase
     .from("bookings")
@@ -25,21 +42,19 @@ export async function GET(request: NextRequest) {
       packages ( name, translations ),
       payments ( transaction_id )
     `)
-    .eq("business_id", ctx.businessId)
+    .eq("business_id", businessId)
     .order("created_at", { ascending: false });
 
   // Booking delay filter — employee only sees bookings older than N minutes
-  if (ctx.permissions.booking_delay_minutes > 0) {
-    const cutoff = new Date(
-      Date.now() - ctx.permissions.booking_delay_minutes * 60 * 1000
-    ).toISOString();
+  if (delayMinutes > 0) {
+    const cutoff = new Date(Date.now() - delayMinutes * 60 * 1000).toISOString();
     query = query.lte("created_at", cutoff);
   }
 
   // Status filter
   if (status && status !== "all") {
     query = query.eq("status", status);
-  } else if (!ctx.permissions.show_rejected_bookings) {
+  } else if (!showRejected) {
     query = query.neq("status", "rejected");
   }
 
@@ -48,12 +63,10 @@ export async function GET(request: NextRequest) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     query = query
-      .eq("created_by_user_id", ctx.userId)
+      .eq("created_by_user_id", userId)
       .gte("created_at", todayStart.toISOString());
   } else {
     // Customer email/phone filter (not applied in today_mine mode)
-    const emailFilter = ctx.permissions.booking_filter_email;
-    const phoneFilter = ctx.permissions.booking_filter_phone;
     if (emailFilter) query = query.ilike("customer_data->>email", `%${emailFilter}%`);
     if (phoneFilter) query = query.ilike("customer_data->>phone", `%${phoneFilter}%`);
   }

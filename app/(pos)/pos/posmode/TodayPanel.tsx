@@ -19,9 +19,10 @@ const STATUS_CFG = {
 interface Props {
   open: boolean;
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
-export default function TodayPanel({ open, onClose }: Props) {
+export default function TodayPanel({ open, onClose, isAdmin = false }: Props) {
   const { t, isRTL } = useLang();
   const [bookings, setBookings] = useState<ApiBooking[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ export default function TodayPanel({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetch("/api/pos/bookings?today_mine=1&status=all")
+    fetch(`/api/pos/bookings?today_mine=1&status=all${isAdmin ? "&as_admin=1" : ""}`)
       .then(r => r.json())
       .then(data => setBookings(Array.isArray(data) ? data : []))
       .catch(() => setBookings([]))

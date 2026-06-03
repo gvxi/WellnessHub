@@ -55,7 +55,7 @@ function cartTotal(c: Cart) { return c.items.reduce((s, i) => s + i.numericPrice
 // ── Main ───────────────────────────────────────────────────────────────────
 const SOUND_KEY = "pos_sound_enabled";
 
-export default function PosStorefront() {
+export default function PosStorefront({ isAdmin = false }: { isAdmin?: boolean }) {
   const { isRTL, t, lang, setLang } = useLang();
   const { showToast, toasts } = usePosToast();
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -354,7 +354,7 @@ export default function PosStorefront() {
         showToast={showToast}
       />
 
-      <TodayPanel open={todayOpen} onClose={() => setTodayOpen(false)} />
+      <TodayPanel open={todayOpen} onClose={() => setTodayOpen(false)} isAdmin={isAdmin} />
       <PosToastStack toasts={toasts} />
     </div>
   );
