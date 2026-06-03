@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyEmployeeFromCookies } from "@/lib/auth/verify-employee";
+import PosShell from "@/app/(pos)/_components/PosShell";
 
 export default async function PosDashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -8,5 +9,5 @@ export default async function PosDashboardLayout({ children }: { children: React
 
   if (!ctx) redirect("/pos");
 
-  return <>{children}</>;
+  return <PosShell>{children}</PosShell>;
 }

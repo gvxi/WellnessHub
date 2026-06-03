@@ -150,7 +150,7 @@ interface Props {
 
 const SPRING = { type: "spring" as const, stiffness: 340, damping: 34 };
 
-type TranslateStatus = "idle" | "loading" | "done" | "error";
+type TranslateStatus = "idle" | "loading" | "done" | "error" | "empty";
 type TranslateDir = "en-ar" | "ar-en";
 
 export default function EditSheet({ open, title, fields, initialValues, onClose, onSave, onDelete }: Props) {
@@ -199,17 +199,18 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
     if (translatableFields.length === 0) return;
     const isEnToAr = translateDir === "en-ar";
 
-    // EN→AR: fill empty AR from non-empty EN
-    // AR→EN: fill empty EN from non-empty AR
     const toTranslate = translatableFields
       .map((f) => ({
         f,
         text: isEnToAr ? (draft[f.key] ?? "") : (draft[`${f.key}_ar`] ?? ""),
-        destEmpty: isEnToAr ? !draft[`${f.key}_ar`]?.trim() : !draft[f.key]?.trim(),
       }))
-      .filter(({ text, destEmpty }) => text.trim() && destEmpty);
+      .filter(({ text }) => text.trim());
 
-    if (toTranslate.length === 0) return;
+    if (toTranslate.length === 0) {
+      setTranslateStatus("empty");
+      setTimeout(() => setTranslateStatus("idle"), 2000);
+      return;
+    }
     setTranslateStatus("loading");
     try {
       const res = await fetch("/api/admin/translate", {
@@ -227,9 +228,10 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
       setDraft((d) => {
         const next = { ...d };
         toTranslate.forEach(({ f }, idx) => {
-          if (translated[idx]) {
-            if (isEnToAr) next[`${f.key}_ar`] = translated[idx];
-            else next[f.key] = translated[idx];
+          const result = translated[idx];
+          if (result) {
+            if (isEnToAr) next[`${f.key}_ar`] = result;
+            else next[f.key] = result;
           }
         });
         return next;
@@ -367,6 +369,7 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
   const translateButtonContent = () => {
     if (translateStatus === "loading") return <><Loader2 size={12} className="animate-spin" />Translating…</>;
     if (translateStatus === "done") return <><CheckCircle2 size={12} className="text-emerald-500" />Done</>;
+    if (translateStatus === "empty") return <><AlertCircle size={12} className="text-amber-400" />No source</>;
     if (translateStatus === "error") return <><AlertCircle size={12} className="text-red-400" />Failed</>;
     return <><Globe size={12} />{translateDir === "en-ar" ? "EN→AR" : "AR→EN"}</>;
   };
@@ -417,7 +420,9 @@ export default function EditSheet({ open, title, fields, initialValues, onClose,
                           ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
                           : translateStatus === "error"
                             ? "bg-red-50 text-red-500 border border-red-200"
-                            : "bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/15",
+                            : translateStatus === "empty"
+                              ? "bg-amber-50 text-amber-600 border border-amber-200"
+                              : "bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/15",
                         translateStatus === "loading" && "opacity-60"
                       )}
                     >

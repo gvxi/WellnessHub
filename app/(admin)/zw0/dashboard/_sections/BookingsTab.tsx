@@ -7,6 +7,7 @@ import type { BookingSource, PaymentMethodType } from "@/lib/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
+import { playPaymentAccepted, playPaymentRejected } from "@/lib/sounds";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useBookingsRealtime } from "@/lib/hooks/useBookingsRealtime";
 import type { ApiBooking } from "@/lib/supabase/types";
@@ -79,6 +80,7 @@ function BookingsTabInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
+    if (status === "approved") playPaymentAccepted(); else playPaymentRejected();
     setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
     setSelectedBooking((prev) => (prev?.id === id ? { ...prev, status } : prev));
     setUpdating(null);
@@ -246,8 +248,20 @@ function BookingsTabInner() {
                     <p className="text-xs text-dark/50">{b.customer_email}</p>
                   )}
 
-                  {/* Service · Package */}
-                  {(b.service_name || b.package_name) && (
+                  {/* POS/Admin creator info */}
+                  {b.booking_by !== "Customer" && (b.created_by_name || b.created_by_email) && (
+                    <div className="bg-secondary/6 rounded-xl px-3 py-2.5 space-y-0.5">
+                      {b.created_by_name && (
+                        <p className="text-xs font-semibold text-dark">{b.created_by_name}</p>
+                      )}
+                      {b.created_by_email && (
+                        <p className="text-[11px] text-dark/50">{b.created_by_email}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Service · Package (customer bookings only) */}
+                  {b.booking_by === "Customer" && (b.service_name || b.package_name) && (
                     <p className="text-sm font-medium text-dark">
                       {b.service_name ?? ""}
                       {b.service_name && b.package_name ? " · " : ""}
@@ -303,9 +317,6 @@ function BookingsTabInner() {
                       <BookingSourceBadge source={b.booking_by} />
                       <PaymentMethodBadge method={b.payment_method} />
                     </div>
-                    {b.booking_by !== "Customer" && b.created_by_name && (
-                      <p className="text-[11px] text-dark/50">{t("pos.created_by")} <span className="font-medium text-dark/70">{b.created_by_name}</span></p>
-                    )}
                   </div>
 
                   {/* Booking ID + Payment Reference */}

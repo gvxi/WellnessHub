@@ -1,16 +1,18 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { XCircle, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLang } from "@/lib/lang-context";
+import { playPaymentRejected } from "@/lib/sounds";
 
 function FailedContent() {
   const params = useSearchParams();
   const orderId = params.get("order_id");
   const { t } = useLang();
 
+  useEffect(() => { playPaymentRejected(); }, []);
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">

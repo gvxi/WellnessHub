@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { TargetAndTransition, Transition } from "framer-motion";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, ChevronLeft, Loader2, CheckCircle2, Banknote,
+  X, ChevronLeft, Loader2, CheckCircle2, XCircle, Banknote,
   CreditCard, QrCode, AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
+import { playPaymentAccepted, playPaymentRejected } from "@/lib/sounds";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Cart = {
@@ -17,9 +18,11 @@ type Cart = {
   items: Array<{
     key: string;
     name: string;
+    nameAr?: string;
     price: string;
     numericPrice: number;
     tierLabel?: string;
+    tierLabelAr?: string;
     qty: number;
     categoryTitle: string;
     itemId: string;
@@ -35,6 +38,7 @@ interface Props {
   onSuccess: (cartId: string, status: "approved" | "rejected") => void;
   onClose: () => void;
   showToast: (msg: string, kind?: "success" | "error" | "info") => void;
+  soundEnabled?: boolean;
 }
 
 const SPRING = { type: "spring" as const, stiffness: 340, damping: 34 };
@@ -46,7 +50,7 @@ const ANIM_VARIANTS: { animate: TargetAndTransition; transition: Transition }[] 
   { animate: { rotate: [0, 360] },      transition: { duration: 2, repeat: Infinity, ease: "linear" } },
 ];
 
-export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, showToast }: Props) {
+export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, showToast, soundEnabled = true }: Props) {
   const { t, lang } = useLang();
   const [step, setStep] = useState<Step>(1);
   const [customer, setCustomer] = useState({ name: "", email: "" });
@@ -55,6 +59,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showActions, setShowActions] = useState(false); // Step 4: reveal after 3s
+  const [bookingStatus, setBookingStatus] = useState<"approved" | "rejected" | null>(null);
   const animVariantRef = useRef(Math.floor(Math.random() * 3));
 
   // Reset on open
@@ -65,7 +70,9 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
       setSessionId(null);
       setPaymentMethod(null);
       setError(null);
+      setLoading(false);
       setShowActions(false);
+      setBookingStatus(null);
       animVariantRef.current = Math.floor(Math.random() * 3);
     }
   }, [open]);
@@ -158,9 +165,11 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
           customer,
           items: cart.items.map((i) => ({
             name: i.name,
+            name_ar: i.nameAr,
             price: i.price,
             numericPrice: i.numericPrice,
             tierLabel: i.tierLabel,
+            tierLabelAr: i.tierLabelAr,
             qty: i.qty,
             categoryTitle: i.categoryTitle,
           })),
@@ -170,11 +179,14 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Failed to create booking"); setLoading(false); return; }
+      if (!res.ok) { setError(data.error ?? "Failed to create booking"); return; }
+      if (soundEnabled) { if (status === "approved") playPaymentAccepted(); else playPaymentRejected(); }
+      setBookingStatus(status);
       setStep("5b");
       setTimeout(() => onSuccess(cart.id, status), 1400);
     } catch {
       setError("Network error");
+    } finally {
       setLoading(false);
     }
   }
@@ -225,6 +237,9 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
               )}
             </div>
 
+            {/* Items summary */}
+            <CartItemsPanel items={cart.items} />
+
             {/* Step indicator */}
             <StepIndicator step={step} />
 
@@ -243,7 +258,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
                   </StepWrap>
                 )}
                 {step === 2 && (
-                  <StepWrap key="s2">
+                  <StepWrap key={`s2-${sessionId}`}>
                     <OtpStep
                       email={customer.email}
                       loading={loading}
@@ -287,7 +302,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
                 )}
                 {step === "5b" && (
                   <StepWrap key="s5b">
-                    <SuccessStep customerName={customer.name} />
+                    <SuccessStep customerName={customer.name} status={bookingStatus ?? "approved"} />
                   </StepWrap>
                 )}
               </AnimatePresence>
@@ -296,6 +311,50 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+// ── Cart items panel ───────────────────────────────────────────────────────
+function CartItemsPanel({ items }: { items: Cart["items"] }) {
+  const { isRTL, t } = useLang();
+  const total = items.reduce((s, i) => s + i.numericPrice * i.qty, 0);
+
+  return (
+    <div className="flex-none mx-5 mb-3 border border-dark/8 rounded-2xl overflow-hidden bg-dark/[0.015]">
+      {/* Column headers */}
+      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 px-3 py-2 border-b border-dark/6 bg-dark/[0.03]">
+        <span className="text-[10px] font-semibold text-dark/40 uppercase tracking-wide">{t("pos.item")}</span>
+        <span className="text-[10px] font-semibold text-dark/40 uppercase tracking-wide text-center w-7">{t("pos.qty")}</span>
+        <span className="text-[10px] font-semibold text-dark/40 uppercase tracking-wide text-end w-16">{t("pos.price")}</span>
+        <span className="text-[10px] font-semibold text-dark/40 uppercase tracking-wide text-end w-16">{t("pos.total")}</span>
+      </div>
+
+      {/* Item rows */}
+      <div className="max-h-[140px] overflow-y-auto divide-y divide-dark/5">
+        {items.map((item) => {
+          const name = isRTL && item.nameAr ? item.nameAr : item.name;
+          const tier = isRTL && item.tierLabelAr ? item.tierLabelAr : item.tierLabel;
+          const lineTotal = item.numericPrice * item.qty;
+          return (
+            <div key={item.key} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-dark truncate">{name}</p>
+                {tier && <p className="text-[10px] text-dark/40 truncate">{tier}</p>}
+              </div>
+              <span className="text-xs text-dark/50 text-center w-7">{item.qty}</span>
+              <span className="text-xs text-dark/60 text-end w-16 tabular-nums">{item.price}</span>
+              <span className="text-xs font-semibold text-dark text-end w-16 tabular-nums">{lineTotal.toFixed(3)}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Total row */}
+      <div className="flex items-center justify-between px-3 py-2 border-t border-dark/8 bg-primary/[0.04]">
+        <span className="text-xs font-bold text-dark">{t("pos.total")}</span>
+        <span className="text-xs font-bold text-primary tabular-nums">{total.toFixed(3)} OMR</span>
+      </div>
+    </div>
   );
 }
 
@@ -352,11 +411,10 @@ function CustomerInfoStep({
           onChange={(e) => onChange({ ...customer, name: e.target.value })}
           className="w-full bg-dark/[0.04] border border-dark/10 rounded-xl px-4 py-3 text-sm text-dark placeholder:text-dark/30 outline-none focus:border-primary/40 transition-colors"
         />
-        <input
-          type="email"
+        <EmailInput
           placeholder={t("pos.checkout_email")}
           value={customer.email}
-          onChange={(e) => onChange({ ...customer, email: e.target.value })}
+          onChange={v => onChange({ ...customer, email: v })}
           className="w-full bg-dark/[0.04] border border-dark/10 rounded-xl px-4 py-3 text-sm text-dark placeholder:text-dark/30 outline-none focus:border-primary/40 transition-colors"
         />
       </div>
@@ -553,9 +611,10 @@ function DeclineConfirmStep({
   );
 }
 
-// ── Step 5b: Success ───────────────────────────────────────────────────────
-function SuccessStep({ customerName }: { customerName: string }) {
+// ── Step 5b: Result ────────────────────────────────────────────────────────
+function SuccessStep({ customerName, status }: { customerName: string; status: "approved" | "rejected" }) {
   const { t } = useLang();
+  const isRejected = status === "rejected";
   return (
     <motion.div
       initial={{ scale: 0.85, opacity: 0 }}
@@ -566,15 +625,92 @@ function SuccessStep({ customerName }: { customerName: string }) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.1 }}
-        className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center"
+        className={cn(
+          "w-20 h-20 rounded-full flex items-center justify-center",
+          isRejected ? "bg-red-50" : "bg-emerald-50"
+        )}
       >
-        <CheckCircle2 size={40} className="text-emerald-500" />
+        {isRejected
+          ? <XCircle size={40} className="text-red-500" />
+          : <CheckCircle2 size={40} className="text-emerald-500" />
+        }
       </motion.div>
       <div>
-        <p className="text-lg font-bold text-dark">{t("pos.checkout_confirmed")}</p>
-        <p className="text-sm text-dark/45 mt-1">{t("pos.checkout_receipt_sent")} {customerName}.</p>
+        <p className="text-lg font-bold text-dark">
+          {isRejected ? t("pos.checkout_declined") : t("pos.checkout_confirmed")}
+        </p>
+        {!isRejected && (
+          <p className="text-sm text-dark/45 mt-1">{t("pos.checkout_receipt_sent")} {customerName}.</p>
+        )}
       </div>
     </motion.div>
+  );
+}
+
+// ── Email input with domain suggestions ───────────────────────────────────
+const EMAIL_DOMAINS = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "icloud.com", "live.com"];
+
+function EmailInput({
+  value, onChange, placeholder, className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  className: string;
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node))
+        setSuggestions([]);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const computeSuggestions = useCallback((val: string) => {
+    const atIdx = val.indexOf("@");
+    if (atIdx < 1) { setSuggestions([]); return; }
+    const domain = val.slice(atIdx + 1).toLowerCase();
+    const local = val.slice(0, atIdx);
+    const filtered = domain
+      ? EMAIL_DOMAINS.filter(d => d.startsWith(domain) && d !== domain)
+      : EMAIL_DOMAINS;
+    setSuggestions(filtered.map(d => `${local}@${d}`));
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        type="email"
+        autoComplete="email"
+        placeholder={placeholder}
+        value={value}
+        onChange={e => { onChange(e.target.value); computeSuggestions(e.target.value); }}
+        onFocus={() => computeSuggestions(value)}
+        className={className}
+      />
+      {suggestions.length > 0 && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-light border border-dark/10 rounded-xl shadow-lg overflow-hidden">
+          {suggestions.map(s => {
+            const at = s.indexOf("@");
+            return (
+              <button
+                key={s}
+                type="button"
+                onMouseDown={e => { e.preventDefault(); onChange(s); setSuggestions([]); }}
+                className="w-full text-left px-4 py-2.5 text-sm hover:bg-dark/[0.04] transition-colors flex items-center gap-0"
+              >
+                <span className="text-dark/40">{s.slice(0, at + 1)}</span>
+                <span className="font-medium text-dark">{s.slice(at + 1)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

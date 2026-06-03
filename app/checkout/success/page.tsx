@@ -8,6 +8,7 @@ import { useLang } from "@/lib/lang-context";
 import { useCart } from "@/lib/shop-context";
 import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { playPaymentAccepted } from "@/lib/sounds";
 
 function SuccessContent() {
   const params = useSearchParams();
@@ -23,6 +24,7 @@ function SuccessContent() {
 
   useEffect(() => {
     clearCart();
+    playPaymentAccepted();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

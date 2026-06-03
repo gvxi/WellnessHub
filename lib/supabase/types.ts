@@ -188,6 +188,7 @@ export type ApiBooking = {
   booking_by: BookingSource;
   created_by_user_id: string | null;
   created_by_name: string | null;
+  created_by_email: string | null;
   payment_method: PaymentMethodType;
 };
 

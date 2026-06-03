@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const bookings = (data ?? []).map((b: any) => ({
+  const rawBookings = (data ?? []).map((b: any) => ({
     id: b.id,
     status: b.status,
     scheduled_at: b.scheduled_at,
@@ -75,11 +75,33 @@ export async function GET(request: NextRequest) {
     payment_reference: (b.payments as any)?.[0]?.transaction_id ?? null,
     booking_by: b.booking_by ?? "Customer",
     created_by_user_id: b.created_by_user_id ?? null,
-    created_by_name: null, // resolved below if needed
+    created_by_name: null as string | null,
+    created_by_email: null as string | null,
     payment_method: b.payment_method ?? "Payment Gateway",
   }));
 
-  return NextResponse.json(bookings);
+  // Resolve creator name + email from auth.users via admin API
+  const creatorIds = [...new Set(rawBookings
+    .filter(b => b.booking_by !== "Customer" && b.created_by_user_id)
+    .map(b => b.created_by_user_id as string))];
+
+  if (creatorIds.length > 0) {
+    const { data: usersData } = await adminClient()
+      .from("users")
+      .select("id, full_name, email")
+      .in("id", creatorIds);
+    const creatorMap = Object.fromEntries(
+      (usersData ?? []).map((u: any) => [u.id, { name: u.full_name ?? null, email: u.email ?? null }])
+    );
+    for (const b of rawBookings) {
+      if (b.created_by_user_id && creatorMap[b.created_by_user_id]) {
+        b.created_by_name = creatorMap[b.created_by_user_id].name;
+        b.created_by_email = creatorMap[b.created_by_user_id].email;
+      }
+    }
+  }
+
+  return NextResponse.json(rawBookings);
 }
 
 // ── POST — create a POS booking after checkout flow ────────────────────────
@@ -174,9 +196,11 @@ export async function POST(request: NextRequest) {
       customerName: customer.name,
       items: items.map((i) => ({
         name: i.name,
+        nameAr: i.name_ar,
         tierLabel: i.tierLabel,
+        tierLabelAr: (i as any).tierLabelAr,
         qty: i.qty,
-        price: i.price,
+        numericPrice: i.numericPrice,
       })),
       totalAmount: total_amount,
       paymentMethod: payment_method,

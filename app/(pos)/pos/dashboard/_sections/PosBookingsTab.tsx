@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, XCircle, Clock, AlertCircle, Loader2, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
+import { playPaymentAccepted, playPaymentRejected } from "@/lib/sounds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBookingsRealtime } from "@/lib/hooks/useBookingsRealtime";
 import type { ApiBooking, EmployeePermissions, Translations } from "@/lib/supabase/types";
@@ -114,6 +115,7 @@ export default function PosBookingsTab({ permissions }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: actionMode === "approve" ? "approved" : "rejected", reason }),
       });
+      if (actionMode === "approve") playPaymentAccepted(); else playPaymentRejected();
       await load();
       closePopup();
     } finally {
@@ -266,17 +268,29 @@ export default function PosBookingsTab({ permissions }: Props) {
 
                 {/* Service + scheduled */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-dark/4 rounded-2xl px-4 py-3">
-                    <p className="text-[10px] uppercase tracking-widest text-dark/40 font-semibold mb-1">{t("pos.service")}</p>
-                    <p className="text-xs font-medium text-dark">
-                      {translated(selectedBooking.service_name ?? "—", selectedBooking.service_translations, isRTL) || selectedBooking.service_name || "—"}
-                    </p>
-                    {selectedBooking.package_name && (
-                      <p className="text-[10px] text-dark/50 mt-0.5">
-                        {translated(selectedBooking.package_name, selectedBooking.package_translations, isRTL) || selectedBooking.package_name}
+                  {selectedBooking.booking_by !== "Customer" && (selectedBooking.created_by_name || selectedBooking.created_by_email) ? (
+                    <div className="bg-secondary/6 rounded-2xl px-4 py-3 space-y-0.5">
+                      <p className="text-[10px] uppercase tracking-widest text-dark/40 font-semibold mb-1">{t("pos.created_by")}</p>
+                      {selectedBooking.created_by_name && (
+                        <p className="text-xs font-semibold text-dark">{selectedBooking.created_by_name}</p>
+                      )}
+                      {selectedBooking.created_by_email && (
+                        <p className="text-[11px] text-dark/50">{selectedBooking.created_by_email}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-dark/4 rounded-2xl px-4 py-3">
+                      <p className="text-[10px] uppercase tracking-widest text-dark/40 font-semibold mb-1">{t("pos.service")}</p>
+                      <p className="text-xs font-medium text-dark">
+                        {translated(selectedBooking.service_name ?? "—", selectedBooking.service_translations, isRTL) || selectedBooking.service_name || "—"}
                       </p>
-                    )}
-                  </div>
+                      {selectedBooking.package_name && (
+                        <p className="text-[10px] text-dark/50 mt-0.5">
+                          {translated(selectedBooking.package_name, selectedBooking.package_translations, isRTL) || selectedBooking.package_name}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div className="bg-dark/4 rounded-2xl px-4 py-3">
                     <p className="text-[10px] uppercase tracking-widest text-dark/40 font-semibold mb-1">{t("pos.scheduled")}</p>
                     <p className="text-xs font-medium text-dark">
@@ -323,9 +337,6 @@ export default function PosBookingsTab({ permissions }: Props) {
                     <BookingSourceBadge source={selectedBooking.booking_by} />
                     <PaymentMethodBadge method={selectedBooking.payment_method} />
                   </div>
-                  {selectedBooking.booking_by !== "Customer" && selectedBooking.created_by_name && (
-                    <p className="text-[11px] text-dark/50">By <span className="font-medium text-dark/70">{selectedBooking.created_by_name}</span></p>
-                  )}
                 </div>
 
                 {/* Payment ref */}

@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, X, Plus, Minus, ShoppingCart, ChevronLeft,
-  Tag, Trash2,
+  Tag, Trash2, Volume2, VolumeX, Languages,
 } from "lucide-react";
 import PosCheckoutDrawer from "./PosCheckoutDrawer";
 import Image from "next/image";
@@ -12,6 +12,7 @@ import type { Category, SubCategory, ServiceItem, PriceTier } from "@/lib/servic
 import { cn } from "@/lib/utils";
 import { useLang } from "@/lib/lang-context";
 import { usePosToast, PosToastStack } from "@/lib/hooks/usePosToast";
+import { playAddToCart } from "@/lib/sounds";
 
 const CART_STORAGE_KEY = "pos_storefront_carts";
 
@@ -51,9 +52,16 @@ function cartCount(c: Cart) { return c.items.reduce((s, i) => s + i.qty, 0); }
 function cartTotal(c: Cart) { return c.items.reduce((s, i) => s + i.numericPrice * i.qty, 0); }
 
 // ── Main ───────────────────────────────────────────────────────────────────
+const SOUND_KEY = "pos_sound_enabled";
+
 export default function PosStorefront() {
-  const { isRTL, t } = useLang();
+  const { isRTL, t, lang, setLang } = useLang();
   const { showToast, toasts } = usePosToast();
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const v = localStorage.getItem(SOUND_KEY);
+    return v === null ? true : v === "true";
+  });
   const cartCounterRef = useRef(2);
 
   const [catalog, setCatalog] = useState<Category[]>([]);
@@ -151,7 +159,8 @@ export default function PosStorefront() {
         }],
       };
     }));
-  }, [activeCartId]);
+    if (soundEnabled) playAddToCart();
+  }, [activeCartId, soundEnabled]);
 
   const updateQty = useCallback((key: string, delta: number) => {
     setCarts(prev => prev.map(c => {
@@ -194,9 +203,9 @@ export default function PosStorefront() {
       {/* ── Left: content ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-        {/* Search */}
-        <div className="flex-none px-4 py-3 border-b border-dark/6 bg-light">
-          <div className="relative max-w-lg">
+        {/* Top nav: search + toggles */}
+        <div className="flex-none px-4 py-3 border-b border-dark/6 bg-light flex items-center gap-2">
+          <div className="relative flex-1 max-w-lg">
             <Search size={15} className="absolute start-3 top-1/2 -translate-y-1/2 text-dark/35 pointer-events-none" />
             <input
               value={search} onChange={e => setSearch(e.target.value)}
@@ -210,6 +219,34 @@ export default function PosStorefront() {
               </button>
             )}
           </div>
+
+          {/* Language toggle */}
+          <button
+            onClick={() => setLang(lang === "en" ? "ar" : "en")}
+            title="Toggle language"
+            className="flex-none flex items-center gap-1.5 h-9 px-3 rounded-xl bg-dark/[0.04] border border-dark/8 text-dark/60 hover:text-dark hover:bg-dark/8 transition-colors text-xs font-semibold"
+          >
+            <Languages size={14} />
+            <span>{lang === "en" ? "AR" : "EN"}</span>
+          </button>
+
+          {/* Sound toggle */}
+          <button
+            onClick={() => {
+              const next = !soundEnabled;
+              setSoundEnabled(next);
+              localStorage.setItem(SOUND_KEY, String(next));
+            }}
+            title={soundEnabled ? "Mute sounds" : "Enable sounds"}
+            className={cn(
+              "flex-none w-9 h-9 rounded-xl border flex items-center justify-center transition-colors",
+              soundEnabled
+                ? "bg-dark/[0.04] border-dark/8 text-dark/60 hover:text-dark hover:bg-dark/8"
+                : "bg-primary/8 border-primary/20 text-primary/60 hover:text-primary"
+            )}
+          >
+            {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+          </button>
         </div>
 
         {/* View area */}
@@ -293,6 +330,7 @@ export default function PosStorefront() {
       <PosCheckoutDrawer
         open={checkoutCart !== null}
         cart={checkoutCart ?? { id: "", label: "", items: [] }}
+        soundEnabled={soundEnabled}
         onSuccess={(cartId, status) => {
           closeCart(cartId);
           setCheckoutCart(null);

@@ -8,6 +8,7 @@ import { useToast } from "@/lib/toast-context";
 import { useLang } from "@/lib/lang-context";
 import type { ServiceItem } from "@/lib/services-data";
 import { cn } from "@/lib/utils";
+import { playAddToCart } from "@/lib/sounds";
 
 const SPRING = { type: "spring" as const, stiffness: 280, damping: 28 };
 
@@ -70,6 +71,7 @@ export default function ItemDrawer({ item, onClose }: Props) {
     } else {
       addItem(item, qty);
     }
+    playAddToCart();
     showToast(t("item.addToCart"), "cart");
     onClose();
   }
