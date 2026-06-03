@@ -4,9 +4,10 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, X, Plus, Minus, ShoppingCart, ChevronLeft,
-  Tag, Trash2, Volume2, VolumeX, Languages,
+  Tag, Trash2, Volume2, VolumeX, Languages, History,
 } from "lucide-react";
 import PosCheckoutDrawer from "./PosCheckoutDrawer";
+import TodayPanel from "./TodayPanel";
 import Image from "next/image";
 import type { Category, SubCategory, ServiceItem, PriceTier } from "@/lib/services-data";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,7 @@ export default function PosStorefront() {
     const v = localStorage.getItem(SOUND_KEY);
     return v === null ? true : v === "true";
   });
+  const [todayOpen, setTodayOpen] = useState(false);
   const cartCounterRef = useRef(2);
 
   const [catalog, setCatalog] = useState<Category[]>([]);
@@ -247,6 +249,15 @@ export default function PosStorefront() {
           >
             {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
           </button>
+
+          {/* Today's bookings */}
+          <button
+            onClick={() => setTodayOpen(true)}
+            title="Today's bookings"
+            className="flex-none w-9 h-9 rounded-xl border border-dark/8 bg-dark/[0.04] flex items-center justify-center text-dark/60 hover:text-dark hover:bg-dark/8 transition-colors"
+          >
+            <History size={15} />
+          </button>
         </div>
 
         {/* View area */}
@@ -343,6 +354,7 @@ export default function PosStorefront() {
         showToast={showToast}
       />
 
+      <TodayPanel open={todayOpen} onClose={() => setTodayOpen(false)} />
       <PosToastStack toasts={toasts} />
     </div>
   );

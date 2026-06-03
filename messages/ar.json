@@ -642,7 +642,9 @@
     "toast_cart_restored": "تمت استعادة السلة",
     "toast_cart_deleted": "محذوف",
     "cart": "سلة",
-    "items_label": "عناصر"
+    "items_label": "عناصر",
+    "today_bookings": "حجوزات اليوم",
+    "today_empty": "لا توجد حجوزات اليوم"
   },
   "lang": "ع"
 }

@@ -642,7 +642,9 @@
     "toast_cart_restored": "Cart restored",
     "toast_cart_deleted": "deleted",
     "cart": "Cart",
-    "items_label": "items"
+    "items_label": "items",
+    "today_bookings": "Today's Bookings",
+    "today_empty": "No bookings made today"
   },
   "lang": "EN"
 }

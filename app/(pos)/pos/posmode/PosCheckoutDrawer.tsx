@@ -99,6 +99,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to send OTP"); return; }
       setSessionId(data.session_id);
+      saveRecentEmail(customer.email.trim().toLowerCase());
       setStep(2);
       showToast(t("pos.toast_code_sent"), "success");
     } catch {
@@ -399,7 +400,18 @@ function CustomerInfoStep({
   error: string | null;
 }) {
   const { t } = useLang();
+  const [recentEmails, setRecentEmails] = useState<string[]>([]);
   const valid = customer.name.trim().length > 1 && customer.email.includes("@");
+
+  useEffect(() => {
+    setRecentEmails(loadRecentEmails());
+  }, []);
+
+  function fillEmail(email: string) {
+    onChange({ ...customer, email: "" });
+    requestAnimationFrame(() => onChange({ ...customer, email }));
+  }
+
   return (
     <div className="space-y-4 pt-2">
       <p className="text-sm text-dark/50">{t("pos.checkout_otp_instruction").split(" ").slice(0, 6).join(" ")}…</p>
@@ -411,12 +423,28 @@ function CustomerInfoStep({
           onChange={(e) => onChange({ ...customer, name: e.target.value })}
           className="w-full bg-dark/[0.04] border border-dark/10 rounded-xl px-4 py-3 text-sm text-dark placeholder:text-dark/30 outline-none focus:border-primary/40 transition-colors"
         />
-        <EmailInput
-          placeholder={t("pos.checkout_email")}
-          value={customer.email}
-          onChange={v => onChange({ ...customer, email: v })}
-          className="w-full bg-dark/[0.04] border border-dark/10 rounded-xl px-4 py-3 text-sm text-dark placeholder:text-dark/30 outline-none focus:border-primary/40 transition-colors"
-        />
+        <div>
+          <EmailInput
+            placeholder={t("pos.checkout_email")}
+            value={customer.email}
+            onChange={v => onChange({ ...customer, email: v })}
+            className="w-full bg-dark/[0.04] border border-dark/10 rounded-xl px-4 py-3 text-sm text-dark placeholder:text-dark/30 outline-none focus:border-primary/40 transition-colors"
+          />
+          {recentEmails.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {recentEmails.map((email) => (
+                <button
+                  key={email}
+                  type="button"
+                  onClick={() => fillEmail(email)}
+                  className="inline-flex items-center px-2.5 py-1 rounded-lg bg-dark/[0.04] border border-dark/8 text-[11px] text-dark/55 hover:bg-primary/8 hover:border-primary/20 hover:text-primary transition-colors font-mono"
+                >
+                  {redactEmail(email)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {error && <ErrorLine>{error}</ErrorLine>}
       <button
@@ -648,6 +676,30 @@ function SuccessStep({ customerName, status }: { customerName: string; status: "
 }
 
 // ── Email input with domain suggestions ───────────────────────────────────
+// ── Recent emails (localStorage) ──────────────────────────────────────────
+const RECENT_EMAILS_KEY = "pos_recent_emails";
+const MAX_RECENT = 5;
+
+function loadRecentEmails(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_EMAILS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch { return []; }
+}
+
+function saveRecentEmail(email: string) {
+  try {
+    const prev = loadRecentEmails().filter(e => e !== email);
+    localStorage.setItem(RECENT_EMAILS_KEY, JSON.stringify([email, ...prev].slice(0, MAX_RECENT)));
+  } catch {}
+}
+
+function redactEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at < 1) return email;
+  return `${email[0]}***${email.slice(at)}`;
+}
+
 const EMAIL_DOMAINS = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "icloud.com", "live.com"];
 
 function EmailInput({

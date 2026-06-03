@@ -43,14 +43,19 @@ export async function GET(request: NextRequest) {
     query = query.neq("status", "rejected");
   }
 
-  // Customer email/phone filter
-  const emailFilter = ctx.permissions.booking_filter_email;
-  const phoneFilter = ctx.permissions.booking_filter_phone;
-  if (emailFilter) {
-    query = query.ilike("customer_data->>email", `%${emailFilter}%`);
-  }
-  if (phoneFilter) {
-    query = query.ilike("customer_data->>phone", `%${phoneFilter}%`);
+  // Today + own bookings filter (for history panel)
+  if (searchParams.get("today_mine") === "1") {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    query = query
+      .eq("created_by_user_id", ctx.userId)
+      .gte("created_at", todayStart.toISOString());
+  } else {
+    // Customer email/phone filter (not applied in today_mine mode)
+    const emailFilter = ctx.permissions.booking_filter_email;
+    const phoneFilter = ctx.permissions.booking_filter_phone;
+    if (emailFilter) query = query.ilike("customer_data->>email", `%${emailFilter}%`);
+    if (phoneFilter) query = query.ilike("customer_data->>phone", `%${phoneFilter}%`);
   }
 
   const { data, error } = await query;
