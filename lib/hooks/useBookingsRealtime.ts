@@ -34,7 +34,7 @@ export function useBookingsRealtime({
   useEffect(() => {
     if (typeof window === "undefined" || !BIZ_ID) return;
 
-    if (Notification.permission === "default") {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission();
     }
 
