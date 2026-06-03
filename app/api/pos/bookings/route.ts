@@ -213,8 +213,8 @@ export async function POST(request: NextRequest) {
       lang: resolvedLang,
     });
 
-    // Customer receipt (fire-and-forget)
-    sendEmail({
+    // Customer receipt — awaited so Vercel doesn't kill the fetch before it completes
+    await sendEmail({
       to: customer.email,
       subject: resolvedLang === "ar" ? "WellnessHub — تأكيد حجزك" : "WellnessHub — Booking Confirmation",
       html: receiptHtml,

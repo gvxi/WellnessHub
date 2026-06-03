@@ -55,6 +55,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
   const [step, setStep] = useState<Step>(1);
   const [customer, setCustomer] = useState({ name: "", email: "" });
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionLang, setSessionLang] = useState<"en" | "ar">("en");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
       setStep(1);
       setCustomer({ name: "", email: "" });
       setSessionId(null);
+      setSessionLang("en");
       setPaymentMethod(null);
       setError(null);
       setLoading(false);
@@ -90,15 +92,17 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
   async function handleSendOtp() {
     setLoading(true);
     setError(null);
+    const frozenLang: "en" | "ar" = lang === "ar" ? "ar" : "en";
     try {
       const res = await fetch("/api/pos/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: customer.email, lang }),
+        body: JSON.stringify({ email: customer.email, lang: frozenLang }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to send OTP"); return; }
       setSessionId(data.session_id);
+      setSessionLang(frozenLang);
       saveRecentEmail(customer.email.trim().toLowerCase());
       setStep(2);
       showToast(t("pos.toast_code_sent"), "success");
@@ -116,7 +120,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
       const res = await fetch("/api/pos/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: customer.email, lang }),
+        body: JSON.stringify({ email: customer.email, lang: sessionLang }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to resend"); return; }
@@ -176,7 +180,7 @@ export default function PosCheckoutDrawer({ open, cart, onSuccess, onClose, show
           })),
           payment_method: paymentMethod,
           status,
-          lang,
+          lang: sessionLang,
         }),
       });
       const data = await res.json();
