@@ -42,22 +42,19 @@ function resolve(obj: Record<string, unknown>, path: string): string {
   return typeof cur === "string" ? cur : path;
 }
 
-function readStoredLang(): Lang {
-  if (typeof window === "undefined") return "en";
-  try {
-    const stored = localStorage.getItem("wh_lang") as Lang | null;
-    if (stored === "en" || stored === "ar") return stored;
-  } catch {}
-  return "en";
-}
-
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(readStoredLang);
+  const [lang, setLangState] = useState<Lang>("en");
 
-  // Sync initial lang to DB on mount (no localStorage read needed — done in useState init)
+  // After hydration: read localStorage, then sync to DB
   useEffect(() => {
+    let stored: Lang = "en";
+    try {
+      const s = localStorage.getItem("wh_lang") as Lang | null;
+      if (s === "en" || s === "ar") stored = s;
+    } catch {}
+    setLangState(stored);
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) supabase.rpc("set_user_language", { p_lang: lang });
+      if (user) supabase.rpc("set_user_language", { p_lang: stored });
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
